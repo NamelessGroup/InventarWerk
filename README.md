@@ -75,3 +75,6 @@ Patch
 all optional
 ### /itemPreset/delete?uuid=""
 Delete
+### /lastChanges
+Get
+time stamp of last changes in millis
