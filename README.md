@@ -28,7 +28,7 @@ classDiagram
         price: number
         text: string
         creator: string
-        type: string
+        itemType: string
     }
 
     class Item {
