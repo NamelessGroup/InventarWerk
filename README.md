@@ -99,6 +99,7 @@ change migrations path in diesel.toml in backend/
 
 ## Database Structure
 ```mermaid
+
 erDiagram
     inventory {
         text uuid PK
@@ -128,6 +129,7 @@ erDiagram
         text presetReference FK
         integer amount
         text dmnote
+        text inventoryuuid FK
     }
     itempreset {
         text uuid PK
@@ -136,7 +138,6 @@ erDiagram
         text text
         text creator
         text itemType
-        text inventoryuuid FK
     }
     itempreset 1--0+ item: "creates/created by"
     user {
