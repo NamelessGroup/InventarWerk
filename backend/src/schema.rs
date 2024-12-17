@@ -3,16 +3,9 @@
 diesel::table! {
     inventory (uuid) {
         uuid -> Text,
-        owner -> Text,
+        owneruuid -> Text,
         money -> Integer,
-    }
-}
-
-diesel::table! {
-    inventoryItems (id) {
-        id -> Integer,
-        itemuuid -> Text,
-        inventoryuuid -> Text,
+        name -> Text,
     }
 }
 
@@ -39,6 +32,7 @@ diesel::table! {
         presetReference -> Text,
         amount -> Integer,
         dmNote -> Text,
+        inventoryuuid -> Text,
     }
 }
 
@@ -57,19 +51,20 @@ diesel::table! {
     user (uuid) {
         uuid -> Text,
         name -> Text,
+        dm -> Integer,
     }
 }
 
-diesel::joinable!(inventoryItems -> inventory (inventoryuuid));
-diesel::joinable!(inventoryItems -> item (itemuuid));
+diesel::joinable!(inventory -> user (owneruuid));
 diesel::joinable!(inventoryReaders -> inventory (inventoryuuid));
 diesel::joinable!(inventoryReaders -> user (useruuid));
 diesel::joinable!(inventoryWriters -> inventory (inventoryuuid));
 diesel::joinable!(inventoryWriters -> user (useruuid));
+diesel::joinable!(item -> inventory (inventoryuuid));
+diesel::joinable!(item -> itempreset (presetReference));
 
 diesel::allow_tables_to_appear_in_same_query!(
     inventory,
-    inventoryItems,
     inventoryReaders,
     inventoryWriters,
     item,
