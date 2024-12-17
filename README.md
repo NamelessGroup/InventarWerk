@@ -92,3 +92,6 @@ install libsqlite3-dev
 sudo apt update
 sudo apt install libsqlite3-dev
 ```
+
+set `DATABASE_URL=` in .env in backend/
+change migrations path in diesel.toml in backend/
