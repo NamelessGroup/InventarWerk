@@ -1,9 +1,16 @@
+#[macro_use] extern crate rocket;
+
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
 
-fn main() {
-    println!("Hello, world!");
+
+
+mod router;
+
+#[rocket::main]
+async fn main() {
+    rocket::build().mount("/", router::get_routes()).launch().await;
 }
 
 pub fn establish_connection() -> SqliteConnection {
