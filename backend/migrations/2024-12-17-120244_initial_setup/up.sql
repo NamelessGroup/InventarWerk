@@ -7,14 +7,6 @@ CREATE TABLE inventory (
     FOREIGN KEY (owneruuid) REFERENCES user(uuid)
 );
 
-CREATE TABLE inventoryItems (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    itemuuid TEXT NOT NULL,
-    inventoryuuid TEXT NOT NULL,
-    FOREIGN KEY(itemuuid) REFERENCES item(uuid),
-    FOREIGN KEY(inventoryuuid) REFERENCES inventory(uuid)
-);
-
 CREATE TABLE inventoryReaders (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     useruuid TEXT NOT NULL,
