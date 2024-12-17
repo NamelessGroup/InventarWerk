@@ -16,6 +16,7 @@
 classDiagram
     class Inventar {
         uuid: string
+        name: string
         owner: string
         money: number
         reader: string[]
