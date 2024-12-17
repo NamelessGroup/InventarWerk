@@ -83,3 +83,12 @@ time stamp of last changes in millis
 Get
 ### /account/isDm
 Get
+
+
+# Backend
+## Prerequisites
+install libsqlite3-dev
+```
+sudo apt update
+sudo apt install libsqlite3-dev
+```
