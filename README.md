@@ -96,3 +96,52 @@ sudo apt install libsqlite3-dev
 
 set `DATABASE_URL=` in .env in backend/
 change migrations path in diesel.toml in backend/
+
+## Database Structure
+```mermaid
+erDiagram
+    inventory {
+        text uuid PK
+        text owneruuid FK
+        integer money
+        text name
+    }
+    inventory 1+--1 user: "owned by/owns"
+    inventory 1--0+ item: "contains/contained by"
+    inventoryReadersList {
+        integer id PK
+        text useruuid FK
+        text inventoryuuid FK
+    }
+    inventoryReadersList 1+--1+ inventory: "reads/read by"
+    inventoryReadersList 1+--1+ user: "contains/contained by"
+    inventoryWritersList {
+        integer id PK
+        text useruuid FK
+        text inventoryuuid FK
+    }
+    inventoryWritersList 1+--1+ inventory: "writes/written by"
+    inventoryWritersList 1+--1+ user: "contains/contained by"
+    item {
+        text uuid PK
+        text name
+        text presetReference FK
+        integer amount
+        text dmnote
+    }
+    itempreset {
+        text uuid PK
+        text name
+        integer price
+        text text
+        text creator
+        text itemType
+        text inventoryuuid FK
+    }
+    itempreset 1--0+ item: "creates/created by"
+    user {
+        text uuid PK
+        text name
+        boolean dm
+    }
+```
