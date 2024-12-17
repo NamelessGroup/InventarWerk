@@ -28,6 +28,7 @@ classDiagram
         price: number
         text: string
         creator: string
+        type: string
     }
 
     class Item {
@@ -78,3 +79,7 @@ Delete
 ### /lastChanges
 Get
 time stamp of last changes in millis
+### /itemPreset/all
+Get
+### /account/isDm
+Get
