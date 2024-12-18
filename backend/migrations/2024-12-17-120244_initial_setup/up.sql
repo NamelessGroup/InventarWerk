@@ -27,7 +27,7 @@ CREATE TABLE item (
     uuid TEXT NOT NULL PRIMARY KEY,
     presetReference TEXT NOT NULL,
     amount INTEGER NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
     dmNote TEXT NOT NULL,
     inventoryuuid TEXT NOT NULL,
     FOREIGN KEY(presetReference) REFERENCES itempreset(uuid),
