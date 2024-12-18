@@ -27,7 +27,7 @@ classDiagram
         uuid: string
         name: string
         price: number
-        text: string
+        description: string
         creator: string
         itemType: string
     }
@@ -38,6 +38,7 @@ classDiagram
         presetReference: string
         amount: number
         dmNote: string
+        description: string
     }
 
     Inventar --> Item
@@ -125,8 +126,8 @@ erDiagram
     inventoryWritersList 1+--1+ user: "contains/contained by"
     item {
         text uuid PK
-        text name
         text presetReference FK
+        text description
         integer amount
         text dmnote
         text inventoryuuid FK
@@ -135,7 +136,7 @@ erDiagram
         text uuid PK
         text name
         integer price
-        text text
+        text description
         text creator
         text itemType
     }
