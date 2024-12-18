@@ -45,46 +45,53 @@ classDiagram
 ```
 
 ## Schnittstellen
-### /inventar/all
+### Inventar
+#### /inventar/all
 Get
-### /inventar?uuid=""
+#### /inventar?uuid=""
 Get
-### /itemPreset?uuid=""
-Get
-### /inventar?name=""
+#### /inventar?uuid="",name=""
 Put
-### /inventar/addPrest?presetUuid="",amount=""
+#### /inventar/addPreset?presetUuid="",amount=""
 Put
-### /inventar/addNew?name="",amount=""
+#### /inventar/addNew?name="",amount=""
 Put
-### /inventar/delete?uuid=""
-Delete
-### /inventar/money?amount=""
+
+#### /inventar/money?amount=""
 Patch
-### /inventar/modifyAmount?uuid="",amount=""
+#### /inventar/modifyAmount?uuid="",amount=""
 Patch
-### /inventar/share
+#### /inventar/share
 Patch
 machts public
-### /inventar/share?userid="",write=""
+#### /inventar/share?userid="",write=""
 Patch
-### /account/get
+#### /inventar/delete?uuid=""
+Delete
+### ItemPreset
+#### /itemPreset?uuid=""
 Get
-return all accounts
-### /note/add?uuid="",note=""
-Patch
-### /itemPreset/modify?uuid="",name="",price="",text=""
+#### /itemPreset/modify?uuid="",name="",price="",text=""
 Patch
 all optional
-### /itemPreset/delete?uuid=""
+#### /itemPreset/delete?uuid=""
 Delete
-### /lastChanges
+#### /itemPreset/all
+Get
+### Account
+#### /account/get
+Get
+return all accounts
+#### /account/isDm?uuid=""
+Get
+### Note
+#### /note/add?uuid="",note=""
+Patch
+### last Changes
+#### /lastChanges
 Get
 time stamp of last changes in millis
-### /itemPreset/all
-Get
-### /account/isDm
-Get
+
 
 
 # Backend

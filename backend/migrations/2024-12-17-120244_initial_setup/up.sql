@@ -8,28 +8,26 @@ CREATE TABLE inventory (
 );
 
 CREATE TABLE inventoryReaders (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     useruuid TEXT NOT NULL,
     inventoryuuid TEXT NOT NULL,
     FOREIGN KEY(useruuid) REFERENCES user(uuid),
     FOREIGN KEY(inventoryuuid) REFERENCES inventory(uuid),
-    UNIQUE(useruuid, inventoryuuid)
+    PRIMARY KEY(useruuid, inventoryuuid)
 );
 
 CREATE TABLE inventoryWriters (
-    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     useruuid TEXT NOT NULL,
     inventoryuuid TEXT NOT NULL,
     FOREIGN KEY(useruuid) REFERENCES user(uuid),
     FOREIGN KEY(inventoryuuid) REFERENCES inventory(uuid),
-    UNIQUE(useruuid, inventoryuuid)
+    PRIMARY KEY(useruuid, inventoryuuid)
 );
 
 CREATE TABLE item (
     uuid TEXT NOT NULL PRIMARY KEY,
-    name TEXT NOT NULL,
     presetReference TEXT NOT NULL,
     amount INTEGER NOT NULL,
+    description TEXT NOT NULL
     dmNote TEXT NOT NULL,
     inventoryuuid TEXT NOT NULL,
     FOREIGN KEY(presetReference) REFERENCES itempreset(uuid),
@@ -40,7 +38,7 @@ CREATE TABLE itempreset(
     uuid TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     price INTEGER NOT NULL,
-    text TEXT NOT NULL,
+    description TEXT NOT NULL,
     creator TEXT NOT NULL,
     itemType TEXT NOT Null
 );
