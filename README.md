@@ -48,26 +48,26 @@ classDiagram
 ### Inventar
 #### /inventar/all
 Get
-#### /inventar?uuid=""
+#### /inventar?inventory_uuid=""
 Get
-#### /inventar?uuid="",name=""
+#### /inventar?inventory_uuid="",name=""
 Put
-#### /inventar/addPreset?presetUuid="",amount=""
+#### /inventar/addPreset?inventory_uuid="",preset_uuid="",amount=""
 Put
 #### /inventar/addNew?name="",amount=""
 Put
-
 #### /inventar/money?amount=""
 Patch
-#### /inventar/modifyAmount?uuid="",amount=""
-Patch
-#### /inventar/share
+#### /inventar/share?uuid=""
 Patch
 machts public
-#### /inventar/share?userid="",write=""
+#### /inventar/share?uuid="",read="",write=""
 Patch
 #### /inventar/delete?uuid=""
 Delete
+### Item
+#### /item/modifyAmount?uuid="",amount=""
+Patch
 ### ItemPreset
 #### /itemPreset?uuid=""
 Get
