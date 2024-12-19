@@ -66,8 +66,9 @@ Patch
 #### /inventar/delete?uuid=""
 Delete
 ### Item
-#### /item/modifyAmount?uuid="",amount=""
+#### /item/edit?uuid="",name="",amount="",description=""
 Patch
+name, amount and description are optional
 ### ItemPreset
 #### /itemPreset?uuid=""
 Get
