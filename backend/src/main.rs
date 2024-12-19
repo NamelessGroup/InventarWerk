@@ -14,6 +14,7 @@ use dbmod::establish_connection;
 
 #[rocket::main]
 async fn main() {
+    dotenv().ok();
     let dbconn:DbPool = establish_connection();
 
     let invCont = InventoryController::new(dbconn);
