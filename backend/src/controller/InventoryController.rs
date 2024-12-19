@@ -1,12 +1,13 @@
 use diesel::prelude::SqliteConnection;
+use crate::dbmod::DbPool;
 
-
-pub struct ItemsController {
-    db_manager: SqliteConnection,
+#[derive(Clone)]
+pub struct InventoryController {
+    db: DbPool,
 }
 
-impl ItemsController {
-    pub fn new(db_manager: SqliteConnection) -> Self {
-        Self { db_manager }
+impl InventoryController {
+    pub fn new(db: DbPool) -> Self {
+        Self { db }
     }
 }
