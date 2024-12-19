@@ -1,5 +1,8 @@
 #[macro_use] extern crate rocket;
 
+mod routers;
+mod controller;
+
 use rocket::fs::{FileServer, relative};
 use diesel::prelude::*;
 use dotenvy::dotenv;
@@ -7,13 +10,12 @@ use std::env;
 
 
 
-mod router;
 
 #[rocket::main]
 async fn main() {
     rocket::build()
         .mount("/", FileServer::from(relative!("static")))
-        .mount("/", router::get_routes())
+        .mount("/", routers::get_routes())
         .launch().await;
 }
 
