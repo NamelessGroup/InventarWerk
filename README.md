@@ -78,6 +78,7 @@ all optional
 Delete
 #### /itemPreset/all
 Get
+Response: List of {name: string, itemType:string}
 ### Account
 #### /account/get
 Get
@@ -88,10 +89,10 @@ Get
 #### /note/add?uuid="",note=""
 Patch
 ### last Changes
-#### /lastChanges
+#### /lastChanges?timestamp=""
 Get
-time stamp of last changes in millis
-
+time stamp of last fetch in millis
+Response: List of uuids of inventories that recieved updates after the given time
 
 
 # Backend
