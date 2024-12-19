@@ -92,7 +92,7 @@ Patch
 #### /lastChanges?timestamp=""
 Get
 time stamp of last fetch in millis
-Response: List of uuids of inventories that recieved updates after the given time
+Response: {uuid: string, type: 'create'|'patch'|'delete'}[]
 
 
 # Backend
