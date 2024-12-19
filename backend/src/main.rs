@@ -8,7 +8,7 @@ use rocket::fs::{FileServer, relative};
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
-use controller::InventoryController::InventoryController;
+use controller::inventoryController::InventoryController;
 use dbmod::DbPool;
 use dbmod::establish_connection;
 
@@ -20,6 +20,6 @@ async fn main() {
     rocket::build()
         .manage(invCont)
         .mount("/", FileServer::from(relative!("static")))
-        .mount("/", routers::get_routes())
+        .mount("/", routers::get_inventory_routes())
         .launch().await;
 }

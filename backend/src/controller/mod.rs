@@ -1,1 +1,1 @@
-pub mod InventoryController;
+pub mod inventoryController;
