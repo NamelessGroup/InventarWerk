@@ -97,6 +97,14 @@ Response: {uuid: string, type: 'create'|'patch'|'delete'}[]
 
 
 # Backend
+##
+required fields in .enc in backend/
+```
+DATABASE_URL=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_REDIRECT_URI=
+```
 ## Prerequisites
 install libsqlite3-dev
 ```
