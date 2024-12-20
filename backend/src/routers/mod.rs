@@ -1,7 +1,7 @@
 use item_preset_router::{get_item_preset, modify_item_preset};
 use item_router::edit_item;
 use last_changes_router::last_changes;
-use rocket::{Build, Rocket, Route};
+use rocket::Route;
 
 pub mod account_router;
 pub mod inventory_router;
@@ -34,7 +34,7 @@ pub fn get_item_routes() -> Vec<Route> {
 }
 
 pub fn get_item_preset_routes() -> Vec<Route> {
-    routes![get_item_preset, modify_item_preset]
+    routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_preset]
 }
 
 pub fn get_note_routes() -> Vec<Route> {

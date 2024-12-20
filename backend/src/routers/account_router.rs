@@ -1,5 +1,5 @@
 use rocket::form::FromForm;
-use rocket::tokio::task::id;
+use rocket::response::Redirect;
 use std::env;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
@@ -45,14 +45,14 @@ pub async fn is_account_dm(params: AccountUUIDParams) -> &'static str {
 }
 
 #[get("/account/login")]
-pub async fn login() -> String {
+pub async fn login() -> Redirect {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let redirect_uri = env::var("DISCORD_REDIRECT_URI").expect("DISCORD_REDIRECT_URI not set");
     let url = format!(
         "https://discord.com/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
         client_id, redirect_uri
     );
-    format!("Login via Discord: <a href=\"{}\">Discord OAuth</a>", url)
+    Redirect::to(url)
 }
 
 #[get("/account/info")]

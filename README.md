@@ -127,16 +127,14 @@ erDiagram
     }
     inventory 1+--1 user: "owned by/owns"
     inventoryReadersList {
-        integer id PK
-        text useruuid FK
-        text inventoryuuid FK
+        text useruuid PK
+        text inventoryuuid PK
     }
     inventoryReadersList 1+--1+ inventory: "reads/read by"
     inventoryReadersList 1+--1+ user: "contains/contained by"
     inventoryWritersList {
-        integer id PK
-        text useruuid FK
-        text inventoryuuid FK
+        text useruuid PK
+        text inventoryuuid PK
     }
     inventoryWritersList 1+--1+ inventory: "writes/written by"
     inventoryWritersList 1+--1+ user: "contains/contained by"
