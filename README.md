@@ -118,7 +118,6 @@ erDiagram
         text name
     }
     inventory 1+--1 user: "owned by/owns"
-    inventory 1--0+ item: "contains/contained by"
     inventoryReadersList {
         integer id PK
         text useruuid FK
@@ -133,14 +132,7 @@ erDiagram
     }
     inventoryWritersList 1+--1+ inventory: "writes/written by"
     inventoryWritersList 1+--1+ user: "contains/contained by"
-    item {
-        text uuid PK
-        text presetReference FK
-        text description
-        integer amount
-        text dmnote
-        text inventoryuuid FK
-    }
+    
     itempreset {
         text uuid PK
         text name
@@ -149,10 +141,17 @@ erDiagram
         text creator
         text itemType
     }
-    itempreset 1--0+ item: "creates/created by"
     user {
         text uuid PK
         text name
         boolean dm
+    }
+    inventoryItemList 1+--1+ inventory: ""
+    inventoryItemList 1+--1+ itempreset: ""
+    inventoryItemList {
+        text inventoryUUID PK
+        text itempresetUUID PK
+        text dmNote
+        integer amount
     }
 ```
