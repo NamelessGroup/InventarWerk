@@ -119,27 +119,33 @@ change migrations path in diesel.toml in backend/
 ```mermaid
 
 erDiagram
-    inventory {
+    Inventory 1+--1 User: "owned by/owns"
+    
+    Inventory {
         text uuid PK
-        text owneruuid FK
+        text owner_uuid FK
         integer money
         text name
     }
-    inventory 1+--1 user: "owned by/owns"
-    inventoryReadersList {
-        text useruuid PK
-        text inventoryuuid PK
+
+    InventoryReader 1+--1+ Inventory: "reads/read by"
+    InventoryReader 1+--1+ User: "contains/contained by"
+
+    InventoryReader {
+        text user_uuid PK
+        text inventory_uuid PK
     }
-    inventoryReadersList 1+--1+ inventory: "reads/read by"
-    inventoryReadersList 1+--1+ user: "contains/contained by"
-    inventoryWritersList {
-        text useruuid PK
-        text inventoryuuid PK
-    }
-    inventoryWritersList 1+--1+ inventory: "writes/written by"
-    inventoryWritersList 1+--1+ user: "contains/contained by"
     
-    itempreset {
+    InventoryWriter 1+--1+ Inventory: "writes/written by"
+    InventoryWriter 1+--1+ User: "contains/contained by"
+
+    InventoryWriter {
+        text user_uuid PK
+        text inventory_uuid PK
+    }
+
+
+    ItemPreset {
         text uuid PK
         text name
         integer price
@@ -147,17 +153,17 @@ erDiagram
         text creator
         text itemType
     }
-    user {
+    User {
         text uuid PK
         text name
         boolean dm
     }
-    inventoryItemList 1+--1+ inventory: ""
-    inventoryItemList 1+--1+ itempreset: ""
-    inventoryItemList {
-        text inventoryUUID PK
-        text itempresetUUID PK
-        text dmNote
+    InventoryItemList 1+--1+ Inventory: ""
+    InventoryItemList 1+--1+ ItemPreset: ""
+    InventoryItemList {
+        text inventory_uuid PK
+        text itempreset_uuid PK
+        text dm_note
         integer amount
     }
 ```
