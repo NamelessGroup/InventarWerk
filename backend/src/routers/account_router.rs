@@ -1,5 +1,5 @@
 use rocket::form::FromForm;
-use rocket::response::{self, Redirect};
+use rocket::response::Redirect;
 use rocket::State;
 use std::env;
 use rocket::serde::{Deserialize, Serialize};
@@ -75,7 +75,7 @@ pub async fn login() -> Redirect {
 }
 
 #[get("/account/info")]
-pub async fn account_info(cookies: &CookieJar<'_>, user: super::AuthenticatedUser) -> String {
+pub async fn account_info(user: super::AuthenticatedUser) -> String {
     format!("{}", user.user_id)
 }
 
