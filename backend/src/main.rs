@@ -3,6 +3,8 @@
 mod routers;
 mod controller;
 mod dbmod;
+mod model;
+mod schema;
 
 use controller::account_controller::AccountController;
 use openssl::rand::rand_bytes;

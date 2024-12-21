@@ -119,33 +119,33 @@ change migrations path in diesel.toml in backend/
 ```mermaid
 
 erDiagram
-    Inventory 1+--1 User: "owned by/owns"
+    inventory 1+--1 user: "owned by/owns"
     
-    Inventory {
+    inventory {
         text uuid PK
         text owner_uuid FK
         integer money
         text name
     }
 
-    InventoryReader 1+--1+ Inventory: "reads/read by"
-    InventoryReader 1+--1+ User: "contains/contained by"
+    inventory_reader 1+--1+ inventory: "reads/read by"
+    inventory_reader 1+--1+ user: "contains/contained by"
 
-    InventoryReader {
+    inventory_reader {
         text user_uuid PK
         text inventory_uuid PK
     }
     
-    InventoryWriter 1+--1+ Inventory: "writes/written by"
-    InventoryWriter 1+--1+ User: "contains/contained by"
+    inventory_writer 1+--1+ inventory: "writes/written by"
+    inventory_writer 1+--1+ user: "contains/contained by"
 
-    InventoryWriter {
+    inventory_writer {
         text user_uuid PK
         text inventory_uuid PK
     }
 
 
-    ItemPreset {
+    item_preset {
         text uuid PK
         text name
         integer price
@@ -153,14 +153,14 @@ erDiagram
         text creator
         text itemType
     }
-    User {
+    user {
         text uuid PK
         text name
         boolean dm
     }
-    InventoryItemList 1+--1+ Inventory: ""
-    InventoryItemList 1+--1+ ItemPreset: ""
-    InventoryItemList {
+    inventory_item 1+--1+ inventory: ""
+    inventory_item 1+--1+ item_preset: ""
+    inventory_item {
         text inventory_uuid PK
         text itempreset_uuid PK
         text dm_note

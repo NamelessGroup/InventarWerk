@@ -1,8 +1,8 @@
 -- This file should undo anything in `up.sql`
 
-DROP TABLE Inventory;
-DROP TABLE InventoryReader;
-DROP TABLE InventoryWriter;
-DROP TABLE ItemPreset;
-DROP TABLE User;
-DROP TABLE InventoryItem;
+DROP TABLE inventory;
+DROP TABLE inventory_reader;
+DROP TABLE inventory_writer;
+DROP TABLE item_preset;
+DROP TABLE user;
+DROP TABLE inventory_item;
