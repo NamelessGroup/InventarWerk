@@ -45,6 +45,7 @@ classDiagram
 ```
 
 ## Schnittstellen
+Any Endpoint other than `/account/login` or `/account/oauth/callback` requires authentication through `/account/login`
 ### Inventar
 #### /inventar/all
 Get
