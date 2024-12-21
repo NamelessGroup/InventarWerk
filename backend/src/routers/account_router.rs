@@ -1,10 +1,14 @@
 use rocket::form::FromForm;
-use rocket::response::Redirect;
+use rocket::response::{self, Redirect};
+use rocket::State;
 use std::env;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
 use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
+
+use crate::controller::account_controller::AccountController;
+use crate::schema::user;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenResponse {
@@ -62,7 +66,7 @@ pub async fn account_info(cookies: &CookieJar<'_>) -> String {
 }
 
 #[get("/account/oauth/callback?<params..>")]
-pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>) -> Result<Json<DiscordUser>, Status> {
+pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>) -> Result<Json<DiscordUser>, Status> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");
     let redirect_uri = env::var("DISCORD_REDIRECT_URI").expect("DISCORD_REDIRECT_URI not set");
@@ -98,7 +102,27 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>) -> Result<Jso
         .json::<DiscordUser>()
         .await
         .map_err(|_| Status::InternalServerError)?;
+    
+    // revoke refresh token
+    let revoke_url = "https://discord.com/api/oauth2/token/revoke";
+    let params = [
+        ("client_id", client_id.as_str()),
+        ("client_secret", client_secret.as_str()),
+        ("token", token_response.refresh_token.as_str()),
+        ("token_type_hint", "access_token")
+    ];
 
+    let _response = client 
+        .post(revoke_url)
+        .form(&params)
+        .send()
+        .await
+        .map_err(|_| Status::InternalServerError)?;
+
+
+    if !acc_con.has_user(user_response.id.clone()) {
+        acc_con.add_user(user_response.id.clone(), user_response.username.clone());
+    }
     // Speichern eines Cookies als Beispiel
     cookies.add_private(Cookie::new("user_id", user_response.id.clone()));
 
