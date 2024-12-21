@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::schema::{inventory, inventory_reader, inventory_writer, item_preset, user, inventory_item};
 
-#[derive(Queryable, Identifiable, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = user)]
 #[diesel(primary_key(uuid))]
 pub struct User {
@@ -12,7 +12,7 @@ pub struct User {
     pub dm: i32,
 }
 
-#[derive(Queryable, Identifiable, Associations, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
 #[diesel(belongs_to(User, foreign_key=owner_uuid))]
 #[diesel(table_name = inventory)]
 #[diesel(primary_key(uuid))]
@@ -23,7 +23,7 @@ pub struct Inventory {
     pub name: String,
 }
 
-#[derive(Queryable, Identifiable, Associations, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
 #[diesel(belongs_to(User, foreign_key=user_uuid))]
 #[diesel(belongs_to(Inventory, foreign_key=inventory_uuid))]
 #[diesel(table_name = inventory_reader)]
@@ -33,7 +33,7 @@ pub struct InventoryReader {
     pub inventory_uuid: String,
 }
 
-#[derive(Queryable, Identifiable, Associations, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
 #[diesel(belongs_to(User, foreign_key=user_uuid))]
 #[diesel(belongs_to(Inventory, foreign_key=inventory_uuid))]
 #[diesel(table_name = inventory_writer)]
@@ -43,7 +43,7 @@ pub struct InventoryWriter {
     pub inventory_uuid: String,
 }
 
-#[derive(Queryable, Identifiable, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable, Insertable, Serialize, Deserialize)]
 #[diesel(table_name = item_preset)]
 #[diesel(primary_key(uuid))]
 pub struct ItemPreset {
@@ -55,7 +55,7 @@ pub struct ItemPreset {
     pub item_type: String,
 }
 
-#[derive(Queryable, Identifiable, Associations, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
 #[diesel(belongs_to(Inventory, foreign_key=inventory_uuid))]
 #[diesel(belongs_to(ItemPreset, foreign_key=item_preset_uuid))]
 #[diesel(table_name = inventory_item)]
