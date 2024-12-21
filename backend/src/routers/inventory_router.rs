@@ -1,4 +1,24 @@
-use rocket::form::{FromForm};
+use rocket::{form::FromForm, serde::json::Json, State};
+use serde::{Deserialize, Serialize};
+
+use crate::controller::inventory_controller::InventoryController;
+
+
+
+#[derive(Serialize, Deserialize)]
+pub struct InventoryReturn {
+    uuid: String,
+    name: String,
+    owner: String,
+    money: i32,
+    reader: Vec<String>,
+    writer: Vec<String>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GetAllInventoriesReturn{
+    inventories: Vec<InventoryReturn>
+}
 
 #[derive(FromForm)]
 pub struct InventoryUUIDParams {
@@ -38,9 +58,23 @@ pub struct InventoryShareParams {
 }
 
 #[get("/inventar/all")]
-pub async fn get_all_inventories(user: super::AuthenticatedUser) -> &'static str {
-    // return all inventories
-    "Hello, Rocket with async!"
+pub async fn get_all_inventories(user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Json<GetAllInventoriesReturn> {
+    let inv = inv_con.get_all_inventories(user.user_id);
+    let mut inv_ret = GetAllInventoriesReturn {
+        inventories: Vec::new()
+    };
+    for i in inv.iter() {
+        inv_ret.inventories.push(InventoryReturn{
+            uuid: i.uuid.clone(),
+            name: i.name.clone(),
+            owner: i.owner_uuid.clone(),
+            money: i.money,
+            reader: inv_con.get_readers_for_inventory(i.uuid.clone()),
+            writer: inv_con.get_writers_for_inventories(i.uuid.clone())
+        });
+    }
+    Json(inv_ret)
+
 }
 
 #[get("/inventar?<params..>")]
