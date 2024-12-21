@@ -8,7 +8,6 @@ use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
 
 use crate::controller::account_controller::AccountController;
-use crate::schema::user;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenResponse {
@@ -36,7 +35,7 @@ pub struct AccountUUIDParams {
     itempreset_uuid: String
 }
 
-#[get("/account")]
+#[get("/account/get")]
 pub async fn get_accounts() -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
@@ -102,7 +101,7 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         .json::<DiscordUser>()
         .await
         .map_err(|_| Status::InternalServerError)?;
-    
+
     // revoke refresh token
     let revoke_url = "https://discord.com/api/oauth2/token/revoke";
     let params = [

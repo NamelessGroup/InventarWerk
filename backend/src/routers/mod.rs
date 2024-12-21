@@ -7,13 +7,11 @@ pub mod account_router;
 pub mod inventory_router;
 pub mod item_preset_router;
 pub mod item_router;
-pub mod note_router;
 pub mod last_changes_router;
 use inventory_router::*;
 use account_router::*;
 use item_preset_router::*;
 use item_router::*;
-use note_router::*;
 use last_changes_router::*;
 
 pub fn get_inventory_routes() -> Vec<Route> {

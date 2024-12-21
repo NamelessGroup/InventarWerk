@@ -48,47 +48,162 @@ classDiagram
 ### Inventar
 #### /inventar/all
 Get
+Returns all inventories from the logged in user
+Response:
+```json
+{
+    "inventories": [
+        {
+            "uuid": "some uuid",
+            "name": "some name",
+            "owner": "some owner uuid",
+            "money": 69,
+            "reader": ["some uuid", "some uuid", "..."],
+            "writer": ["some uuid", "..."]
+
+        }//, ...
+    ]
+}
+```
 #### /inventar?inventory_uuid=""
 Get
-#### /inventar?inventory_uuid="",name=""
+Returns the inventory with the given uuid
+Response:
+```json
+{
+    "uuid": "the requested uuid",
+    "name": "some name",
+    "owner": "some owner uuid",
+    "money": 42,
+    "reader": ["some uuid", "some uuid", "..."],
+    "writer": ["some uuid", "..."]
+
+}
+```
+#### /inventar?name=""
 Put
+Creates a new inventory
+Response:
+```json
+{
+    "uuid": "a new uuid",
+    "name": "name from the request",
+    "owner": "the uuid of the logged in user",
+    "money": 0,
+    "reader": ["the uuid of the logged in user"],
+    "writer": ["the uuid of the logged in user"]
+
+}
+```
 #### /inventar/addPreset?inventory_uuid="",preset_uuid="",amount=""
 Put
-#### /inventar/addNew?name="",amount=""
+Adds an new item to the inventory (dont increase fom 0->1 or 3->4)
+Response:
+201
+#### /inventar/addNew?inventory_uuid="",name="",amount=""
 Put
-#### /inventar/money?amount=""
+Creates an itempreset with the given name and adds it to the inventory, returns the item class from frontend
+Response:
+```json
+{
+    "name": "the given name",
+    "presetReference": "the uuid of the item preset",
+    "amount": 0, // the given amount
+    "dmNote": "",
+    "description": ""
+
+}
+```
+#### /inventar/money?inventory_uuid="",amount=""
 Patch
-#### /inventar/share?uuid=""
+Edits the Amount of Money in an Inventory
+Response: 204
+#### /inventar/share?uuid="",reader_uuid="",writer_uuid=""
 Patch
-machts public
-#### /inventar/share?uuid="",read="",write=""
-Patch
+Makes an inventory visible to other members of the site
+reader_uuid and writer_uuid contains the uuid of the members that shoud get read/write access to the inventory
+reader_uuid and writer_uuid are optional, if they both dont exists, all members get read acces to the inventory
+Response:204
 #### /inventar/delete?uuid=""
 Delete
+deletes an inventory
+Response: 204
 ### Item
-#### /item/edit?uuid="",name="",amount="",description=""
+#### /item/edit?inventory_uuid="",item_preset_uuid="",amount=""
 Patch
-name, amount and description are optional
+changes the amount of an itemPreset in an inventory
+Response: 204
+#### /item/addNote?inventory_uuid="",item_preset_uuid="",note=""
+Patch
+Adds an dm note to an item
+REQUIRES AN DM ACCOUNT
+Response:201
 ### ItemPreset
-#### /itemPreset?uuid=""
+#### /itemPreset?item_preset_uuid=""
 Get
-#### /itemPreset/modify?uuid="",name="",price="",text=""
+returns the item preset with the given uuid
+Response: 
+```json
+{
+    "uuid": "owner uuid",
+    "name": "item preset name",
+    "price": 0,
+    "description": "a description",
+    "creator": "creator uuid",
+    "itemType": "item type"
+}
+```
+#### /itemPreset/modify?item_preset_uuid="",name="",price="",description="",item_type=""
 Patch
-all optional
-#### /itemPreset/delete?uuid=""
+all optional expect item_preset_uuid
+Response: 204
+#### /itemPreset/delete?item_preset_uuid=""
 Delete
+Deletes an itemPreset
+Response: 204
 #### /itemPreset/all
 Get
-Response: List of {name: string, itemType:string}
+Returns all itemPreset reduced
+Response:
+```json
+{
+    "item_presets": [{
+        "name":"name",
+        "itemType":"type"
+    }//,...
+    ]
+}
+```
 ### Account
 #### /account/get
 Get
-return all accounts
+returns all accounts
+Response:
+```json
+{
+    "accounts": [
+        {
+            "name":"name",
+            "uuid":"uuid"
+        }//,...
+    ]
+}
+```
 #### /account/isDm?uuid=""
 Get
-### Note
-#### /note/add?uuid="",note=""
-Patch
+Returns if the account is dm
+Response:
+```json
+{
+    "isDm":true // or false
+}
+```
+#### /account/login
+redirects to the discord login page
+#### /account/oauth/callback
+handles the redirect from the oauth
+#### /account/info
+debug page, displays the account id
 ### last Changes
 #### /lastChanges?timestamp=""
 Get
@@ -151,7 +266,7 @@ erDiagram
         integer price
         text description
         text creator
-        text itemType
+        text item_type
     }
     user {
         text uuid PK

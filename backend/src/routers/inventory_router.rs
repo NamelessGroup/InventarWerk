@@ -26,6 +26,7 @@ pub struct InventoryAddItemByPresetParams {
 
 #[derive(Debug, FromForm)]
 pub struct InventoryModifyMoneyParams {
+    inventory_uuid:String,
     amount: i32
 }
 

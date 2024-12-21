@@ -3,15 +3,16 @@ use rocket::form::FromForm;
 
 #[derive(FromForm)]
 pub struct ItemPresetUUIDParams {
-    itempreset_uuid: String
+    item_preset_uuid: String
 }
 
 #[derive(FromForm)]
 pub struct ItemModifyParams {
-    itempreset_uuid: String,
-    name: String,
-    amount: i32,
-    description: String
+    item_preset_uuid: String,
+    name: Option<String>,
+    price:Option<i32>,
+    description: Option<String>,
+    item_type: Option<String>
 }
 
 #[get("/itemPreset?<params..>")]
