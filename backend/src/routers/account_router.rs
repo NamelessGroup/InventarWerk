@@ -8,6 +8,17 @@ use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
 
 use crate::controller::account_controller::AccountController;
+use crate::model::User;
+
+
+#[derive(Serialize, Deserialize)]
+pub struct DMResponse {
+    is_dm: bool
+}
+#[derive(Serialize, Deserialize)]
+pub struct AccountResponse {
+    accounts: Vec<User>
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenResponse {
@@ -32,19 +43,24 @@ pub struct CodeParams {
 
 #[derive(FromForm)]
 pub struct AccountUUIDParams {
-    itempreset_uuid: String
+    account_uuid: String
 }
 
 #[get("/account/get")]
-pub async fn get_accounts(_user: super::AuthenticatedUser) -> &'static str {
-    // return all inventories
-    "Hello, Rocket with async!"
+pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>) -> Json<AccountResponse> {
+    Json(
+        AccountResponse {
+            accounts: acc_con.get_all_users()
+        }
+    )
 }
 
 #[get("/account/isDm?<params..>")]
-pub async fn is_account_dm(params: AccountUUIDParams,  user: super::AuthenticatedUser) -> &'static str {
-    // return all inventories
-    "Hello, Rocket with async!"
+pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, acc_con: &State<AccountController>)
+ -> Json<DMResponse> {
+    Json(DMResponse {
+        is_dm: acc_con.user_is_dm(params.account_uuid)
+    })
 }
 
 #[get("/account/login")]

@@ -44,4 +44,16 @@ impl AccountController {
         diesel::select(exists(user.filter(uuid.eq(id)))).get_result(&mut self.get_conn())
             .expect("Error checking User")
     }
+
+    fn get_account(&self, id: String) -> User {
+        user.find(id).get_result(&mut self.get_conn()).expect("user could not be queried")
+    }
+
+    pub fn user_is_dm(&self, id: String) -> bool {
+        self.get_account(id).dm == 1
+    }
+
+    pub fn get_all_users(&self) -> Vec<User> {
+        user.load::<User>(&mut self.get_conn()).expect("Couldn't load any User")
+    }
 }
