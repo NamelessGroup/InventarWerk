@@ -59,9 +59,8 @@ pub async fn login() -> Redirect {
 }
 
 #[get("/account/info")]
-pub async fn account_info(cookies: &CookieJar<'_>) -> String {
-    let id = cookies.get_private("user_id").map(|cookie| cookie.value().to_string()).unwrap_or("default".to_string());
-    format!("{}", id)
+pub async fn account_info(cookies: &CookieJar<'_>, user: super::AuthenticatedUser) -> String {
+    format!("{}", user.user_id)
 }
 
 #[get("/account/oauth/callback?<params..>")]

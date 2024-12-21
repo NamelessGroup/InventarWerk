@@ -1,7 +1,10 @@
 use item_preset_router::{get_item_preset, modify_item_preset};
 use item_router::edit_item;
 use last_changes_router::last_changes;
-use rocket::Route;
+use rocket::request::Outcome;
+use rocket::{request::FromRequest, Route};
+use rocket::Request;
+use rocket::http::Status;
 
 pub mod account_router;
 pub mod inventory_router;
@@ -37,4 +40,23 @@ pub fn get_item_preset_routes() -> Vec<Route> {
 
 pub fn get_note_routes() -> Vec<Route> {
     routes![add_note_to_item]
+}
+
+pub struct AuthenticatedUser {
+    pub user_id: String
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AuthenticatedUser {
+    type Error = ();
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let cookies = request.cookies();
+
+        if let Some(cookie) = cookies.get_private("user_id") {
+            let user_id = cookie.value().to_string();
+            Outcome::Success(AuthenticatedUser {user_id})
+        } else {
+            Outcome::Error((Status::Unauthorized, ()))
+        }
+    }
 }
