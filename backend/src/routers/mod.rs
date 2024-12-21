@@ -35,7 +35,7 @@ pub fn get_item_routes() -> Vec<Route> {
 }
 
 pub fn get_item_preset_routes() -> Vec<Route> {
-    routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_preset]
+    routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_presets]
 }
 
 pub fn get_note_routes() -> Vec<Route> {

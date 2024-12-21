@@ -15,13 +15,13 @@ pub struct NoteAddParams {
 }
 
 #[patch("/item/edit?<params..>")]
-pub async fn edit_item(params: ItemEditParams) -> &'static str {
+pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }
 
 #[get("/item/addNote?<params..>")]
-pub async fn add_note_to_item(params: NoteAddParams) -> &'static str {
+pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }

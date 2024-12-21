@@ -36,13 +36,13 @@ pub struct AccountUUIDParams {
 }
 
 #[get("/account/get")]
-pub async fn get_accounts() -> &'static str {
+pub async fn get_accounts(_user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }
 
 #[get("/account/isDm?<params..>")]
-pub async fn is_account_dm(params: AccountUUIDParams) -> &'static str {
+pub async fn is_account_dm(params: AccountUUIDParams,  user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }

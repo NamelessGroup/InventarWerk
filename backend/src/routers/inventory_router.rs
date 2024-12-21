@@ -38,49 +38,49 @@ pub struct InventoryShareParams {
 }
 
 #[get("/inventar/all")]
-pub async fn get_all_inventories() -> &'static str {
+pub async fn get_all_inventories(user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }
 
 #[get("/inventar?<params..>")]
-pub async fn get_specific_inventory(params: InventoryUUIDParams) -> String {
+pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser) -> String {
     // return specific inventory
     format!("Hello, Rocket with async! {}", params.inventory_uuid)
 }
 
 #[put("/inventar?<params..>")]
-pub async fn create_inventory(params: InventoryCreateParams) -> &'static str {
+pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser) -> &'static str {
     // create New Inventory
     "Hello, Rocket with async!"
 }
 
 #[put("/inventar/addPreset?<params..>")]
-pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams) -> &'static str {
+pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser) -> &'static str {
     // add Preset to Inventory
     "Hello, Rocket with async!"
 }
 
 #[put("/inventar/addNew?<params..>")]
-pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams) -> &'static str {
+pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser) -> &'static str {
     // add Item to Inventory
     "Hello, Rocket with async!"
 }
 
 #[patch("/inventar/money?<params..>")]
-pub async fn modify_money(params: InventoryModifyMoneyParams) -> &'static str {
+pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }
 
 #[patch("/inventar/share?<params..>")]
-pub async fn share_inventory(params: InventoryShareParams) -> &'static str {
+pub async fn share_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser) -> &'static str {
     // share Inventory
     "Hello, Rocket with async!"
 }
 
 #[delete("/inventar/delete?<params..>")]
-pub async fn delete_inventory(params:InventoryUUIDParams) -> &'static str {
+pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser) -> &'static str {
     // delete Inventory
     "Hello, Rocket with async!"
 }

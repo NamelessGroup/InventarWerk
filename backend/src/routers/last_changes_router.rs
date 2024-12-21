@@ -6,7 +6,7 @@ pub struct LastChangesParams {
 }
 
 #[get("/lastChanges?<params..>")]
-pub async fn last_changes(params: LastChangesParams) -> &'static str {
+pub async fn last_changes(params: LastChangesParams, user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }
