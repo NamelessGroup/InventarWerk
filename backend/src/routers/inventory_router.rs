@@ -78,7 +78,7 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser, inv_con: &State
 }
 
 #[get("/inventar?<params..>")]
-pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser) -> String {
+pub async fn get_specific_inventory(params: InventoryUUIDParams,  _user: super::AuthenticatedUser) -> String {
     // return specific inventory
     format!("Hello, Rocket with async! {}", params.inventory_uuid)
 }
