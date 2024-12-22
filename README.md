@@ -34,7 +34,6 @@ classDiagram
 
     class Item {
         name: string
-        uuid: string
         presetReference: string
         amount: number
         dmNote: string
@@ -59,6 +58,9 @@ Response:
             "name": "some name",
             "owner": "some owner uuid",
             "money": 69,
+            "items": [
+                // ...
+            ],
             "reader": ["some uuid", "some uuid", "..."],
             "writer": ["some uuid", "..."]
 
@@ -98,7 +100,7 @@ Response:
 ```
 #### /inventar/addPreset?inventory_uuid="",preset_uuid="",amount=""
 Put
-Adds an new item to the inventory (dont increase fom 0->1 or 3->4)
+Adds an new item to the inventory (dont increase amount fom 0->1 or 3->4)
 Response:
 201
 #### /inventar/addNew?inventory_uuid="",name="",amount=""
@@ -115,6 +117,10 @@ Response:
 
 }
 ```
+#### /inventar/removeItem?innventory_uuid="",item_preset_uuid=""
+Delete
+Deletes the given item preset from the given iventory
+Response: 204
 #### /inventar/money?inventory_uuid="",amount=""
 Patch
 Edits the Amount of Money in an Inventory

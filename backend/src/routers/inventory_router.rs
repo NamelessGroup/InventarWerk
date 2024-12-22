@@ -1,9 +1,16 @@
 use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 
-use crate::controller::inventory_controller::InventoryController;
+use crate::controller::{account_controller::AccountController, inventory_controller::InventoryController};
 
-
+#[derive(Serialize, Deserialize)]
+pub struct Item {
+    name: String,
+    presetReference: String,
+    amount: i32,
+    dmNote: String,
+    description: String
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct InventoryReturn {
@@ -11,6 +18,7 @@ pub struct InventoryReturn {
     name: String,
     owner: String,
     money: i32,
+    items: Vec<Item>,
     reader: Vec<String>,
     writer: Vec<String>
 }
@@ -58,20 +66,36 @@ pub struct InventoryShareParams {
 }
 
 #[get("/inventar/all")]
-pub async fn get_all_inventories(user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Json<GetAllInventoriesReturn> {
-    let inv = inv_con.get_all_inventories(user.user_id);
+pub async fn get_all_inventories(user: super::AuthenticatedUser,
+        inv_con: &State<InventoryController>,
+        acc_conn: &State<AccountController>) -> Json<GetAllInventoriesReturn> {
+    let inv = inv_con.get_all_inventories(user.user_id.clone());
     let mut inv_ret = GetAllInventoriesReturn {
         inventories: Vec::new()
     };
+    let user_is_dm = acc_conn.user_is_dm(user.user_id.clone());
     for i in inv.iter() {
-        inv_ret.inventories.push(InventoryReturn{
+        let mut specific_inventory = InventoryReturn{
             uuid: i.uuid.clone(),
             name: i.name.clone(),
             owner: i.owner_uuid.clone(),
             money: i.money,
+            items: Vec::new(),
             reader: inv_con.get_readers_for_inventory(i.uuid.clone()),
             writer: inv_con.get_writers_for_inventories(i.uuid.clone())
-        });
+        };
+        let items = inv_con.get_items_in_inventory(i.uuid.clone());
+        for item in items.iter() {
+            let preset = inv_con.get_item_preset(item.0.clone());
+            specific_inventory.items.push(Item {
+                name: preset.name.clone(),
+                presetReference: item.0.clone(),
+                amount: item.1,
+                dmNote: if user_is_dm {inv_con.get_dm_note(specific_inventory.uuid.clone(), item.0.clone())} else {"".to_string()},
+                description: preset.description.clone()
+            });
+        }
+        inv_ret.inventories.push(specific_inventory);
     }
     Json(inv_ret)
 
@@ -97,6 +121,11 @@ pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  us
 
 #[put("/inventar/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser) -> &'static str {
+    // add Item to Inventory
+    "Hello, Rocket with async!"
+}
+
+pub async fn delete_item_from_inventory() -> &'static str {
     // add Item to Inventory
     "Hello, Rocket with async!"
 }
