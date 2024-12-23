@@ -1,9 +1,12 @@
+use rocket::http::Status;
 use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 
 use crate::controller::{account_controller::AccountController, inventory_controller::InventoryController};
 use crate::frontend_model::{InventoryReturn, Item};
 
+
+use rocket::response::status::{self, Custom};
 
 #[derive(Serialize, Deserialize)]
 pub struct GetAllInventoriesReturn{
@@ -69,11 +72,17 @@ pub struct InventoryShareParams {
 
 #[get("/inventar/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>) -> Json<GetAllInventoriesReturn> {
+        inv_con: &State<InventoryController>) -> Result<Json<GetAllInventoriesReturn>, Custom<&'static str>>  {
     
-    Json(GetAllInventoriesReturn {
-        inventories: inv_con.get_inventories_parsed(user.user_id)
-    })
+    Ok(Json(GetAllInventoriesReturn {
+        inventories: match inv_con.get_inventories_parsed(user.user_id) {
+            Ok(res) => res,
+            Err(e) => return  Err(Custom(
+                Status::InternalServerError,
+                e
+            ))
+        }
+    }))
 
 }
 

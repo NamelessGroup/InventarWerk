@@ -6,6 +6,7 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
 use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
+use rocket::response::status::Custom;
 
 use crate::controller::account_controller::AccountController;
 use crate::model::User;
@@ -48,7 +49,7 @@ pub struct AccountUUIDParams {
 
 #[get("/account/get")]
 pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<AccountResponse>, status::Custom<&'static str>> {
+ -> Result<Json<AccountResponse>, Custom<&'static str>> {
     match acc_con.get_all_users() {
         Err(e) => Err(status::Custom(
             Status::NotFound,
@@ -66,7 +67,7 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<Accou
 
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<DMResponse>, status::Custom<&'static str>> {
+ -> Result<Json<DMResponse>, Custom<&'static str>> {
     match acc_con.user_is_dm(params.account_uuid) {
         Ok(res) => Ok(Json(DMResponse {
             is_dm: res
