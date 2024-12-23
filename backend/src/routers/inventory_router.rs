@@ -11,6 +11,26 @@ pub struct GetAllInventoriesReturn{
 }
 
 #[derive(FromForm)]
+pub struct ItemDeleteParams {
+    inventory_uuid: String,
+    item_preset_uuid: String
+}
+
+#[derive(FromForm)]
+pub struct ItemEditParams {
+    inventory_uuid: String,
+    item_preset_uuid: String,
+    amount: i32
+}
+
+#[derive(FromForm)]
+pub struct NoteAddParams {
+    item_preset_uuid: String,
+    inventory_uuid: String,
+    note: String
+}
+
+#[derive(FromForm)]
 pub struct InventoryUUIDParams {
     inventory_uuid: String
 }
@@ -57,48 +77,61 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 
 }
 
-#[get("/inventar?<params..>")]
+#[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  _user: super::AuthenticatedUser) -> String {
     // return specific inventory
     format!("Hello, Rocket with async! {}", params.inventory_uuid)
 }
 
-#[put("/inventar?<params..>")]
+#[put("/inventory?<params..>")]
 pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser) -> &'static str {
     // create New Inventory
     "Hello, Rocket with async!"
 }
 
-#[put("/inventar/addPreset?<params..>")]
+#[put("/inventory/item/addPreset?<params..>")]
 pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser) -> &'static str {
     // add Preset to Inventory
     "Hello, Rocket with async!"
 }
 
-#[put("/inventar/addNew?<params..>")]
+#[put("/inventory/item/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser) -> &'static str {
     // add Item to Inventory
     "Hello, Rocket with async!"
 }
 
-pub async fn delete_item_from_inventory() -> &'static str {
+#[patch("/inventory/item/edit?<params..>")]
+pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser) -> &'static str {
+    // return all inventories
+    "Hello, Rocket with async!"
+}
+
+#[get("/inventory/item/addNote?<params..>")]
+pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser) -> &'static str {
+    // return all inventories
+    "Hello, Rocket with async!"
+}
+
+#[get("/inventory/item/remove?<params..>")]
+pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser) -> &'static str {
     // add Item to Inventory
     "Hello, Rocket with async!"
 }
 
-#[patch("/inventar/money?<params..>")]
+#[patch("/inventory/money?<params..>")]
 pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser) -> &'static str {
     // return all inventories
     "Hello, Rocket with async!"
 }
 
-#[patch("/inventar/share?<params..>")]
+#[patch("/inventory/share?<params..>")]
 pub async fn share_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser) -> &'static str {
     // share Inventory
     "Hello, Rocket with async!"
 }
 
-#[delete("/inventar/delete?<params..>")]
+#[delete("/inventory/delete?<params..>")]
 pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser) -> &'static str {
     // delete Inventory
     "Hello, Rocket with async!"

@@ -1,6 +1,3 @@
-use item_preset_router::{get_item_preset, modify_item_preset};
-use item_router::edit_item;
-use last_changes_router::last_changes;
 use rocket::request::Outcome;
 use rocket::{request::FromRequest, Route};
 use rocket::Request;
@@ -9,17 +6,15 @@ use rocket::http::Status;
 pub mod account_router;
 pub mod inventory_router;
 pub mod item_preset_router;
-pub mod item_router;
 pub mod last_changes_router;
 use inventory_router::*;
 use account_router::*;
 use item_preset_router::*;
-use item_router::*;
 use last_changes_router::*;
 
 pub fn get_inventory_routes() -> Vec<Route> {
     routes![get_all_inventories, get_specific_inventory, create_inventory, add_preset_to_inventory, add_new_item_to_inventory,
-        modify_money, share_inventory, delete_inventory]
+        modify_money, share_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
 }
 
 pub fn get_account_routes() -> Vec<Route> {
@@ -28,10 +23,6 @@ pub fn get_account_routes() -> Vec<Route> {
 
 pub fn get_last_changes_routes() -> Vec<Route> {
     routes![last_changes]
-}
-
-pub fn get_item_routes() -> Vec<Route> {
-    routes![edit_item]
 }
 
 pub fn get_item_preset_routes() -> Vec<Route> {

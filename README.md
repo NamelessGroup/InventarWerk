@@ -46,7 +46,7 @@ classDiagram
 ## Schnittstellen
 Any Endpoint other than `/account/login` or `/account/oauth/callback` requires authentication through `/account/login`
 ### Inventar
-#### /inventar/all
+#### /inventory/all
 Get
 Returns all inventories from the logged in user
 Response:
@@ -68,7 +68,7 @@ Response:
     ]
 }
 ```
-#### /inventar?inventory_uuid=""
+#### /inventory?inventory_uuid=""
 Get
 Returns the inventory with the given uuid
 Response:
@@ -83,7 +83,7 @@ Response:
 
 }
 ```
-#### /inventar?name=""
+#### /inventory?name=""
 Put
 Creates a new inventory
 Response:
@@ -98,12 +98,12 @@ Response:
 
 }
 ```
-#### /inventar/addPreset?inventory_uuid="",preset_uuid="",amount=""
+#### /inventory/item/addPreset?inventory_uuid="",preset_uuid="",amount=""
 Put
 Adds an new item to the inventory (dont increase amount fom 0->1 or 3->4)
 Response:
 201
-#### /inventar/addNew?inventory_uuid="",name="",amount=""
+#### /inventory/item/addNew?inventory_uuid="",name="",amount=""
 Put
 Creates an itempreset with the given name and adds it to the inventory, returns the item class from frontend
 Response:
@@ -117,34 +117,33 @@ Response:
 
 }
 ```
-#### /inventar/removeItem?innventory_uuid="",item_preset_uuid=""
+#### /inventory/item/edit?inventory_uuid="",item_preset_uuid="",amount=""
+Patch
+changes the amount of an itemPreset in an inventory
+Response: 204
+#### /inventory/item/addNote?inventory_uuid="",item_preset_uuid="",note=""
+Patch
+Adds an dm note to an item
+REQUIRES AN DM ACCOUNT
+Response:201
+#### /inventory/item/remove?innventory_uuid="",item_preset_uuid=""
 Delete
 Deletes the given item preset from the given iventory
 Response: 204
-#### /inventar/money?inventory_uuid="",amount=""
+#### /inventory/money?inventory_uuid="",amount=""
 Patch
 Edits the Amount of Money in an Inventory
 Response: 204
-#### /inventar/share?uuid="",reader_uuid="",writer_uuid=""
+#### /inventory/share?uuid="",reader_uuid="",writer_uuid=""
 Patch
 Makes an inventory visible to other members of the site
 reader_uuid and writer_uuid contains the uuid of the members that shoud get read/write access to the inventory
 reader_uuid and writer_uuid are optional, if they both dont exists, all members get read acces to the inventory
 Response:204
-#### /inventar/delete?uuid=""
+#### /inventory/delete?uuid=""
 Delete
 deletes an inventory
 Response: 204
-### Item
-#### /item/edit?inventory_uuid="",item_preset_uuid="",amount=""
-Patch
-changes the amount of an itemPreset in an inventory
-Response: 204
-#### /item/addNote?inventory_uuid="",item_preset_uuid="",note=""
-Patch
-Adds an dm note to an item
-REQUIRES AN DM ACCOUNT
-Response:201
 ### ItemPreset
 #### /itemPreset?item_preset_uuid=""
 Get
