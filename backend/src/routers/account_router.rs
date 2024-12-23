@@ -1,5 +1,5 @@
 use rocket::form::FromForm;
-use rocket::response::Redirect;
+use rocket::response::{status, Redirect};
 use rocket::State;
 use std::env;
 use rocket::serde::{Deserialize, Serialize};
@@ -47,20 +47,36 @@ pub struct AccountUUIDParams {
 }
 
 #[get("/account/get")]
-pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>) -> Json<AccountResponse> {
-    Json(
-        AccountResponse {
-            accounts: acc_con.get_all_users()
-        }
-    )
+pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>)
+ -> Result<Json<AccountResponse>, status::Custom<&'static str>> {
+    match acc_con.get_all_users() {
+        Err(e) => Err(status::Custom(
+            Status::NotFound,
+            e
+        )),
+        Ok(users) => Ok(Json(
+            AccountResponse {
+                accounts: users
+            }
+        ))
+    }
+
+    
 }
 
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Json<DMResponse> {
-    Json(DMResponse {
-        is_dm: acc_con.user_is_dm(params.account_uuid)
-    })
+ -> Result<Json<DMResponse>, status::Custom<&'static str>> {
+    match acc_con.user_is_dm(params.account_uuid) {
+        Ok(res) => Ok(Json(DMResponse {
+            is_dm: res
+        })),
+        Err(e) => Err(status::Custom(
+            Status::NotFound,
+            e
+        ))
+    }
+    
 }
 
 #[get("/account/login")]
@@ -80,7 +96,8 @@ pub async fn account_info(user: super::AuthenticatedUser) -> String {
 }
 
 #[get("/account/oauth/callback?<params..>")]
-pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>) -> Result<Json<DiscordUser>, Status> {
+pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>)
+ -> Result<Redirect, Status> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");
     let redirect_uri = env::var("DISCORD_REDIRECT_URI").expect("DISCORD_REDIRECT_URI not set");
@@ -133,12 +150,19 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         .await
         .map_err(|_| Status::InternalServerError)?;
 
-
-    if !acc_con.has_user(user_response.id.clone()) {
-        acc_con.add_user(user_response.id.clone(), user_response.username.clone());
+    let has_user = match acc_con.has_user(user_response.id.clone()) {
+        Ok(res) => res,
+        Err(_e) => return Err(Status::InternalServerError)
+    };
+    if !has_user {
+        let res = acc_con.add_user(user_response.id.clone(), user_response.username.clone());
+        match res {
+            Ok(res) => (),
+            Err(_e) => return Err(Status::InternalServerError)
+        }
     }
     // Speichern eines Cookies als Beispiel
     cookies.add_private(Cookie::new("user_id", user_response.id.clone()));
 
-    Ok(Json(user_response))
+    Ok(Redirect::to(uri!("/")))
 }

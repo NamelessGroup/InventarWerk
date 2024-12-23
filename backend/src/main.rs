@@ -5,6 +5,7 @@ mod controller;
 mod dbmod;
 mod model;
 mod schema;
+mod frontend_model;
 
 use controller::account_controller::AccountController;
 use openssl::rand::rand_bytes;
