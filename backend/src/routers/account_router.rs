@@ -158,7 +158,7 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
     if !has_user {
         let res = acc_con.add_user(user_response.id.clone(), user_response.username.clone());
         match res {
-            Ok(res) => (),
+            Ok(_res) => (),
             Err(_e) => return Err(Status::InternalServerError)
         }
     }
