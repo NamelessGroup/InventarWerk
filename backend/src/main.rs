@@ -39,7 +39,6 @@ async fn main() {
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())
         .mount("/", routers::get_item_preset_routes())
-        .mount("/", routers::get_item_routes())
         .mount("/", routers::get_last_changes_routes())
         .mount("/", routers::get_note_routes())
         .launch().await;
