@@ -1,12 +1,13 @@
 use rocket::http::Status;
 use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
-
-use crate::controller::{account_controller::AccountController, inventory_controller::InventoryController};
+use crate::controller::inventory_controller::InventoryController;
 use crate::frontend_model::{InventoryReturn, Item};
 
 
 use rocket::response::status::{self, Custom};
+
+use super::transform_to_http_error;
 
 #[derive(Serialize, Deserialize)]
 pub struct GetAllInventoriesReturn{
@@ -87,9 +88,10 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 }
 
 #[get("/inventory?<params..>")]
-pub async fn get_specific_inventory(params: InventoryUUIDParams,  _user: super::AuthenticatedUser) -> String {
-    // return specific inventory
-    format!("Hello, Rocket with async! {}", params.inventory_uuid)
+pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
+    inv_con: &State<InventoryController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
+    transform_to_http_error(inv_con.get_inventory_parsed(params.inventory_uuid.clone(), user.user_id.clone()),
+        Status::BadRequest)
 }
 
 #[put("/inventory?<params..>")]

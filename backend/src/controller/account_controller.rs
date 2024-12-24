@@ -3,7 +3,6 @@ use diesel::dsl::exists;
 use diesel::r2d2::ConnectionManager;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
-use std::fmt::Error;
 
 use crate::dbmod::DbPool;
 use crate::model::User;
@@ -32,10 +31,7 @@ impl AccountController {
     }
 
     pub fn add_user(&self, id:String, user_name: String) -> Result<User, &str> {
-        let db_has_users = match self.has_users() {
-            Ok(u) => u,
-            Err(e) => return Err(e)
-        };
+        let db_has_users = self.has_users()?;
 
         let new_user = User {
             uuid: id,
@@ -61,7 +57,7 @@ impl AccountController {
         let u = user.find(id).get_result::<User>(&mut self.get_conn());
         match u {
             Ok(res) => Ok(res),
-            Err(e) => Err("Couldn't find user with this id!")
+            Err(_e) => Err("Couldn't find user with this id!")
         }
     }
 

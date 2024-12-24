@@ -1,4 +1,6 @@
 use rocket::request::Outcome;
+use rocket::response::status::Custom;
+use rocket::serde::json::Json;
 use rocket::{request::FromRequest, Route};
 use rocket::Request;
 use rocket::http::Status;
@@ -49,5 +51,16 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
         } else {
             Outcome::Error((Status::Unauthorized, ()))
         }
+    }
+}
+
+pub fn transform_to_http_error<T>(transform_result: Result<T, &'static str>, status: Status)
+    -> Result<Json<T>, Custom<&'static str>> {
+    match transform_result {
+        Ok(res) => Ok(Json(res)),
+        Err(e) => Err(Custom (
+            status,
+            e
+        ))
     }
 }

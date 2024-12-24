@@ -1,10 +1,11 @@
+use diesel::dsl::exists;
 use diesel::r2d2::ConnectionManager;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 
 use crate::model::{InventoryItem, ItemPreset, User};
 use crate::{dbmod::DbPool, model::Inventory};
-use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, user};
+use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer};
 use crate::schema::inventory::dsl::*;
 use crate::schema::inventory_reader::dsl::*;
 use crate::schema::inventory_writer::dsl::*;
@@ -75,14 +76,18 @@ impl InventoryController {
     }
 
     fn user_has_access_to_inventory(&self, searched_inventory_uuid: String, searcher_uuid: String) -> Result<bool, &'static str> {
-        Ok(true)
+        formatResultToCustomErr( 
+            diesel::select(exists(
+                inventory_reader.filter(inventory_reader::dsl::inventory_uuid.eq(searched_inventory_uuid))
+                    .filter(inventory_reader::dsl::user_uuid.eq(searcher_uuid))))
+                .get_result::<bool>(&mut self.get_conn()), "Failed to load any result")
     }
 
     pub fn get_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String) -> Result<String, &'static str> {
         match inventory_item.find((searched_inventory_uuid, searched_item_preset))
         .get_result::<InventoryItem>(&mut self.get_conn()) {
             Ok(res) => Ok(res.dm_note),
-            Err(_e) => Err("")
+            Err(_e) => Err("Couldn't load dm Note")
         }
     }
 
@@ -116,7 +121,7 @@ impl InventoryController {
             Err(e) => return Err(e)
         };
         for item in items.iter() {
-            let preset = self.get_item_preset(item.0.clone())?
+            let preset = self.get_item_preset(item.0.clone())?;
             inventory_parsed.items.push(Item {
                 name: preset.name.clone(),
                 presetReference: item.0.clone(),
@@ -131,14 +136,10 @@ impl InventoryController {
     }
 
     pub fn get_inventories_parsed(&self, searcher_uuid: String) -> Result<Vec<InventoryReturn>, &'static str> {
-        let inv = match self.get_all_inventories(searcher_uuid.clone()){
-            Ok(res) => res,
-            Err(e) => return Err(e)
-        };
+        let inv = self.get_all_inventories(searcher_uuid.clone())?;
         let mut inventories: Vec<InventoryReturn> = Vec::new();
-        let user_is_dm = self.user_is_dm(searcher_uuid.clone())?;
         for i in inv.iter() {
-            inventories.push(self.get_inventory_parsed(searcher_uuid, i.uuid)?);
+            inventories.push(self.get_inventory_parsed(searcher_uuid.clone(), i.uuid.clone())?);
         }
         Ok(inventories)
     }
