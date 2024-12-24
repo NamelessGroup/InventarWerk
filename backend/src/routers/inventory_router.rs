@@ -70,7 +70,7 @@ pub struct InventoryShareParams {
     writer_uuid: Option<String>
 }
 
-#[get("/inventar/all")]
+#[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Json<GetAllInventoriesReturn>, Custom<&'static str>>  {
     
