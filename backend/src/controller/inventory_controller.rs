@@ -1,11 +1,12 @@
 use diesel::dsl::exists;
 use diesel::r2d2::ConnectionManager;
-use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
+use diesel::{ExpressionMethods, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 
 use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, User};
+use crate::routers::inventory_router;
 use crate::{dbmod::DbPool, model::Inventory};
-use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer};
+use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset};
 use crate::schema::inventory::dsl::*;
 use crate::schema::inventory_reader::dsl::*;
 use crate::schema::inventory_writer::dsl::*;
@@ -161,8 +162,8 @@ impl InventoryController {
             inventory_uuid: searched_inventory_uuid
         };
         match diesel::insert_into(inventory_reader::table).values(inv_read).execute(&mut self.get_conn()) {
-            Ok(res) => (),
-            Err(e) => return Err("Couldn't insert reader")
+            Ok(_res) => (),
+            Err(_e) => return Err("Couldn't insert reader")
         };
         Ok(true)
     }
@@ -176,8 +177,8 @@ impl InventoryController {
             inventory_uuid: searched_inventory_uuid
         };
         match diesel::insert_into(inventory_writer::table).values(inv_write).execute(&mut self.get_conn()) {
-            Ok(res) => (),
-            Err(e) => return Err("Couldn't insert writer")
+            Ok(_res) => (),
+            Err(_e) => return Err("Couldn't insert writer")
         };
         Ok(true)
     }
@@ -196,5 +197,34 @@ impl InventoryController {
         self.add_writer_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
         self.add_reader_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
         Ok(new_inv)
+    }
+
+    // possible future duplicate
+    fn preset_exists(&self, preset_uuid: String) -> Result<bool, &'static str>{
+        match diesel::select(exists(item_preset.filter(item_preset::dsl::uuid.eq(preset_uuid)))).get_result(&mut self.get_conn()) {
+            Ok(res) => Ok(res),
+            Err(_e) => Err("Couldn't load presets")
+        }
+    }
+
+    pub fn add_preset_to_inventory(&self, searched_inventory_uuid: String, preset_uuid: String, item_amount: i32) -> Result<InventoryItem, &'static str> {
+        if !self.preset_exists(preset_uuid.clone())? {
+            return Err("Preset does not exists");
+        }
+        let preset_inventory_pair = InventoryItem {
+            inventory_uuid: searched_inventory_uuid,
+            item_preset_uuid: preset_uuid,
+            dm_note: "".to_string(),
+            amount: item_amount
+        };
+        match diesel::insert_into(inventory_item::table).values(preset_inventory_pair).execute(&mut self.get_conn()) {
+            Ok(res) => (),
+            Err(_e) => return Err("")
+        };
+        Ok(preset_inventory_pair)
+    }
+
+    pub fn add_new_item_to_inventory() {
+
     }
 }
