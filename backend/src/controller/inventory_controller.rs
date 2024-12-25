@@ -1,10 +1,10 @@
+use diesel::associations::HasTable;
 use diesel::dsl::exists;
 use diesel::r2d2::ConnectionManager;
-use diesel::{ExpressionMethods, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl};
+use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 
-use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, User};
-use crate::routers::inventory_router;
+use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney, User};
 use crate::{dbmod::DbPool, model::Inventory};
 use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset};
 use crate::schema::inventory::dsl::*;
@@ -154,7 +154,7 @@ impl InventoryController {
     }
 
     fn add_reader_to_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, &'static str> {
-        if (self.user_has_read_access_to_inventory(searched_inventory_uuid.clone(), reader_uuid.clone())?) {
+        if self.user_has_read_access_to_inventory(searched_inventory_uuid.clone(), reader_uuid.clone())? {
             return Err("User already has read access");
         }
         let inv_read = InventoryReader {
@@ -168,12 +168,12 @@ impl InventoryController {
         Ok(true)
     }
 
-    fn add_writer_to_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, &'static str> {
-        if (self.user_has_write_access_to_inventory(searched_inventory_uuid.clone(), reader_uuid.clone())?) {
+    fn add_writer_to_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, &'static str> {
+        if self.user_has_write_access_to_inventory(searched_inventory_uuid.clone(), writer_uuid.clone())? {
             return Err("User already has write access");
         }
         let inv_write = InventoryWriter {
-            user_uuid: reader_uuid,
+            user_uuid: writer_uuid,
             inventory_uuid: searched_inventory_uuid
         };
         match diesel::insert_into(inventory_writer::table).values(inv_write).execute(&mut self.get_conn()) {
@@ -218,13 +218,122 @@ impl InventoryController {
             amount: item_amount
         };
         match diesel::insert_into(inventory_item::table).values(&preset_inventory_pair).execute(&mut self.get_conn()) {
-            Ok(res) => (),
+            Ok(_res) => (),
             Err(_e) => return Err("")
         };
         Ok(preset_inventory_pair)
     }
 
-    pub fn add_new_item_to_inventory() {
+    pub fn add_new_item_to_inventory(&self, searched_inventory_uuid: String,
+            preset_name: String, item_amount: i32, creator_uuid: String) -> Result<ItemPreset, &'static str> {
+        let new_item_preset = ItemPreset {
+            name: preset_name,
+            uuid: super::generate_uuid_v4(),
+            price: 0,
+            description: "".to_string(),
+            creator: creator_uuid,
+            item_type: "".to_string()
+        };
+        match diesel::insert_into(item_preset::table).values(&new_item_preset).execute(&mut self.get_conn()) {
+            Ok(_res) => (),
+            Err(_e) => return Err("")
+        };
+        self.add_preset_to_inventory(searched_inventory_uuid, new_item_preset.uuid.clone(), item_amount)?;
+        return Ok(new_item_preset);
+    }
 
+    pub fn edit_item_amount(&self, searched_inventory_uuid: String, searched_item_preset: String, new_amount:i32, editor: String)
+        -> Result<bool, &'static str> {
+        let access = match self.user_has_write_access_to_inventory(searched_inventory_uuid.clone(), editor) {
+            Ok(res) => res,
+            Err(e) => return Err(e)
+        };
+        if !access {
+            return Err("No access");
+        }
+        match diesel::update(inventory_item.find((searched_inventory_uuid, searched_item_preset)))
+            .set(UpdateInventoryItem {
+                amount: Some(new_amount),
+                dm_note: None
+            }).execute(&mut self.get_conn()) {
+                Ok(_res) => Ok(true),
+                Err(_e) => Err("Couldn't update item")
+            }
+    }
+
+    pub fn edit_item_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String, new_dm_note:String, editor: String)
+    -> Result<bool, &'static str> {
+        let access = match self.user_is_dm(editor) {
+            Ok(res) => res,
+            Err(e) => return Err(e)
+        };
+        if !access {
+            return Err("No access");
+        }
+        match diesel::update(inventory_item.find((searched_inventory_uuid, searched_item_preset)))
+            .set(UpdateInventoryItem {
+                amount: None,
+                dm_note: Some(new_dm_note)
+            }).execute(&mut self.get_conn()) {
+                Ok(_res) => Ok(true),
+                Err(_e) => Err("Couldn't update item")
+            }
+    }
+
+    pub fn delete_item_from_inventory(&self, searched_inventory_uuid: String, searched_item_preset: String, editor: String)
+        -> Result<bool, &'static str> {
+        let access = self.user_has_write_access_to_inventory(searched_inventory_uuid.clone(), editor)?;
+        if !access {
+            return Err("No access");
+        }
+        match diesel::delete(inventory_item.find((searched_inventory_uuid, searched_item_preset)))
+            .execute(&mut self.get_conn()) {
+                Ok(_res) => Ok(true),
+                Err(_e) => Err("Couldn't delete Entry")
+            }
+    }
+    pub fn edit_money_in_inventory(&self, searched_inventory_uuid: String, new_money:i32, editor: String) -> Result<bool, &'static str>{
+        let access = self.user_has_write_access_to_inventory(searched_inventory_uuid.clone(), editor)?;
+        if !access {
+            return Err("No access");
+        }
+        match diesel::update(inventory.find(searched_inventory_uuid)).set(UpdateInventoryMoney{
+            money: new_money
+        }).execute(&mut self.get_conn()) {
+            Ok(_res) => Ok(true),
+            Err(_e) => Err("Couldn't update Money")
+        }
+    }
+
+    pub fn is_creator_of_inventory(&self, searched_inventory_uuid: String, creator_canidate: String) -> Result<bool, &'static str> {
+        Ok(self.get_inventory(searched_inventory_uuid)?.owner_uuid == creator_canidate)
+    }
+
+    pub fn checked_add_reader_to_inventory(&self, searched_inventory_uuid: String, reader_uuid: String, editor: String)
+            -> Result<bool, &'static str> {
+        if !self.is_creator_of_inventory(searched_inventory_uuid.clone(), editor)? {
+            return Err("Access denied");
+        }
+        self.add_reader_to_inventory(searched_inventory_uuid, reader_uuid)?;
+        Ok(true)
+    }
+
+    pub fn checked_add_writer_to_inventory(&self, searched_inventory_uuid: String, writer_uuid: String, editor: String)
+            -> Result<bool, &'static str> {
+        if !self.is_creator_of_inventory(searched_inventory_uuid.clone(), editor)? {
+            return Err("Access denied");
+        }
+        self.add_writer_to_inventory(searched_inventory_uuid, writer_uuid)?;
+        Ok(true)
+    }
+
+    pub fn delete_inventory(&self, searched_inventory_uuid: String, editor: String) -> Result<bool, &'static str> {
+        if !self.is_creator_of_inventory(searched_inventory_uuid.clone(), editor)? {
+            return Err("Access denied");
+        }
+        match diesel::delete(inventory.find(searched_inventory_uuid)).execute(&mut self.get_conn()) {
+            Ok(_res) => Ok(true),
+            Err(_e) => Err("Couldn't delete inventory")
+        }
     }
 }

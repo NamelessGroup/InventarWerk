@@ -1,8 +1,11 @@
+use std::str::Split;
+
 use rocket::http::Status;
 use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 use crate::controller::inventory_controller::InventoryController;
 use crate::frontend_model::{InventoryReturn, Item};
+use crate::model::{InventoryItem, ItemPreset};
 
 
 use rocket::response::status::{self, Custom};
@@ -107,52 +110,102 @@ pub async fn create_inventory(params: InventoryCreateParams,  user: super::Authe
 }
 
 #[put("/inventory/item/addPreset?<params..>")]
-pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
-    let item_pair = inv_con.add_preset_to_inventory(params.inventory_uuid, params.preset_uuid, params.amount);
-    Err(Custom(
-        Status::NotImplemented,
-        "Not Implemented"
-    )) //TODO: implement item
+pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  _user: super::AuthenticatedUser,
+        inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+    match inv_con.add_preset_to_inventory(params.inventory_uuid, params.preset_uuid, params.amount) {
+        Ok(_res) => Ok(Status::NoContent),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            e
+        ))
+    }
 }
 
 #[put("/inventory/item/addNew?<params..>")]
-pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser) -> &'static str {
-    // add Item to Inventory
-    "Hello, Rocket with async!"
+pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser,
+    inv_con: &State<InventoryController>) -> Result<Json<ItemPreset>, Custom<&'static str>> {
+    match inv_con.add_new_item_to_inventory(params.inventory_uuid,
+        params.name, params.amount, user.user_id) {
+            Ok(res) => Ok(Json(res)),
+            Err(e) => Err(Custom (
+                Status::InternalServerError,
+                e
+            ))
+    }
+    
 }
 
 #[patch("/inventory/item/edit?<params..>")]
-pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser) -> &'static str {
-    // return all inventories
-    "Hello, Rocket with async!"
+pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+    match inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount, user.user_id) {
+        Ok(_res) => Ok(Status::NoContent),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            e
+        ))
+    }
 }
 
 #[get("/inventory/item/addNote?<params..>")]
-pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser) -> &'static str {
-    // return all inventories
-    "Hello, Rocket with async!"
+pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+    match inv_con.edit_item_dm_note(params.inventory_uuid, params.item_preset_uuid, params.note, user.user_id) {
+        Ok(_res) => Ok(Status::NoContent),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            e
+        ))
+    }
 }
 
 #[get("/inventory/item/remove?<params..>")]
-pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser) -> &'static str {
-    // add Item to Inventory
-    "Hello, Rocket with async!"
+pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
+        inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+    match inv_con.delete_item_from_inventory(params.inventory_uuid, params.item_preset_uuid, user.user_id) {
+        Ok(_res) => Ok(Status::NoContent),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            e
+        ))
+    }
 }
 
 #[patch("/inventory/money?<params..>")]
-pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser) -> &'static str {
-    // return all inventories
-    "Hello, Rocket with async!"
+pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser,
+        inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+    match inv_con.edit_money_in_inventory(params.inventory_uuid, params.amount, user.user_id) {
+        Ok(_res) => Ok(Status::NoContent),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            e
+        ))
+    }
 }
 
 #[patch("/inventory/share?<params..>")]
-pub async fn share_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser) -> &'static str {
-    // share Inventory
-    "Hello, Rocket with async!"
+pub async fn share_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
+        inv_con: &State<InventoryController>) -> Status {
+    let readers_resolved = params.reader_uuid.unwrap_or("".to_string());
+    let readers = readers_resolved.split(',');
+    let writers_resolved = params.writer_uuid.unwrap_or("".to_string());
+    let writers = writers_resolved.split(',');
+    for reader in readers {
+        let _ = inv_con.checked_add_reader_to_inventory(params.inventory_uuid.clone(), reader.to_string(), user.user_id.clone());
+    }
+    for writer in writers {
+        let _ = inv_con.checked_add_writer_to_inventory(params.inventory_uuid.clone(), writer.to_string(), user.user_id.clone());
+    }
+    Status::NoContent
 }
 
 #[delete("/inventory/delete?<params..>")]
-pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser) -> &'static str {
-    // delete Inventory
-    "Hello, Rocket with async!"
+pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser,
+        inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+    match inv_con.delete_inventory(params.inventory_uuid, user.user_id) {
+        Ok(_res) => Ok(Status::NoContent),
+        Err(e) => Err(Custom(
+            Status::InternalServerError,
+            e
+        ))
+    }
+
 }
