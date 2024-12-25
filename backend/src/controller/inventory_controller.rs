@@ -217,7 +217,7 @@ impl InventoryController {
             dm_note: "".to_string(),
             amount: item_amount
         };
-        match diesel::insert_into(inventory_item::table).values(preset_inventory_pair).execute(&mut self.get_conn()) {
+        match diesel::insert_into(inventory_item::table).values(&preset_inventory_pair).execute(&mut self.get_conn()) {
             Ok(res) => (),
             Err(_e) => return Err("")
         };

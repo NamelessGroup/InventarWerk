@@ -107,9 +107,12 @@ pub async fn create_inventory(params: InventoryCreateParams,  user: super::Authe
 }
 
 #[put("/inventory/item/addPreset?<params..>")]
-pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser) -> &'static str {
-    // add Preset to Inventory
-    "Hello, Rocket with async!"
+pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
+    let item_pair = inv_con.add_preset_to_inventory(params.inventory_uuid, params.preset_uuid, params.amount);
+    Err(Custom(
+        Status::NotImplemented,
+        "Not Implemented"
+    )) //TODO: implement item
 }
 
 #[put("/inventory/item/addNew?<params..>")]
