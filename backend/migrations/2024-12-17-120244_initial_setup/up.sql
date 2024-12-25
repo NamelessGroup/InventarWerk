@@ -4,22 +4,22 @@ CREATE TABLE inventory (
     owner_uuid TEXT NOT NULL,
     money INTEGER NOT NULL,
     name TEXT NOT NULL,
-    FOREIGN KEY (owner_uuid) REFERENCES user(uuid)
+    FOREIGN KEY (owner_uuid) REFERENCES user(uuid) ON DELETE CASCADE
 );
 
 CREATE TABLE inventory_reader (
     user_uuid TEXT NOT NULL,
     inventory_uuid TEXT NOT NULL,
-    FOREIGN KEY(user_uuid) REFERENCES user(uuid),
-    FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid),
+    FOREIGN KEY(user_uuid) REFERENCES user(uuid) ON DELETE CASCADE,
+    FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid) ON DELETE CASCADE,
     PRIMARY KEY(user_uuid, inventory_uuid)
 );
 
 CREATE TABLE inventory_writer (
     user_uuid TEXT NOT NULL,
     inventory_uuid TEXT NOT NULL,
-    FOREIGN KEY(user_uuid) REFERENCES user(uuid),
-    FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid),
+    FOREIGN KEY(user_uuid) REFERENCES user(uuid) ON DELETE CASCADE,
+    FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid) ON DELETE CASCADE,
     PRIMARY KEY(user_uuid, inventory_uuid)
 );
 
@@ -45,6 +45,6 @@ CREATE TABLE inventory_item(
     dm_note TEXT NOT NULL,
     amount INTEGER NOT NULL,
     PRIMARY KEY(inventory_uuid, item_preset_uuid),
-    FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid),
-    FOREIGN KEY(item_preset_uuid) REFERENCES item_preset(uuid)
+    FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid) ON DELETE CASCADE,
+    FOREIGN KEY(item_preset_uuid) REFERENCES item_preset(uuid) ON DELETE CASCADE
 )
