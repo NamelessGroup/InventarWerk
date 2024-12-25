@@ -11,3 +11,4 @@ r2d2 = "0.8.1"
 serde = {version="1.0.216", features=["derive"]}
 reqwest = {version="0.12.9", features=["json"]}
 openssl = { version = "0.10", features = ["vendored"] }
+rand = "0.8.5"

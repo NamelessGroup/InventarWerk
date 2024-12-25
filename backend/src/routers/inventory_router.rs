@@ -95,9 +95,15 @@ pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::A
 }
 
 #[put("/inventory?<params..>")]
-pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser) -> &'static str {
-    // create New Inventory
-    "Hello, Rocket with async!"
+pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
+    let inv_uuid = match inv_con.insert_inventory(params.name, user.user_id.clone()) {
+        Ok(res) => res.uuid,
+        Err(e) => return Err(Custom (
+            Status::InternalServerError,
+            e
+        ))
+    };
+    get_specific_inventory(InventoryUUIDParams {inventory_uuid: inv_uuid}, user, inv_con).await
 }
 
 #[put("/inventory/item/addPreset?<params..>")]

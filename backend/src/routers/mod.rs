@@ -5,6 +5,7 @@ use rocket::{request::FromRequest, Route};
 use rocket::Request;
 use rocket::http::Status;
 
+
 pub mod account_router;
 pub mod inventory_router;
 pub mod item_preset_router;
@@ -31,9 +32,6 @@ pub fn get_item_preset_routes() -> Vec<Route> {
     routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_presets]
 }
 
-pub fn get_note_routes() -> Vec<Route> {
-    routes![add_note_to_item]
-}
 
 pub struct AuthenticatedUser {
     pub user_id: String

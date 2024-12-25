@@ -20,6 +20,7 @@ use rocket::config::Config;
 #[rocket::main]
 async fn main() {
     dotenv().ok();
+    print!("Generierte UUID: {}", controller::generate_uuid_v4());
     let dbconn:DbPool = establish_connection();
 
     let inv_cont = InventoryController::new(dbconn.clone());
@@ -40,6 +41,5 @@ async fn main() {
         .mount("/", routers::get_inventory_routes())
         .mount("/", routers::get_item_preset_routes())
         .mount("/", routers::get_last_changes_routes())
-        .mount("/", routers::get_note_routes())
         .launch().await;
 }
