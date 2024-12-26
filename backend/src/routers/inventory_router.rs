@@ -79,104 +79,61 @@ pub struct InventoryShareParams {
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Json<GetAllInventoriesReturn>, Custom<&'static str>>  {
     Ok(Json(GetAllInventoriesReturn {
-        inventories: match tthe(inv_con.get_inventories_parsed(user.user_id.clone()), Status::InternalServerError) {
-            Ok(res) => res,
-            Err(e) => return Err(e)
-        }
+        inventories: inv_con.get_inventories_parsed(user.user_id.clone())?
     }))
-
 }
 
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
     inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
     //if(acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), user.user_id)?) {}
-    ttjhe(inv_con.get_inventory_parsed(params.inventory_uuid.clone()),
-        Status::BadRequest)
+    Ok(Json(inv_con.get_inventory_parsed(params.inventory_uuid.clone())?))
 }
 
 #[put("/inventory?<params..>")]
 pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser, inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
-    let inv_uuid = match inv_con.insert_inventory(params.name, user.user_id.clone()) {
-        Ok(res) => res.uuid,
-        Err(e) => return Err(Custom (
-            Status::InternalServerError,
-            e
-        ))
-    };
-    get_specific_inventory(InventoryUUIDParams {inventory_uuid: inv_uuid},user, inv_con, acc_con).await
+    let inv = inv_con.insert_inventory(params.name, user.user_id.clone())?;
+    get_specific_inventory(InventoryUUIDParams {inventory_uuid: inv.uuid},user, inv_con, acc_con).await
 }
 
 #[put("/inventory/item/addPreset?<params..>")]
 pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  _user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.add_preset_to_inventory(params.inventory_uuid, params.preset_uuid, params.amount) {
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
+    inv_con.add_preset_to_inventory(params.inventory_uuid, params.preset_uuid, params.amount)?;
+    Ok(Status::NoContent)
 }
 
 #[put("/inventory/item/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser,
     inv_con: &State<InventoryController>) -> Result<Json<ItemPreset>, Custom<&'static str>> {
-    match inv_con.add_new_item_to_inventory(params.inventory_uuid,
-        params.name, params.amount, user.user_id) {
-            Ok(res) => Ok(Json(res)),
-            Err(e) => Err(Custom (
-                Status::InternalServerError,
-                e
-            ))
-    }
+    Ok(Json(inv_con.add_new_item_to_inventory(params.inventory_uuid, params.name, params.amount, user.user_id)?))
     
 }
 
 #[patch("/inventory/item/edit?<params..>")]
 pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount) {
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
+    inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount)?;
+    Ok(Status::NoContent)
 }
 
 #[get("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.edit_item_dm_note(params.inventory_uuid, params.item_preset_uuid, params.note) {
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
+    inv_con.edit_item_dm_note(params.inventory_uuid, params.item_preset_uuid, params.note)?;
+    Ok(Status::NoContent)
 }
 
 #[get("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.delete_item_from_inventory(params.inventory_uuid, params.item_preset_uuid) {
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
+    inv_con.delete_item_from_inventory(params.inventory_uuid, params.item_preset_uuid)?;
+    Ok(Status::NoContent)
 }
 
 #[patch("/inventory/money?<params..>")]
 pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.edit_money_in_inventory(params.inventory_uuid, params.amount) {
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
+    inv_con.edit_money_in_inventory(params.inventory_uuid, params.amount)?;
+    Ok(Status::NoContent)
 }
 
 #[patch("/inventory/addShare?<params..>")] //TODO: Add Public
@@ -214,12 +171,6 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
 #[delete("/inventory/delete?<params..>")]
 pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.delete_inventory(params.inventory_uuid) {
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
-
+    inv_con.delete_inventory(params.inventory_uuid)?;
+    Ok(Status::NoContent)
 }
