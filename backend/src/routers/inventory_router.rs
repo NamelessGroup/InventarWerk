@@ -93,7 +93,7 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
     inv_con: &State<InventoryController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
-    transform_to_http_error(inv_con.get_inventory_parsed(params.inventory_uuid.clone(), user.user_id.clone()),
+    transform_to_http_error(inv_con.get_inventory_parsed(params.inventory_uuid.clone()),
         Status::BadRequest)
 }
 
@@ -137,7 +137,7 @@ pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  use
 
 #[patch("/inventory/item/edit?<params..>")]
 pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount, user.user_id) {
+    match inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount) {
         Ok(_res) => Ok(Status::NoContent),
         Err(e) => Err(Custom(
             Status::InternalServerError,
@@ -148,7 +148,7 @@ pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, i
 
 #[get("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.edit_item_dm_note(params.inventory_uuid, params.item_preset_uuid, params.note, user.user_id) {
+    match inv_con.edit_item_dm_note(params.inventory_uuid, params.item_preset_uuid, params.note) {
         Ok(_res) => Ok(Status::NoContent),
         Err(e) => Err(Custom(
             Status::InternalServerError,
@@ -160,7 +160,7 @@ pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedU
 #[get("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.delete_item_from_inventory(params.inventory_uuid, params.item_preset_uuid, user.user_id) {
+    match inv_con.delete_item_from_inventory(params.inventory_uuid, params.item_preset_uuid) {
         Ok(_res) => Ok(Status::NoContent),
         Err(e) => Err(Custom(
             Status::InternalServerError,
@@ -172,7 +172,7 @@ pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::A
 #[patch("/inventory/money?<params..>")]
 pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.edit_money_in_inventory(params.inventory_uuid, params.amount, user.user_id) {
+    match inv_con.edit_money_in_inventory(params.inventory_uuid, params.amount) {
         Ok(_res) => Ok(Status::NoContent),
         Err(e) => Err(Custom(
             Status::InternalServerError,
@@ -189,10 +189,10 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
     let writers_resolved = params.writer_uuid.unwrap_or("".to_string());
     let writers = writers_resolved.split(',');
     for reader in readers {
-        let _ = inv_con.checked_add_reader_to_inventory(params.inventory_uuid.clone(), reader.to_string(), user.user_id.clone());
+        let _ = inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader.to_string());
     }
     for writer in writers {
-        let _ = inv_con.checked_add_writer_to_inventory(params.inventory_uuid.clone(), writer.to_string(), user.user_id.clone());
+        let _ = inv_con.add_writer_to_inventory(params.inventory_uuid.clone(), writer.to_string());
     }
     Status::NoContent
 }
@@ -205,10 +205,10 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
     let writers_resolved = params.writer_uuid.unwrap_or("".to_string());
     let writers = writers_resolved.split(',');
     for reader in readers {
-        let _ = inv_con.checked_remove_reader_from_inventory(params.inventory_uuid.clone(), reader.to_string(), user.user_id.clone());
+        let _ = inv_con.remove_reader_from_inventory(params.inventory_uuid.clone(), reader.to_string());
     }
     for writer in writers {
-        let _ = inv_con.checked_remove_writer_from_inventory(params.inventory_uuid.clone(), writer.to_string(), user.user_id.clone());
+        let _ = inv_con.remove_writer_from_inventory(params.inventory_uuid.clone(), writer.to_string());
     }
     Status::NoContent
 }
@@ -216,7 +216,7 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
 #[delete("/inventory/delete?<params..>")]
 pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
-    match inv_con.delete_inventory(params.inventory_uuid, user.user_id) {
+    match inv_con.delete_inventory(params.inventory_uuid) {
         Ok(_res) => Ok(Status::NoContent),
         Err(e) => Err(Custom(
             Status::InternalServerError,

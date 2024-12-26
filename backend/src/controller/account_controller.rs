@@ -6,7 +6,12 @@ use r2d2::PooledConnection;
 
 use crate::dbmod::DbPool;
 use crate::model::User;
+use crate::schema::{inventory_reader, inventory_writer};
 use crate::schema::user::dsl::*;
+use crate::schema::inventory_reader::dsl::*;
+use crate::schema::inventory_writer::dsl::*;
+
+use super::format_result_to_custom_err;
 
 #[derive(Clone)]
 pub struct AccountController {
@@ -75,4 +80,21 @@ impl AccountController {
             Err(_e) => Err("Couldn't load Users")
         }
     }
+
+    pub fn user_has_read_access_to_inventory(&self, searched_inventory_uuid: String, searcher_uuid: String) -> Result<bool, &'static str> {
+        format_result_to_custom_err( 
+            diesel::select(exists(
+                inventory_reader.filter(inventory_reader::dsl::inventory_uuid.eq(searched_inventory_uuid))
+                    .filter(inventory_reader::dsl::user_uuid.eq(searcher_uuid))))
+                .get_result::<bool>(&mut self.get_conn()), "Failed to load any result")
+    }
+
+    pub fn user_has_write_access_to_inventory(&self, searched_inventory_uuid: String, searcher_uuid: String) -> Result<bool, &'static str> {
+        format_result_to_custom_err( 
+            diesel::select(exists(
+                inventory_writer.filter(inventory_writer::dsl::inventory_uuid.eq(searched_inventory_uuid))
+                    .filter(inventory_writer::dsl::user_uuid.eq(searcher_uuid))))
+                .get_result::<bool>(&mut self.get_conn()), "Failed to load any result")
+    }
+
 }

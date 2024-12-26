@@ -251,6 +251,8 @@ set DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI in the env fi
 
 if you move the backend folder dont forget to change migrations path in diesel.toml in backend/
 
+finally run `cargo run`
+
 ## Database Structure
 ```mermaid
 
