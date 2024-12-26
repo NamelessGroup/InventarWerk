@@ -181,8 +181,8 @@ pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::Auth
     }
 }
 
-#[patch("/inventory/share?<params..>")]
-pub async fn share_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
+#[patch("/inventory/addShare?<params..>")] //TODO: Add Public
+pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Status {
     let readers_resolved = params.reader_uuid.unwrap_or("".to_string());
     let readers = readers_resolved.split(',');
@@ -193,6 +193,22 @@ pub async fn share_inventory(params: InventoryShareParams,  user: super::Authent
     }
     for writer in writers {
         let _ = inv_con.checked_add_writer_to_inventory(params.inventory_uuid.clone(), writer.to_string(), user.user_id.clone());
+    }
+    Status::NoContent
+}
+
+#[patch("/inventory/removeShare?<params..>")]
+pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
+        inv_con: &State<InventoryController>) -> Status {
+    let readers_resolved = params.reader_uuid.unwrap_or("".to_string());
+    let readers = readers_resolved.split(',');
+    let writers_resolved = params.writer_uuid.unwrap_or("".to_string());
+    let writers = writers_resolved.split(',');
+    for reader in readers {
+        let _ = inv_con.checked_remove_reader_from_inventory(params.inventory_uuid.clone(), reader.to_string(), user.user_id.clone());
+    }
+    for writer in writers {
+        let _ = inv_con.checked_remove_writer_from_inventory(params.inventory_uuid.clone(), writer.to_string(), user.user_id.clone());
     }
     Status::NoContent
 }

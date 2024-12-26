@@ -17,7 +17,7 @@ use last_changes_router::*;
 
 pub fn get_inventory_routes() -> Vec<Route> {
     routes![get_all_inventories, get_specific_inventory, create_inventory, add_preset_to_inventory, add_new_item_to_inventory,
-        modify_money, share_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
+        modify_money, add_share_to_inventory, remove_share_from_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
 }
 
 pub fn get_account_routes() -> Vec<Route> {

@@ -336,4 +336,24 @@ impl InventoryController {
             Err(_e) => Err("Couldn't delete inventory")
         }
     }
+
+    pub fn checked_remove_reader_from_inventory(&self, searched_inventory_uuid: String, reader_uuid: String, editor: String) -> Result<bool, &'static str> {
+        if !self.is_creator_of_inventory(searched_inventory_uuid.clone(), editor)? {
+            return Err("Access denied");
+        }
+        match diesel::delete(inventory_reader.find((searched_inventory_uuid, reader_uuid))).execute(&mut self.get_conn()) {
+            Ok(_res) => Ok(true),
+            Err(_e) => Err("Couldn't remove pair")
+        }
+    }
+
+    pub fn checked_remove_writer_from_inventory(&self, searched_inventory_uuid: String, writer_uuid: String, editor: String) -> Result<bool, &'static str> {
+        if !self.is_creator_of_inventory(searched_inventory_uuid.clone(), editor)? {
+            return Err("Access denied");
+        }
+        match diesel::delete(inventory_writer.find((searched_inventory_uuid, writer_uuid))).execute(&mut self.get_conn()) {
+            Ok(_res) => Ok(true),
+            Err(_e) => Err("Couldn't remove pair")
+        }
+    }
 }
