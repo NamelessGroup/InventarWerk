@@ -134,11 +134,15 @@ Response: 204
 Patch
 Edits the Amount of Money in an Inventory
 Response: 204
-#### /inventory/share?uuid="",reader_uuid="",writer_uuid=""
+#### /inventory/addShare?uuid="",reader_uuid="",writer_uuid=""
 Patch
 Makes an inventory visible to other members of the site
 reader_uuid and writer_uuid contains the uuid of the members that shoud get read/write access to the inventory
 reader_uuid and writer_uuid are optional, if they both dont exists, all members get read acces to the inventory
+Response:204
+#### /inventory/removeShare?uuid="",reader_uuid="",writer_uuid=""
+Patch
+Removes given shares
 Response:204
 #### /inventory/delete?uuid=""
 Delete
