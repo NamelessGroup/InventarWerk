@@ -223,7 +223,7 @@ Response: {uuid: string, type: 'create'|'patch'|'delete'}[]
 
 # Backend
 ##
-required fields in .enc in backend/
+required fields in .env in backend/
 ```
 DATABASE_URL=
 DISCORD_CLIENT_ID=
@@ -231,14 +231,25 @@ DISCORD_CLIENT_SECRET=
 DISCORD_REDIRECT_URI=
 ```
 ## Prerequisites
-install libsqlite3-dev
+install [rust](https://www.rust-lang.org/tools/install) 
+install [diesel-cli](https://diesel.rs/guides/getting-started.html#installing-diesel-cli)
+move into the backend folder
+
+set `DATABASE_URL=` in .env in backend/
+i suggest backend/database.db
+
+run diesel setup
+if you encounter sql errors installing libsqlite3-dev might help (on wsl, search for other packages if you dont use wsl/ubuntu) and run `diesel migration run`, this should not be neccessary if the setup, doesnt encountered an error
 ```
 sudo apt update
 sudo apt install libsqlite3-dev
 ```
 
-set `DATABASE_URL=` in .env in backend/
-change migrations path in diesel.toml in backend/
+
+go to the [discord developer portal](https://discord.com/developers) and create a application and generate the client secret
+set DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI in the env file the DISCORD_REDIRECT_URI should be yourdomain.de/account/oauth/callback, also add the url to the redirects in the discord developer portal.
+
+if you move the backend folder dont forget to change migrations path in diesel.toml in backend/
 
 ## Database Structure
 ```mermaid
