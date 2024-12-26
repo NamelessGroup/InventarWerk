@@ -4,11 +4,22 @@ pub mod item_preset_controller;
 
 use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;
+use rocket::http::Status;
+use rocket::response::status::Custom;
 
-pub fn format_result_to_custom_err<T>(result: Result<T, diesel::result::Error>, err_msg: &'static str) -> Result<T, &'static str> {
+//custom status
+pub type cstat = Custom<&'static str>;
+pub fn new_cstst(stat: Status, msg: &'static str) -> cstat {
+    Custom(
+        stat,
+        msg
+    )
+}
+
+pub fn format_result_to_cstat<T>(result: Result<T, diesel::result::Error>, stat: Status, err_msg: &'static str) -> Result<T, cstat> {
     match result {
         Ok(res) => Ok(res),
-        Err(_e) => Err(err_msg)
+        Err(_e) => Err(new_cstst(stat, err_msg))
     }
 }
 

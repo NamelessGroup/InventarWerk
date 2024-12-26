@@ -3,14 +3,15 @@ use std::str::Split;
 use rocket::http::Status;
 use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
+use crate::controller::account_controller::AccountController;
 use crate::controller::inventory_controller::InventoryController;
 use crate::frontend_model::{InventoryReturn, Item};
-use crate::model::{InventoryItem, ItemPreset};
+use crate::model::ItemPreset;
 
 
 use rocket::response::status::{self, Custom};
 
-use super::transform_to_http_error;
+use super::{tthe, ttjhe};
 
 #[derive(Serialize, Deserialize)]
 pub struct GetAllInventoriesReturn{
@@ -77,14 +78,10 @@ pub struct InventoryShareParams {
 #[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Json<GetAllInventoriesReturn>, Custom<&'static str>>  {
-    
     Ok(Json(GetAllInventoriesReturn {
-        inventories: match inv_con.get_inventories_parsed(user.user_id) {
+        inventories: match tthe(inv_con.get_inventories_parsed(user.user_id.clone()), Status::InternalServerError) {
             Ok(res) => res,
-            Err(e) => return  Err(Custom(
-                Status::InternalServerError,
-                e
-            ))
+            Err(e) => return Err(e)
         }
     }))
 
@@ -92,13 +89,14 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
-    inv_con: &State<InventoryController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
-    transform_to_http_error(inv_con.get_inventory_parsed(params.inventory_uuid.clone()),
+    inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
+    //if(acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), user.user_id)?) {}
+    ttjhe(inv_con.get_inventory_parsed(params.inventory_uuid.clone()),
         Status::BadRequest)
 }
 
 #[put("/inventory?<params..>")]
-pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser, inv_con: &State<InventoryController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
+pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser, inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
     let inv_uuid = match inv_con.insert_inventory(params.name, user.user_id.clone()) {
         Ok(res) => res.uuid,
         Err(e) => return Err(Custom (
@@ -106,7 +104,7 @@ pub async fn create_inventory(params: InventoryCreateParams,  user: super::Authe
             e
         ))
     };
-    get_specific_inventory(InventoryUUIDParams {inventory_uuid: inv_uuid}, user, inv_con).await
+    get_specific_inventory(InventoryUUIDParams {inventory_uuid: inv_uuid},user, inv_con, acc_con).await
 }
 
 #[put("/inventory/item/addPreset?<params..>")]

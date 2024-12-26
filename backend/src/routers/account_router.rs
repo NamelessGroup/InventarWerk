@@ -1,5 +1,5 @@
 use rocket::form::FromForm;
-use rocket::response::{status, Redirect};
+use rocket::response::Redirect;
 use rocket::State;
 use std::env;
 use rocket::serde::{Deserialize, Serialize};
@@ -9,6 +9,7 @@ use reqwest::Client;
 use rocket::response::status::Custom;
 
 use crate::controller::account_controller::AccountController;
+use crate::controller::cstat;
 use crate::model::User;
 
 
@@ -49,18 +50,13 @@ pub struct AccountUUIDParams {
 
 #[get("/account/get")]
 pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<AccountResponse>, Custom<&'static str>> {
-    match acc_con.get_all_users() {
-        Err(e) => Err(status::Custom(
-            Status::NotFound,
-            e
-        )),
-        Ok(users) => Ok(Json(
-            AccountResponse {
-                accounts: users
-            }
-        ))
-    }
+ -> Result<Json<AccountResponse>, cstat> {
+    let all_users =  acc_con.get_all_users()?;
+    Ok(Json(
+        AccountResponse {
+            accounts: all_users
+        }
+    ))
 
     
 }
@@ -68,15 +64,10 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<Accou
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, acc_con: &State<AccountController>)
  -> Result<Json<DMResponse>, Custom<&'static str>> {
-    match acc_con.user_is_dm(params.account_uuid) {
-        Ok(res) => Ok(Json(DMResponse {
-            is_dm: res
-        })),
-        Err(e) => Err(status::Custom(
-            Status::NotFound,
-            e
-        ))
-    }
+    let user_is_dm =  acc_con.user_is_dm(params.account_uuid)?;
+    Ok(Json(DMResponse {
+        is_dm: user_is_dm
+    }))
     
 }
 
