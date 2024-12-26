@@ -1,5 +1,6 @@
 pub mod inventory_controller;
 pub mod account_controller;
+pub mod item_preset_controller;
 
 use rand::{Rng, SeedableRng};
 use rand::rngs::StdRng;

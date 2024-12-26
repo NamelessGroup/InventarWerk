@@ -25,6 +25,10 @@ impl InventoryController {
     pub fn new(db: DbPool) -> Self {
         Self { db }
     }
+    
+    fn get_conn(&self) -> PooledConnection<ConnectionManager<diesel::SqliteConnection>> {
+        self.db.get().expect("Failed to get connection from Pool")
+    }
 
     // TODO: Remove duplicate
     fn user_is_dm(&self, id: String) -> Result<bool, &'static str> {
@@ -35,9 +39,6 @@ impl InventoryController {
         }
     }
 
-    fn get_conn(&self) -> PooledConnection<ConnectionManager<diesel::SqliteConnection>> {
-        self.db.get().expect("Failed to get connection from Pool")
-    }
 
     fn get_all_inventories(&self, inventory_user_uuid: String) -> Result<Vec<Inventory>, &'static str> {
         format_result_to_custom_err( inventory
