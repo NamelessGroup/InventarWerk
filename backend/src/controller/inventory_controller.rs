@@ -30,6 +30,18 @@ impl InventoryController {
         self.db.get().expect("Failed to get connection from Pool")
     }
 
+    pub fn get_all_inventories_ids(&self, searcher_uuid: String) -> Result<Vec<String>, cstat> {
+        let query = inventory_reader.filter(inventory_reader::user_uuid.eq(searcher_uuid))
+            .select(inventory_reader::inventory_uuid).load::<String>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Couldn't load reader table")
+    }
+
+    pub fn get_all_inventories_ids_with_read_access(&self, searcher_uuid: String) -> Result<Vec<String>, cstat> {
+        let query = inventory_writer.filter(inventory_writer::user_uuid.eq(searcher_uuid))
+            .select(inventory_writer::inventory_uuid).load::<String>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Couldn't load reader table")
+    }
+
     fn get_all_inventories(&self, inventory_user_uuid: String) -> Result<Vec<Inventory>, cstat> {
         let query = inventory
             .inner_join(inventory_reader.on(inventory_reader::inventory_uuid.eq(inventory::dsl::uuid)))
@@ -70,6 +82,14 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Couldn't load requested Inventory")
     }
 
+    pub fn item_exits(&self, searched_inventory_uuid: String, searched_item_preset: String) -> Result<bool, cstat> {
+        let query = diesel::select(exists(
+            inventory_item.filter(item_preset_uuid.eq(searched_item_preset))
+            .filter(inventory_item::inventory_uuid.eq(searched_inventory_uuid))))
+            .get_result::<bool>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Couldn't load inventory item table")
+    }
+
     pub fn get_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String) -> Result<String, cstat> {
         let query = inventory_item.find((searched_inventory_uuid, searched_item_preset))
         .get_result::<InventoryItem>(&mut self.get_conn()); 
@@ -77,8 +97,8 @@ impl InventoryController {
         Ok(result.dm_note)
     }
 
-    pub fn get_inventory_parsed(&self, searched_inventory_uuid: String) -> Result<InventoryReturn, cstat> {
-        let inv = self.get_inventory(searched_inventory_uuid)?;
+    pub fn get_inventory_parsed(&self, searched_inventory_uuid: String, is_dm: bool) -> Result<InventoryReturn, cstat> {
+        let inv = self.get_inventory(searched_inventory_uuid.clone())?;
         let mut inventory_parsed = InventoryReturn{
             uuid: inv.uuid.clone(),
             name: inv.name.clone(),
@@ -98,18 +118,18 @@ impl InventoryController {
                 name: preset.name.clone(),
                 presetReference: item.0.clone(),
                 amount: item.1,
-                dmNote: "".to_string(),
+                dmNote: if is_dm {self.get_dm_note(searched_inventory_uuid.clone(), item.0.clone())?} else {"".to_string()} ,
                 description: preset.description.clone()
             });
         }
         Ok(inventory_parsed)
     }
 
-    pub fn get_inventories_parsed(&self, searcher_uuid: String) -> Result<Vec<InventoryReturn>, cstat> {
+    pub fn get_inventories_parsed(&self, searcher_uuid: String, is_dm: bool) -> Result<Vec<InventoryReturn>, cstat> {
         let inv = self.get_all_inventories(searcher_uuid.clone())?;
         let mut inventories: Vec<InventoryReturn> = Vec::new();
         for i in inv.iter() {
-            inventories.push(self.get_inventory_parsed(i.uuid.clone())?);
+            inventories.push(self.get_inventory_parsed(i.uuid.clone(), is_dm)?);
         }
         Ok(inventories)
     }

@@ -75,19 +75,19 @@ pub struct InventoryShareParams {
 
 #[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>) -> Result<Json<GetAllInventoriesReturn>, Custom<&'static str>>  {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<GetAllInventoriesReturn>, Custom<&'static str>>  {
     Ok(Json(GetAllInventoriesReturn {
-        inventories: inv_con.get_inventories_parsed(user.user_id.clone())?
+        inventories: inv_con.get_inventories_parsed(user.user_id.clone(), acc_con.user_is_dm(user.user_id.clone())?)?
     }))
 }
 
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
     inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
-    if !acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), user.user_id)? {
+    if !acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstst(Status::Forbidden, "Not Authorized"))
     }
-    Ok(Json(inv_con.get_inventory_parsed(params.inventory_uuid.clone())?))
+    Ok(Json(inv_con.get_inventory_parsed(params.inventory_uuid.clone(), acc_con.user_is_dm(user.user_id.clone())?)?))
 }
 
 #[put("/inventory?<params..>")]

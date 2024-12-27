@@ -2,12 +2,15 @@ use diesel::r2d2::ConnectionManager;
 use diesel::{QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 use diesel::prelude::*;
+use rocket::http::Status;
 
 use crate::dbmod::DbPool;
 use crate::model::{ItemPreset, UpdateItemPreset, User};
 use crate::schema::{inventory, inventory_item, item_preset};
 use crate::schema::item_preset::dsl::*;
 use crate::schema::inventory_item::dsl::*;
+
+use super::{cstat, format_result_to_cstat, new_cstst};
 #[derive(Clone)]
 pub struct ItemPresetController {
     db: DbPool
@@ -46,18 +49,18 @@ impl ItemPresetController {
         };
         match diesel::update(item_preset.find(searched_item_preset_uuid)).set(item_preset_changes)
             .execute(&mut self.get_conn()) {
-                Ok(res) => Ok(true),
+                Ok(_res) => Ok(true),
                 Err(_e) => Err("Couldn't update item")
             }
     }
 
-    pub fn item_presets_in_inventory(&self, searched_inventory: String) -> Result<Vec<String>, &'static str> {
-    match inventory_item
-        .filter(inventory_uuid.eq(searched_inventory))
-        .select(item_preset_uuid)
-        .load::<String>(&mut self.get_conn()) {
-            Ok(res) => Ok(res),
-            Err(_e) => Err("")
-        }
+    pub fn get_item_preset_in_inventory(&self, searched_item_preset_uuid: String) -> Result<Vec<ItemPreset>, cstat> {
+        let query = inventory_item
+            .filter(inventory_item::inventory_uuid.eq(searched_item_preset_uuid))
+            .inner_join(item_preset)
+            .select((uuid, name, price, description, creator, item_type))
+            .load::<ItemPreset>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Couldn't load tables inventory_item and item_preset")
     }
+
 }
