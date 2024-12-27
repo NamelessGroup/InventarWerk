@@ -1,11 +1,10 @@
-use diesel::associations::HasTable;
 use diesel::dsl::exists;
 use diesel::r2d2::ConnectionManager;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 use rocket::http::Status;
 
-use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney, User};
+use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney};
 use crate::{dbmod::DbPool, model::Inventory};
 use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset};
 use crate::schema::inventory::dsl::*;
@@ -207,7 +206,7 @@ impl InventoryController {
         };
         let query = diesel::insert_into(item_preset::table).values(&new_item_preset)
             .execute(&mut self.get_conn());
-        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table");
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
         self.add_preset_to_inventory(searched_inventory_uuid, new_item_preset.uuid.clone(), item_amount)?;
         return Ok(new_item_preset);
     }
