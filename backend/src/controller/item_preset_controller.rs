@@ -10,7 +10,7 @@ use crate::schema::inventory_item;
 use crate::schema::item_preset::dsl::*;
 use crate::schema::inventory_item::dsl::*;
 
-use super::{cstat, format_result_to_cstat};
+use super::{CStat, format_result_to_cstat};
 #[derive(Clone)]
 pub struct ItemPresetController {
     db: DbPool
@@ -54,7 +54,7 @@ impl ItemPresetController {
             }
     }
 
-    pub fn get_item_preset_in_inventory(&self, searched_item_preset_uuid: String) -> Result<Vec<ItemPreset>, cstat> {
+    pub fn get_item_preset_in_inventory(&self, searched_item_preset_uuid: String) -> Result<Vec<ItemPreset>, CStat> {
         let query = inventory_item
             .filter(inventory_item::inventory_uuid.eq(searched_item_preset_uuid))
             .inner_join(item_preset)

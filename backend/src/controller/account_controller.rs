@@ -12,7 +12,7 @@ use crate::schema::user::dsl::*;
 use crate::schema::inventory_reader::dsl::*;
 use crate::schema::inventory_writer::dsl::*;
 
-use super::{cstat, format_result_to_cstat};
+use super::{CStat, format_result_to_cstat};
 
 #[derive(Clone)]
 pub struct AccountController {
@@ -28,7 +28,7 @@ impl AccountController {
         self.db.get().expect("Failed to get connection from Pool")
     }
 
-    pub fn has_users(&self) -> Result<bool, cstat> {
+    pub fn has_users(&self) -> Result<bool, CStat> {
         let number_of_users = user.count().get_result::<i64>(&mut self.get_conn());
         let result = match number_of_users {
             Ok(res) => Ok(res > 0),
@@ -37,7 +37,7 @@ impl AccountController {
         format_result_to_cstat(result, Status::InternalServerError, "Failed to load user table")
     }
 
-    pub fn add_user(&self, id:String, user_name: String) -> Result<User, cstat> {
+    pub fn add_user(&self, id:String, user_name: String) -> Result<User, CStat> {
         let db_has_users = self.has_users()?;
 
         let new_user = User {
@@ -51,29 +51,29 @@ impl AccountController {
         Ok(new_user)
     }
 
-    pub fn has_user(&self, id:String) -> Result<bool, cstat> {
+    pub fn has_user(&self, id:String) -> Result<bool, CStat> {
         let query_result = diesel::select(exists(user.filter(uuid.eq(id))))
             .get_result(&mut self.get_conn());
         format_result_to_cstat(query_result, Status::InternalServerError, "Failed to load Table")
     }
 
-    fn get_account(&self, id: String) -> Result<User, cstat> {
+    fn get_account(&self, id: String) -> Result<User, CStat> {
         let queried_user = user.find(id).get_result::<User>(&mut self.get_conn());
         format_result_to_cstat(queried_user, Status::InternalServerError, "Couldn't find user with this id!")
     }
 
-    pub fn user_is_dm(&self, id: String) -> Result<bool, cstat> {
+    pub fn user_is_dm(&self, id: String) -> Result<bool, CStat> {
         let acc = self.get_account(id)?;
         Ok(acc.dm == 1)
     }
 
-    pub fn get_all_users(&self) -> Result<Vec<User>, cstat> {
+    pub fn get_all_users(&self) -> Result<Vec<User>, CStat> {
         let users =  user.load::<User>(&mut self.get_conn());
         format_result_to_cstat(users, Status::InternalServerError, "Failed load Users")
     }
 
     pub fn user_has_read_access_to_inventory(&self, searched_inventory_uuid: String, searcher_uuid: String)
-            -> Result<bool, cstat> {
+            -> Result<bool, CStat> {
         let query_result = diesel::select(exists(
             inventory_reader.filter(inventory_reader::dsl::inventory_uuid.eq(searched_inventory_uuid))
                 .filter(inventory_reader::dsl::user_uuid.eq(searcher_uuid))))
@@ -82,7 +82,7 @@ impl AccountController {
     }
 
     pub fn user_has_write_access_to_inventory(&self, searched_inventory_uuid: String, searcher_uuid: String)
-            -> Result<bool, cstat> {
+            -> Result<bool, CStat> {
         let query_result = diesel::select(exists(
             inventory_writer.filter(inventory_writer::dsl::inventory_uuid.eq(searched_inventory_uuid))
                 .filter(inventory_writer::dsl::user_uuid.eq(searcher_uuid))))

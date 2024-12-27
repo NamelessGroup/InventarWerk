@@ -3,7 +3,7 @@ use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 use crate::controller::account_controller::AccountController;
 use crate::controller::inventory_controller::InventoryController;
-use crate::controller::{cstat, new_cstst};
+use crate::controller::{CStat, new_cstst};
 use crate::frontend_model::InventoryReturn;
 use crate::model::ItemPreset;
 
@@ -75,7 +75,7 @@ pub struct InventoryShareParams {
 
 #[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<GetAllInventoriesReturn>, Custom<&'static str>>  {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<GetAllInventoriesReturn>, CStat>  {
     Ok(Json(GetAllInventoriesReturn {
         inventories: inv_con.get_inventories_parsed(user.user_id.clone(), acc_con.user_is_dm(user.user_id.clone())?)?
     }))
@@ -83,7 +83,7 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
-    inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
+    inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, CStat> {
     if !acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstst(Status::Forbidden, "Not Authorized"))
     }
@@ -159,7 +159,7 @@ pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::Auth
 
 #[patch("/inventory/addShare?<params..>")] //TODO: Add Public
 pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>) -> Result<Status, cstat> {
+        inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstst(Status::Forbidden, "Not Authorized"));
     }
@@ -178,7 +178,7 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
 
 #[patch("/inventory/removeShare?<params..>")]
 pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>) -> Result<Status, cstat> {
+        inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstst(Status::Forbidden, "Not Authorized"));
     }

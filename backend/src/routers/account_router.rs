@@ -9,7 +9,7 @@ use reqwest::Client;
 use rocket::response::status::Custom;
 
 use crate::controller::account_controller::AccountController;
-use crate::controller::cstat;
+use crate::controller::CStat;
 use crate::model::User;
 
 
@@ -50,7 +50,7 @@ pub struct AccountUUIDParams {
 
 #[get("/account/get")]
 pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<AccountResponse>, cstat> {
+ -> Result<Json<AccountResponse>, CStat> {
     let all_users =  acc_con.get_all_users()?;
     Ok(Json(
         AccountResponse {

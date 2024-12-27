@@ -1,6 +1,6 @@
 use rocket::{form::FromForm, http::Status, response::status::Custom, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
-use crate::controller::{cstat, new_cstst};
+use crate::controller::{CStat, new_cstst};
 use crate::{controller::item_preset_controller::ItemPresetController, model::ItemPreset};
 use crate::controller::inventory_controller::InventoryController;
 use super::ttjhe;
@@ -25,7 +25,7 @@ pub struct ItemModifyParams {
     item_type: Option<String>
 }
 
-fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con: &State<InventoryController>) -> Result<bool, cstat> {
+fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con: &State<InventoryController>) -> Result<bool, CStat> {
     let mut has_access = false;
     for i in inventories {
         if inv_con.item_exits(i, searched_item_preset.clone())? {
@@ -37,7 +37,7 @@ fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con
 
 #[get("/itemPreset?<params..>")]
 pub async fn get_item_preset(params: ItemPresetUUIDParams,  user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>,
-        inv_con: &State<InventoryController>) -> Result<Json<ItemPreset>, cstat> {
+        inv_con: &State<InventoryController>) -> Result<Json<ItemPreset>, CStat> {
     let invs = inv_con.get_all_inventories_ids(user.user_id)?;
     
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
@@ -81,7 +81,7 @@ pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::Auth
 
 #[patch("/itemPreset/all")]
 pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
-        ipc_con: &State<ItemPresetController>) -> Result<Json<GetItemPresetReturn>, cstat> {
+        ipc_con: &State<ItemPresetController>) -> Result<Json<GetItemPresetReturn>, CStat> {
     let mut ips: Vec<ItemPreset> = Vec::new();
     let invs = inv_con.get_all_inventories_ids(user.user_id)?;
     for i in invs {
