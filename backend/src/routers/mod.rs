@@ -52,27 +52,6 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
     }
 }
 
-pub fn _tthp<T>(transform_result: Result<T, &'static str>, status: Status)
-    -> Result<Json<T>, Custom<&'static str>> {
-    match transform_result {
-        Ok(res) => Ok(Json(res)),
-        Err(e) => Err(Custom (
-            status,
-            e
-        ))
-    }
-}
-
-pub fn tthe<T>(transform_result: Result<T, &'static str>, status: Status) -> Result<T, Custom<&'static str>> {
-    match transform_result {
-        Ok(res) => Ok(res),
-        Err(e) => Err(Custom (
-            status,
-            e
-        ))
-    }
-}
-
 //transform_to_http_error
 pub fn ttjhe<T>(transform_result: Result<T, &'static str>, status: Status)
     -> Result<Json<T>, Custom<&'static str>> {
