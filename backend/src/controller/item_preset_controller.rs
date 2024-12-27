@@ -5,12 +5,12 @@ use diesel::prelude::*;
 use rocket::http::Status;
 
 use crate::dbmod::DbPool;
-use crate::model::{ItemPreset, UpdateItemPreset, User};
-use crate::schema::{inventory, inventory_item, item_preset};
+use crate::model::{ItemPreset, UpdateItemPreset};
+use crate::schema::inventory_item;
 use crate::schema::item_preset::dsl::*;
 use crate::schema::inventory_item::dsl::*;
 
-use super::{cstat, format_result_to_cstat, new_cstst};
+use super::{cstat, format_result_to_cstat};
 #[derive(Clone)]
 pub struct ItemPresetController {
     db: DbPool
@@ -34,8 +34,8 @@ impl ItemPresetController {
 
     pub fn delete_item_preset(&self, searched_item_preset_uuid: String) -> Result<bool, &'static str> {
         match diesel::delete(item_preset.find(searched_item_preset_uuid)).execute(&mut self.get_conn()) {
-            Ok(res) => Ok(true),
-            Err(_E) => Err("Couldn't delete item preset")
+            Ok(_res) => Ok(true),
+            Err(_e) => Err("Couldn't delete item preset")
         }
     }
 
