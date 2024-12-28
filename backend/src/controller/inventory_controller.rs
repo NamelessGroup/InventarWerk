@@ -4,6 +4,7 @@ use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 use rocket::http::Status;
 
+use crate::add_to_global_map;
 use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney};
 use crate::{dbmod::DbPool, model::Inventory};
 use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset};
@@ -14,6 +15,9 @@ use crate::schema::inventory_item::dsl::*;
 use crate::schema::item_preset::dsl::*;
 use crate::frontend_model::{InventoryReturn, Item};
 use super::{CStat, format_result_to_cstat, new_cstst};
+
+#[macro_use]
+use crate::last_changes_map_macro;
 
 #[derive(Clone)]
 pub struct InventoryController {
@@ -134,6 +138,7 @@ impl InventoryController {
     }
 
     pub fn add_reader_to_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, CStat> {
+        add_to_global_map!(searched_inventory_uuid, "mod".to_string());
         let inv_read = InventoryReader {
             user_uuid: reader_uuid,
             inventory_uuid: searched_inventory_uuid
