@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::controller::{CStat, new_cstst};
 use crate::{controller::item_preset_controller::ItemPresetController, model::ItemPreset};
 use crate::controller::inventory_controller::InventoryController;
-use super::ttjhe;
 
 
 #[derive(Serialize, Deserialize)]
@@ -43,7 +42,7 @@ pub async fn get_item_preset(params: ItemPresetUUIDParams,  user: super::Authent
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
         return Err(new_cstst(Status::Forbidden, "No access"));
     }
-    ttjhe(ipc_con.get_item_preset(params.item_preset_uuid), Status::InternalServerError)
+    Ok(Json(ipc_con.get_item_preset(params.item_preset_uuid)?))
 }
 
 #[patch("/itemPreset/modify?<params..>")]
@@ -53,13 +52,8 @@ pub async fn modify_item_preset(params: ItemModifyParams,  user: super::Authenti
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
         return Err(new_cstst(Status::Forbidden, "No access"));
     }
-    match ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.description, params.item_type){
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
+    ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.description, params.item_type)?;
+    Ok(Status::NoContent)
 }
 
 #[patch("/itemPreset/delete?<params..>")]
@@ -70,13 +64,8 @@ pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::Auth
         return Err(new_cstst(Status::Forbidden, "No access"));
     }
 
-    match ipc_con.delete_item_preset(params.item_preset_uuid) {
-        Ok(_res) => Ok(Status::NoContent),
-        Err(e) => Err(Custom(
-            Status::InternalServerError,
-            e
-        ))
-    }
+    ipc_con.delete_item_preset(params.item_preset_uuid)?;
+    Ok(Status::NoContent)
 }
 
 #[patch("/itemPreset/all")]

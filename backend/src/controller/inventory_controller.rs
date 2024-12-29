@@ -4,8 +4,8 @@ use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 use rocket::http::Status;
 
-use crate::add_to_global_map;
 use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney};
+use crate::report_change_on_inventory;
 use crate::{dbmod::DbPool, model::Inventory};
 use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset};
 use crate::schema::inventory::dsl::*;
@@ -15,9 +15,6 @@ use crate::schema::inventory_item::dsl::*;
 use crate::schema::item_preset::dsl::*;
 use crate::frontend_model::{InventoryReturn, Item};
 use super::{CStat, format_result_to_cstat, new_cstst};
-
-#[macro_use]
-use crate::last_changes_map_macro;
 
 #[derive(Clone)]
 pub struct InventoryController {
@@ -138,25 +135,26 @@ impl InventoryController {
     }
 
     pub fn add_reader_to_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, CStat> {
-        add_to_global_map!(searched_inventory_uuid, "mod".to_string());
         let inv_read = InventoryReader {
             user_uuid: reader_uuid,
-            inventory_uuid: searched_inventory_uuid
+            inventory_uuid: searched_inventory_uuid.clone()
         };
         let query =  diesel::insert_into(inventory_reader::table)
             .values(inv_read).execute(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Couldn't insert reader")?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         Ok(true)
     }
 
     pub fn add_writer_to_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, CStat> {
         let inv_write = InventoryWriter {
             user_uuid: writer_uuid,
-            inventory_uuid: searched_inventory_uuid
+            inventory_uuid: searched_inventory_uuid.clone()
         };
         let query = diesel::insert_into(inventory_writer::table)
             .values(inv_write).execute(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Couldn't insert writer")?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         Ok(true)
     }
 
@@ -172,6 +170,7 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Couldn't load inventory")?;
         self.add_writer_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
         self.add_reader_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
+        report_change_on_inventory!(new_inv.uuid.clone());
         Ok(new_inv)
     }
 
@@ -188,7 +187,7 @@ impl InventoryController {
             return Err(new_cstst(Status::NotFound, "Preset does not exists"));
         }
         let preset_inventory_pair = InventoryItem {
-            inventory_uuid: searched_inventory_uuid,
+            inventory_uuid: searched_inventory_uuid.clone(),
             item_preset_uuid: preset_uuid,
             dm_note: "".to_string(),
             amount: item_amount
@@ -196,6 +195,7 @@ impl InventoryController {
         let query = diesel::insert_into(inventory_item::table).values(&preset_inventory_pair)
             .execute(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         Ok(preset_inventory_pair)
     }
 
@@ -212,17 +212,19 @@ impl InventoryController {
         let query = diesel::insert_into(item_preset::table).values(&new_item_preset)
             .execute(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
-        self.add_preset_to_inventory(searched_inventory_uuid, new_item_preset.uuid.clone(), item_amount)?;
+        self.add_preset_to_inventory(searched_inventory_uuid.clone(), new_item_preset.uuid.clone(), item_amount)?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         return Ok(new_item_preset);
     }
 
     pub fn edit_item_amount(&self, searched_inventory_uuid: String, searched_item_preset: String, new_amount:i32)
         -> Result<bool, CStat> {
-        let query = diesel::update(inventory_item.find((searched_inventory_uuid, searched_item_preset)))
+        let query = diesel::update(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
             .set(UpdateInventoryItem {
                 amount: Some(new_amount),
                 dm_note: None
             }).execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         match query {
             Err(_e) => Err(new_cstst(Status::InternalServerError, "Failed to insert into table")),
             Ok(_res) => Ok(true)
@@ -231,11 +233,12 @@ impl InventoryController {
 
     pub fn edit_item_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String, new_dm_note:String)
     -> Result<bool, CStat> {
-        let query = diesel::update(inventory_item.find((searched_inventory_uuid, searched_item_preset)))
+        let query = diesel::update(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
             .set(UpdateInventoryItem {
                 amount: None,
                 dm_note: Some(new_dm_note)
             }).execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         match query {
             Ok(_res) => Ok(true),
             Err(_e) => Err(new_cstst(Status::InternalServerError,"Couldn't update item"))
@@ -244,18 +247,20 @@ impl InventoryController {
 
     pub fn delete_item_from_inventory(&self, searched_inventory_uuid: String, searched_item_preset: String)
         -> Result<bool, CStat> {
-        let query = diesel::delete(inventory_item.find((searched_inventory_uuid, searched_item_preset)))
+        let query = diesel::delete(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
             .execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         match query {
                 Ok(_res) => Ok(true),
                 Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't delete Entry"))
             }
     }
     pub fn edit_money_in_inventory(&self, searched_inventory_uuid: String, new_money:i32) -> Result<bool, CStat>{
-        let query = diesel::update(inventory.find(searched_inventory_uuid))
+        let query = diesel::update(inventory.find(searched_inventory_uuid.clone()))
             .set(UpdateInventoryMoney{
             money: new_money
         }).execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         match query {
             Ok(_res) => Ok(true),
             Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't update Money"))
@@ -273,8 +278,9 @@ impl InventoryController {
     }
 
     pub fn remove_reader_from_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, CStat> {
-        let query = diesel::delete(inventory_reader.find((searched_inventory_uuid, reader_uuid)))
+        let query = diesel::delete(inventory_reader.find((searched_inventory_uuid.clone(), reader_uuid)))
             .execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         match query {
             Ok(_res) => Ok(true),
             Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't remove pair"))
@@ -282,8 +288,9 @@ impl InventoryController {
     }
 
     pub fn remove_writer_from_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, CStat> {
-        let query =  diesel::delete(inventory_writer.find((searched_inventory_uuid, writer_uuid)))
+        let query =  diesel::delete(inventory_writer.find((searched_inventory_uuid.clone(), writer_uuid)))
             .execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
         match query {
             Ok(_res) => Ok(true),
             Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't remove pair"))
