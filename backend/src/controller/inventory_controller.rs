@@ -14,7 +14,7 @@ use crate::schema::inventory_writer::dsl::*;
 use crate::schema::inventory_item::dsl::*;
 use crate::schema::item_preset::dsl::*;
 use crate::frontend_model::{InventoryReturn, Item};
-use super::{CStat, format_result_to_cstat, new_cstst};
+use super::{CStat, format_result_to_cstat, new_cstat_from_ref};
 
 #[derive(Clone)]
 pub struct InventoryController {
@@ -184,7 +184,7 @@ impl InventoryController {
     pub fn add_preset_to_inventory(&self, searched_inventory_uuid: String, preset_uuid: String, item_amount: i32)
             -> Result<InventoryItem, CStat> {
         if !self.preset_exists(preset_uuid.clone())? {
-            return Err(new_cstst(Status::NotFound, "Preset does not exists"));
+            return Err(new_cstat_from_ref(Status::NotFound, "Preset does not exists"));
         }
         let preset_inventory_pair = InventoryItem {
             inventory_uuid: searched_inventory_uuid.clone(),
@@ -225,10 +225,8 @@ impl InventoryController {
                 dm_note: None
             }).execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
-        match query {
-            Err(_e) => Err(new_cstst(Status::InternalServerError, "Failed to insert into table")),
-            Ok(_res) => Ok(true)
-        }
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
+        Ok(true)
     }
 
     pub fn edit_item_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String, new_dm_note:String)
@@ -239,10 +237,8 @@ impl InventoryController {
                 dm_note: Some(new_dm_note)
             }).execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
-        match query {
-            Ok(_res) => Ok(true),
-            Err(_e) => Err(new_cstst(Status::InternalServerError,"Couldn't update item"))
-        }
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to update item")?;
+        Ok(true)
     }
 
     pub fn delete_item_from_inventory(&self, searched_inventory_uuid: String, searched_item_preset: String)
@@ -250,10 +246,8 @@ impl InventoryController {
         let query = diesel::delete(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
             .execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
-        match query {
-                Ok(_res) => Ok(true),
-                Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't delete Entry"))
-            }
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to delete Entry")?;
+        Ok(true)
     }
     pub fn edit_money_in_inventory(&self, searched_inventory_uuid: String, new_money:i32) -> Result<bool, CStat>{
         let query = diesel::update(inventory.find(searched_inventory_uuid.clone()))
@@ -261,40 +255,32 @@ impl InventoryController {
             money: new_money
         }).execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
-        match query {
-            Ok(_res) => Ok(true),
-            Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't update Money"))
-        }
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to update money")?;
+        Ok(true)
     }
 
 
     pub fn delete_inventory(&self, searched_inventory_uuid: String) -> Result<bool, CStat> {
         let query =  diesel::delete(inventory.find(searched_inventory_uuid))
             .execute(&mut self.get_conn());
-        match query {
-            Ok(_res) => Ok(true),
-            Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't delete inventory"))
-        }
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to delete inventory")?;
+        Ok(true)
     }
 
     pub fn remove_reader_from_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, CStat> {
         let query = diesel::delete(inventory_reader.find((searched_inventory_uuid.clone(), reader_uuid)))
             .execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
-        match query {
-            Ok(_res) => Ok(true),
-            Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't remove pair"))
-        }
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to remove pair")?;
+        Ok(true)
     }
 
     pub fn remove_writer_from_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, CStat> {
         let query =  diesel::delete(inventory_writer.find((searched_inventory_uuid.clone(), writer_uuid)))
             .execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
-        match query {
-            Ok(_res) => Ok(true),
-            Err(_e) => Err(new_cstst(Status::InternalServerError, "Couldn't remove pair"))
-        }
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to remove pair")?;
+        Ok(true)
     }
 
     pub fn is_creator_of_inventory(&self, searched_inventory_uuid: String, creator_canidate: String) -> Result<bool, CStat> {

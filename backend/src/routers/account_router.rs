@@ -9,7 +9,7 @@ use reqwest::Client;
 use rocket::response::status::Custom;
 
 use crate::controller::account_controller::AccountController;
-use crate::controller::{new_cstst, CStat};
+use crate::controller::CStat;
 use crate::model::User;
 
 
@@ -63,7 +63,7 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<Accou
 
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<DMResponse>, Custom<&'static str>> {
+ -> Result<Json<DMResponse>, CStat> {
     let user_is_dm =  acc_con.user_is_dm(params.account_uuid)?;
     Ok(Json(DMResponse {
         is_dm: user_is_dm

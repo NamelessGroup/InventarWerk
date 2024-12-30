@@ -3,12 +3,10 @@ use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 use crate::controller::account_controller::AccountController;
 use crate::controller::inventory_controller::InventoryController;
-use crate::controller::{CStat, new_cstst};
+use crate::controller::{CStat, new_cstat_from_ref};
 use crate::frontend_model::InventoryReturn;
 use crate::model::ItemPreset;
 
-
-use rocket::response::status::Custom;
 
 
 #[derive(Serialize, Deserialize)]
@@ -85,23 +83,23 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
     inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, CStat> {
     if !acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"))
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
     Ok(Json(inv_con.get_inventory_parsed(params.inventory_uuid.clone(), acc_con.user_is_dm(user.user_id.clone())?)?))
 }
 
 #[put("/inventory?<params..>")]
 pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
-         acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, Custom<&'static str>> {
+         acc_con: &State<AccountController>) -> Result<Json<InventoryReturn>, CStat> {
     let inv = inv_con.insert_inventory(params.name, user.user_id.clone())?;
     get_specific_inventory(InventoryUUIDParams {inventory_uuid: inv.uuid},user, inv_con, acc_con).await
 }
 
 #[put("/inventory/item/addPreset?<params..>")]
 pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, Custom<&'static str>> {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id)? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"))
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
     inv_con.add_preset_to_inventory(params.inventory_uuid, params.preset_uuid, params.amount)?;
     Ok(Status::NoContent)
@@ -109,9 +107,9 @@ pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  us
 
 #[put("/inventory/item/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<ItemPreset>, Custom<&'static str>> {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<ItemPreset>, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"))
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
     Ok(Json(inv_con.add_new_item_to_inventory(params.inventory_uuid, params.name, params.amount, user.user_id)?))
     
@@ -119,9 +117,9 @@ pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  use
 
 #[patch("/inventory/item/edit?<params..>")]
 pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
-        acc_con: &State<AccountController>) -> Result<Status, Custom<&'static str>> {
+        acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"))
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
     inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount)?;
     Ok(Status::NoContent)
@@ -129,9 +127,9 @@ pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, i
 
 #[get("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
-        acc_con: &State<AccountController>) -> Result<Status, Custom<&'static str>> {
+        acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_is_dm(user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"))
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
     inv_con.edit_item_dm_note(params.inventory_uuid, params.item_preset_uuid, params.note)?;
     Ok(Status::NoContent)
@@ -139,9 +137,9 @@ pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedU
 
 #[get("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, Custom<&'static str>> {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"))
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
     inv_con.delete_item_from_inventory(params.inventory_uuid, params.item_preset_uuid)?;
     Ok(Status::NoContent)
@@ -149,9 +147,9 @@ pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::A
 
 #[patch("/inventory/money?<params..>")]
 pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, Custom<&'static str>> {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"))
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
     inv_con.edit_money_in_inventory(params.inventory_uuid, params.amount)?;
     Ok(Status::NoContent)
@@ -161,7 +159,7 @@ pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::Auth
 pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"));
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
     }
     let readers_resolved = params.reader_uuid.unwrap_or("".to_string());
     let readers = readers_resolved.split(',');
@@ -180,7 +178,7 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
 pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"));
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
     }
     let readers_resolved = params.reader_uuid.unwrap_or("".to_string());
     let readers = readers_resolved.split(',');
@@ -197,9 +195,9 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
 
 #[delete("/inventory/delete?<params..>")]
 pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+        inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstst(Status::Forbidden, "Not Authorized"));
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
     }
     inv_con.delete_inventory(params.inventory_uuid)?;
     Ok(Status::NoContent)

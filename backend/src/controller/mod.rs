@@ -8,18 +8,25 @@ use rocket::http::Status;
 use rocket::response::status::Custom;
 
 //custom status
-pub type CStat = Custom<&'static str>;
-pub fn new_cstst(stat: Status, msg: &'static str) -> CStat {
+pub type CStat = Custom<String>;
+pub fn new_cstat(stat: Status, msg: String) -> CStat {
     Custom(
         stat,
         msg
     )
 }
 
+pub fn new_cstat_from_ref(stat: Status, msg: &'static str) -> CStat {
+    Custom(
+        stat,
+        msg.to_string()
+    )
+}
+
 pub fn format_result_to_cstat<T>(result: Result<T, diesel::result::Error>, stat: Status, err_msg: &'static str) -> Result<T, CStat> {
     match result {
         Ok(res) => Ok(res),
-        Err(_e) => Err(new_cstst(stat, err_msg))
+        Err(e) => Err(new_cstat(stat, format!("{}, more precise: {}", err_msg, e.to_string())))
     }
 }
 

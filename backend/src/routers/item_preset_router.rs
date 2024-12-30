@@ -1,6 +1,6 @@
-use rocket::{form::FromForm, http::Status, response::status::Custom, serde::json::Json, State};
+use rocket::{form::FromForm, http::Status, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
-use crate::controller::{CStat, new_cstst};
+use crate::controller::{CStat, new_cstat_from_ref};
 use crate::{controller::item_preset_controller::ItemPresetController, model::ItemPreset};
 use crate::controller::inventory_controller::InventoryController;
 
@@ -40,17 +40,17 @@ pub async fn get_item_preset(params: ItemPresetUUIDParams,  user: super::Authent
     let invs = inv_con.get_all_inventories_ids(user.user_id)?;
     
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
-        return Err(new_cstst(Status::Forbidden, "No access"));
+        return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
     }
     Ok(Json(ipc_con.get_item_preset(params.item_preset_uuid)?))
 }
 
 #[patch("/itemPreset/modify?<params..>")]
 pub async fn modify_item_preset(params: ItemModifyParams,  user: super::AuthenticatedUser,
-        ipc_con: &State<ItemPresetController>, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+        ipc_con: &State<ItemPresetController>, inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     let invs = inv_con.get_all_inventories_ids_with_read_access(user.user_id)?;
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
-        return Err(new_cstst(Status::Forbidden, "No access"));
+        return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
     }
     ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.description, params.item_type)?;
     Ok(Status::NoContent)
@@ -58,10 +58,10 @@ pub async fn modify_item_preset(params: ItemModifyParams,  user: super::Authenti
 
 #[patch("/itemPreset/delete?<params..>")]
 pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::AuthenticatedUser,
-        ipc_con: &State<ItemPresetController>, inv_con: &State<InventoryController>) -> Result<Status, Custom<&'static str>> {
+        ipc_con: &State<ItemPresetController>, inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     let invs = inv_con.get_all_inventories_ids_with_read_access(user.user_id)?;
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
-        return Err(new_cstst(Status::Forbidden, "No access"));
+        return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
     }
 
     ipc_con.delete_item_preset(params.item_preset_uuid)?;
