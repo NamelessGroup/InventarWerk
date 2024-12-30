@@ -223,12 +223,15 @@ Response: {uuid: string, type: 'create'|'patch'|'delete'}[]
 
 # Backend
 ##
-required fields in .env in backend/
+fields in .env in backend/
 ```
 DATABASE_URL=
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 DISCORD_REDIRECT_URI=
+
+ROCKET_ADDRESS=
+ROCKET_PORT=
 ```
 ## Prerequisites
 install [rust](https://www.rust-lang.org/tools/install) 
