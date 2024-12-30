@@ -26,7 +26,6 @@ COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 # Anwendung und Migrations kopieren
 COPY --from=builder /usr/src/app/target/release/backend ./
 COPY --from=builder /usr/src/app/migrations ./migrations
-COPY backend/.env ./
 
 # TODO: Add frontend here
 COPY /backend/static ./static
