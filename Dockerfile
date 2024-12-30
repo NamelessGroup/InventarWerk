@@ -18,7 +18,7 @@ FROM debian:bookworm-slim
 WORKDIR /usr/src/app
 
 # Laufzeitabhängigkeiten installieren
-RUN apt-get update && apt-get install -y libsqlite3-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libsqlite3-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Diesel CLI aus dem Build-Container kopieren
 COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel

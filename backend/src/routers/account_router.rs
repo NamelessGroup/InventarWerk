@@ -87,9 +87,10 @@ pub async fn account_info(user: super::AuthenticatedUser) -> String {
     format!("{}", user.user_id)
 }
 
+
 #[get("/account/oauth/callback?<params..>")]
 pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>)
- -> Result<Redirect, CStat> {
+ -> Result<Redirect, Custom<String>> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");
     let redirect_uri = env::var("DISCORD_REDIRECT_URI").expect("DISCORD_REDIRECT_URI not set");
@@ -104,16 +105,18 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         ("redirect_uri", redirect_uri.as_str()),
     ];
 
+    println!("{:?}", params);
+
     // Austausch des Authorization Codes gegen einen Token
     let token_response = client
         .post(token_url)
         .form(&params)
         .send()
         .await
-        .map_err(|_| new_cstst(Status::InternalServerError, "Tokenrequest failed"))?
+        .map_err(|err| {Custom(Status::InternalServerError, err.to_string())})?
         .json::<TokenResponse>()
         .await
-        .map_err(|_| new_cstst(Status::InternalServerError, "Conversion to Tokenresponse failed"))?;
+        .map_err(|_| Custom(Status::InternalServerError, "Conversion to Tokenresponse failed".to_string()))?;
 
     // Abrufen der Benutzerinformationen mit dem Access Token
     let user_response = client
@@ -121,10 +124,10 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         .header("Authorization", format!("Bearer {}", token_response.access_token))
         .send()
         .await
-        .map_err(|_| new_cstst(Status::InternalServerError, "Userrequest failed"))?
+        .map_err(|_| Custom(Status::InternalServerError, "Userrequest failed".to_string()))?
         .json::<DiscordUser>()
         .await
-        .map_err(|_| new_cstst(Status::InternalServerError, "Conversion to DiscordUser failed"))?;
+        .map_err(|_| Custom(Status::InternalServerError, "Conversion to DiscordUser failed".to_string()))?;
 
     // revoke refresh token
     let revoke_url = "https://discord.com/api/oauth2/token/revoke";
@@ -140,11 +143,11 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         .form(&params)
         .send()
         .await
-        .map_err(|_| new_cstst(Status::InternalServerError, "Revoke refresh token failed"))?;
+        .map_err(|_| Custom(Status::InternalServerError, "Revoke refresh token failed".to_string()))?;
 
-    let has_user = acc_con.has_user(user_response.id.clone())?;
+    let has_user = acc_con.has_user(user_response.id.clone()).unwrap_or_default();
     if !has_user {
-        let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone())?;
+        let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone());
     }
     // Speichern eines Cookies als Beispiel
     cookies.add_private(Cookie::new("user_id", user_response.id.clone()));
