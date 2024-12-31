@@ -12,7 +12,7 @@ use crate::schema::user::dsl::*;
 use crate::schema::inventory_reader::dsl::*;
 use crate::schema::inventory_writer::dsl::*;
 
-use super::{CStat, format_result_to_cstat};
+use super::{format_result_to_cstat, new_cstat_from_ref, CStat};
 
 #[derive(Clone)]
 pub struct AccountController {
@@ -38,6 +38,9 @@ impl AccountController {
     }
 
     pub fn add_user(&self, id:String, user_name: String) -> Result<User, CStat> {
+        if self.has_user(id.clone())? {
+            return Err(new_cstat_from_ref(Status::BadRequest, "User already exists"))
+        }
         let db_has_users = self.has_users()?;
 
         let new_user = User {
@@ -58,8 +61,11 @@ impl AccountController {
     }
 
     fn get_account(&self, id: String) -> Result<User, CStat> {
+        if !self.has_user(id.clone())? {
+            return Err(new_cstat_from_ref(Status::BadRequest, "User does not exists"))
+        }
         let queried_user = user.find(id).get_result::<User>(&mut self.get_conn());
-        format_result_to_cstat(queried_user, Status::InternalServerError, "Couldn't find user with this id!")
+        format_result_to_cstat(queried_user, Status::InternalServerError, "Failed to load user in get_account")
     }
 
     pub fn user_is_dm(&self, id: String) -> Result<bool, CStat> {
