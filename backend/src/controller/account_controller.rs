@@ -65,7 +65,7 @@ impl AccountController {
             return Err(new_cstat_from_ref(Status::BadRequest, "User does not exists"))
         }
         let queried_user = user.find(id).get_result::<User>(&mut self.get_conn());
-        format_result_to_cstat(queried_user, Status::InternalServerError, "Failed to load user in get_account")
+        format_result_to_cstat(queried_user, Status::InternalServerError, "Failed to load user")
     }
 
     pub fn user_is_dm(&self, id: String) -> Result<bool, CStat> {

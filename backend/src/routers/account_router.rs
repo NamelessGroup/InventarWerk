@@ -105,8 +105,6 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         ("redirect_uri", redirect_uri.as_str()),
     ];
 
-    println!("{:?}", params);
-
     // Austausch des Authorization Codes gegen einen Token
     let token_response = client
         .post(token_url)
