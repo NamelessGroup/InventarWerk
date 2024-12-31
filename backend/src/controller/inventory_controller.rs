@@ -7,12 +7,13 @@ use rocket::http::Status;
 use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney};
 use crate::report_change_on_inventory;
 use crate::{dbmod::DbPool, model::Inventory};
-use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset};
+use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset, user};
 use crate::schema::inventory::dsl::*;
 use crate::schema::inventory_reader::dsl::*;
 use crate::schema::inventory_writer::dsl::*;
 use crate::schema::inventory_item::dsl::*;
 use crate::schema::item_preset::dsl::*;
+use crate::schema::user::dsl::*;
 use crate::frontend_model::{InventoryReturn, Item};
 use super::{CStat, format_result_to_cstat, new_cstat_from_ref};
 
@@ -158,6 +159,11 @@ impl InventoryController {
         Ok(true)
     }
 
+    fn get_dm_accounts(&self) -> Result<Vec<String>, CStat> {
+        let accs = user.filter(user::dm.eq(1)).select(user::uuid).load::<String>(&mut self.get_conn());
+        format_result_to_cstat(accs, Status::InternalServerError, "Failed to load users")
+    }
+
     pub fn insert_inventory(&self, inventory_name: String, creator_uuid: String) -> Result<Inventory, CStat> {
         let new_inv = Inventory {
             uuid: super::generate_uuid_v4(),
@@ -170,6 +176,9 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Failed to insert inventory")?;
         self.add_writer_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
         self.add_reader_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
+        for a in self.get_dm_accounts()? {
+            self.add_reader_to_inventory(new_inv.owner_uuid.clone(), a.clone())?;
+        }
         report_change_on_inventory!(new_inv.uuid.clone());
         Ok(new_inv)
     }
