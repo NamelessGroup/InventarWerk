@@ -28,12 +28,12 @@ impl ItemPresetController {
 
     pub fn get_item_preset(&self, searched_item_preset_uuid: String) -> Result<ItemPreset, CStat> {
         let query = item_preset.find(searched_item_preset_uuid).get_result::<ItemPreset>(&mut self.get_conn());
-        format_result_to_cstat(query, Status::InternalServerError, "Coudn't query preset")
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to query preset")
     }
 
     pub fn delete_item_preset(&self, searched_item_preset_uuid: String) -> Result<bool, CStat> {
         let query = diesel::delete(item_preset.find(searched_item_preset_uuid.clone())).execute(&mut self.get_conn());
-        format_result_to_cstat(query, Status::InternalServerError, "Coudn't update preset")?;
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to update preset")?;
         self.report_change_on_item_preset(searched_item_preset_uuid)?;
         Ok(true)
     }
@@ -48,7 +48,7 @@ impl ItemPresetController {
         };
         let query = diesel::update(item_preset.find(searched_item_preset_uuid.clone())).set(item_preset_changes)
             .execute(&mut self.get_conn());
-        format_result_to_cstat(query, Status::InternalServerError, "Coudn't update preset")?;
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to update preset")?;
         self.report_change_on_item_preset(searched_item_preset_uuid)?;
         Ok(true)
     }
@@ -59,7 +59,7 @@ impl ItemPresetController {
             .inner_join(item_preset)
             .select((uuid, name, price, description, creator, item_type))
             .load::<ItemPreset>(&mut self.get_conn());
-        format_result_to_cstat(query, Status::InternalServerError, "Couldn't load tables inventory_item and item_preset")
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load tables inventory_item and item_preset")
     }
 
     fn report_change_on_item_preset(&self, searched_item_preset_uuid: String) -> Result<bool, CStat> {
