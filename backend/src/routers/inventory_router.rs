@@ -176,7 +176,7 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
 
 #[patch("/inventory/removeShare?<params..>")]
 pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>) -> Result<Status, CStat> {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
     }
@@ -185,9 +185,12 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
     let writers_resolved = params.writer_uuid.unwrap_or("".to_string());
     let writers = writers_resolved.split(',');
     for reader in readers {
+        if inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {continue;}
         let _ = inv_con.remove_reader_from_inventory(params.inventory_uuid.clone(), reader.to_string());
     }
     for writer in writers {
+        if inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {continue;}
+        if acc_con.user_is_dm(user.user_id.clone())? {continue;}
         let _ = inv_con.remove_writer_from_inventory(params.inventory_uuid.clone(), writer.to_string());
     }
     Ok(Status::NoContent)
