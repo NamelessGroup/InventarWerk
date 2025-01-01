@@ -13,6 +13,18 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && r
 COPY ./backend/ ./
 RUN cargo build --release
 
+# 2. Frontend Build Stage
+#FROM node:22 AS frontend-builder
+#WORKDIR /frontend
+
+# Copy Frontend source code
+#COPY frontend/package.json /frontend/
+#RUN npm install
+
+#COPY frontend/ /frontend/
+#RUN npm run build
+
+
 # Runtime-Stage
 FROM debian:bookworm-slim
 WORKDIR /usr/src/app
@@ -27,9 +39,9 @@ COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 COPY --from=builder /usr/src/app/target/release/backend ./
 COPY --from=builder /usr/src/app/migrations ./migrations
 
-# TODO: Add frontend here
-COPY /backend/static ./static
+COPY ./backend/static ./static
 
+#COPY --from=frontend-builder /frontend/dist ./static
 # Startskript hinzufügen
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
