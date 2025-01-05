@@ -1,9 +1,8 @@
 use rocket::request::Outcome;
-use rocket::response::status::Custom;
-use rocket::serde::json::Json;
 use rocket::{request::FromRequest, Route};
 use rocket::Request;
 use rocket::http::Status;
+
 
 pub mod account_router;
 pub mod inventory_router;
@@ -16,7 +15,7 @@ use last_changes_router::*;
 
 pub fn get_inventory_routes() -> Vec<Route> {
     routes![get_all_inventories, get_specific_inventory, create_inventory, add_preset_to_inventory, add_new_item_to_inventory,
-        modify_money, share_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
+        modify_money, add_share_to_inventory, remove_share_from_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
 }
 
 pub fn get_account_routes() -> Vec<Route> {
@@ -31,9 +30,6 @@ pub fn get_item_preset_routes() -> Vec<Route> {
     routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_presets]
 }
 
-pub fn get_note_routes() -> Vec<Route> {
-    routes![add_note_to_item]
-}
 
 pub struct AuthenticatedUser {
     pub user_id: String
@@ -51,16 +47,5 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
         } else {
             Outcome::Error((Status::Unauthorized, ()))
         }
-    }
-}
-
-pub fn transform_to_http_error<T>(transform_result: Result<T, &'static str>, status: Status)
-    -> Result<Json<T>, Custom<&'static str>> {
-    match transform_result {
-        Ok(res) => Ok(Json(res)),
-        Err(e) => Err(Custom (
-            status,
-            e
-        ))
     }
 }

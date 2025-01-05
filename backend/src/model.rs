@@ -66,3 +66,25 @@ pub struct InventoryItem {
     pub dm_note: String,
     pub amount: i32,
 }
+
+#[derive(AsChangeset)]
+#[diesel(table_name = inventory_item)]
+pub struct UpdateInventoryItem {
+    pub dm_note: Option<String>,
+    pub amount: Option<i32>,
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = inventory)]
+pub struct UpdateInventoryMoney {
+    pub money: i32
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = item_preset)]
+pub struct UpdateItemPreset {
+    pub name: Option<String>,
+    pub price: Option<i32>,
+    pub description: Option<String>,
+    pub item_type: Option<String>,
+}

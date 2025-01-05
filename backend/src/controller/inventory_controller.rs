@@ -2,10 +2,12 @@ use diesel::dsl::exists;
 use diesel::r2d2::ConnectionManager;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
+use rocket::http::Status;
 
-use crate::model::{InventoryItem, ItemPreset, User};
+use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney};
+use crate::report_change_on_inventory;
 use crate::{dbmod::DbPool, model::Inventory};
-use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer};
+use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset, user};
 use crate::schema::inventory::dsl::*;
 use crate::schema::inventory_reader::dsl::*;
 use crate::schema::inventory_writer::dsl::*;
@@ -13,7 +15,7 @@ use crate::schema::inventory_item::dsl::*;
 use crate::schema::item_preset::dsl::*;
 use crate::schema::user::dsl::*;
 use crate::frontend_model::{InventoryReturn, Item};
-use super::formatResultToCustomErr;
+use super::{CStat, format_result_to_cstat, new_cstat_from_ref};
 
 #[derive(Clone)]
 pub struct InventoryController {
@@ -24,89 +26,80 @@ impl InventoryController {
     pub fn new(db: DbPool) -> Self {
         Self { db }
     }
-
-    // TODO: Remove duplicate
-    fn user_is_dm(&self, id: String) -> Result<bool, &'static str> {
-        let acc = user.find(id).get_result::<User>(&mut self.get_conn());
-        match acc {
-            Ok(res) => Ok(res.dm == 1),
-            Err(_e) => Err("Could not load user")
-        }
-    }
-
+    
     fn get_conn(&self) -> PooledConnection<ConnectionManager<diesel::SqliteConnection>> {
         self.db.get().expect("Failed to get connection from Pool")
     }
 
-    fn get_all_inventories(&self, inventory_user_uuid: String) -> Result<Vec<Inventory>, &'static str> {
-        formatResultToCustomErr( inventory
+    pub fn get_all_inventories_ids(&self, searcher_uuid: String) -> Result<Vec<String>, CStat> {
+        let query = inventory_reader.filter(inventory_reader::user_uuid.eq(searcher_uuid))
+            .select(inventory_reader::inventory_uuid).load::<String>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load reader table")
+    }
+
+    pub fn get_all_inventories_ids_with_read_access(&self, searcher_uuid: String) -> Result<Vec<String>, CStat> {
+        let query = inventory_writer.filter(inventory_writer::user_uuid.eq(searcher_uuid))
+            .select(inventory_writer::inventory_uuid).load::<String>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load reader table")
+    }
+
+    fn get_all_inventories(&self, searcher_uuid: String) -> Result<Vec<Inventory>, CStat> {
+        let query = inventory
             .inner_join(inventory_reader.on(inventory_reader::inventory_uuid.eq(inventory::dsl::uuid)))
-            .filter(inventory_reader::user_uuid.eq(inventory_user_uuid))
+            .filter(inventory_reader::user_uuid.eq(searcher_uuid))
             .select((inventory::dsl::uuid, owner_uuid, money, inventory::dsl::name))
-            .load::<Inventory>(&mut self.get_conn()), "Couldn't load any Inventory"
-            )
+            .load::<Inventory>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load any Inventory")
     }
 
-    fn get_readers_for_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<String>, &'static str> {
-        formatResultToCustomErr( inventory_reader.filter(inventory_reader::inventory_uuid.eq(searched_inventory_uuid))
-            .select(inventory_reader::dsl::user_uuid)
-            .load::<String>(&mut self.get_conn()) ,"Couldn't load inventory readers")
+    fn get_readers_for_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<String>, CStat> {
+        let query = inventory_reader.filter(inventory_reader::inventory_uuid.eq(searched_inventory_uuid))
+        .select(inventory_reader::dsl::user_uuid)
+        .load::<String>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load inventory readers")
     }
 
-    fn get_writers_for_inventories(&self, searched_inventory_uuid: String) -> Result<Vec<String>, &'static str> {
-        formatResultToCustomErr(inventory_writer.filter(inventory_writer::inventory_uuid.eq(searched_inventory_uuid))
-            .select(inventory_writer::dsl::user_uuid)
-            .load::<String>(&mut self.get_conn()) ,"Couldn't load inventory writers")
+    fn get_writers_for_inventories(&self, searched_inventory_uuid: String) -> Result<Vec<String>, CStat> {
+        let query = inventory_writer.filter(inventory_writer::inventory_uuid.eq(searched_inventory_uuid))
+        .select(inventory_writer::dsl::user_uuid)
+        .load::<String>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load inventory writers")
     }
 
-    fn get_items_in_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<(String, i32)>, &'static str> {
-        formatResultToCustomErr(inventory_item.filter(inventory_item::inventory_uuid.eq(searched_inventory_uuid))
-            .select((inventory_item::dsl::item_preset_uuid, inventory_item::dsl::amount))
-            .load::<(String, i32)>(&mut self.get_conn()), "Couldn't load items in inventory")
+    fn get_items_in_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<(String, i32)>, CStat> {
+        let query = inventory_item.filter(inventory_item::inventory_uuid.eq(searched_inventory_uuid))
+        .select((inventory_item::dsl::item_preset_uuid, inventory_item::dsl::amount))
+        .load::<(String, i32)>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load items in inventory")
     }
 
-    fn get_item_preset(&self, searched_item_preset: String) -> Result<ItemPreset, &'static str>{
-        formatResultToCustomErr( item_preset.find(searched_item_preset).get_result(&mut self.get_conn()),
-            "Couldn't load item preset")
+    fn get_item_preset(&self, searched_item_preset: String) -> Result<ItemPreset, CStat>{
+        let query = item_preset.find(searched_item_preset).get_result(&mut self.get_conn());
+        format_result_to_cstat( query, Status::InternalServerError, "Failed to load item preset")
     }
 
-    fn get_inventory(&self, searched_inventory_uuid: String) -> Result<Inventory, &'static str> {
-        formatResultToCustomErr(inventory.find(searched_inventory_uuid).get_result(&mut self.get_conn()),
-            "Couldn't load requested Inventory")
+    fn get_inventory(&self, searched_inventory_uuid: String) -> Result<Inventory, CStat> {
+        let query = inventory.find(searched_inventory_uuid).get_result(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load requested Inventory")
     }
 
-    fn user_has_access_to_inventory(&self, searched_inventory_uuid: String, searcher_uuid: String) -> Result<bool, &'static str> {
-        formatResultToCustomErr( 
-            diesel::select(exists(
-                inventory_reader.filter(inventory_reader::dsl::inventory_uuid.eq(searched_inventory_uuid))
-                    .filter(inventory_reader::dsl::user_uuid.eq(searcher_uuid))))
-                .get_result::<bool>(&mut self.get_conn()), "Failed to load any result")
+    pub fn item_exits(&self, searched_inventory_uuid: String, searched_item_preset: String) -> Result<bool, CStat> {
+        let query = diesel::select(exists(
+            inventory_item.filter(item_preset_uuid.eq(searched_item_preset))
+            .filter(inventory_item::inventory_uuid.eq(searched_inventory_uuid))))
+            .get_result::<bool>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load inventory item table")
     }
 
-    pub fn get_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String) -> Result<String, &'static str> {
-        match inventory_item.find((searched_inventory_uuid, searched_item_preset))
-        .get_result::<InventoryItem>(&mut self.get_conn()) {
-            Ok(res) => Ok(res.dm_note),
-            Err(_e) => Err("Couldn't load dm Note")
-        }
+    pub fn get_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String) -> Result<String, CStat> {
+        let query = inventory_item.find((searched_inventory_uuid, searched_item_preset))
+        .get_result::<InventoryItem>(&mut self.get_conn()); 
+        let result = format_result_to_cstat(query, Status::InternalServerError, "Failed to load dm Note")?;
+        Ok(result.dm_note)
     }
 
-    pub fn get_inventory_parsed(&self, searcher_uuid: String, searched_inventory_uuid: String) -> Result<InventoryReturn, &'static str> {
-        let access = match self.user_has_access_to_inventory(searched_inventory_uuid.clone(), searcher_uuid.clone()) {
-            Ok(res) => res,
-            Err(e) => return Err(e)
-        };
-        if !access {
-            return Err("Not authorized");
-        }
-        let user_is_dm = match self.user_is_dm(searcher_uuid) {
-            Ok(res) => res,
-            Err(e) => return Err(e)
-        };
-        let inv = match self.get_inventory(searched_inventory_uuid) {
-            Ok(res) => res,
-            Err(e) => return Err(e)
-        };
+    pub fn get_inventory_parsed(&self, searched_inventory_uuid: String, is_dm: bool) -> Result<InventoryReturn, CStat> {
+        let inv = self.get_inventory(searched_inventory_uuid.clone())?;
         let mut inventory_parsed = InventoryReturn{
             uuid: inv.uuid.clone(),
             name: inv.name.clone(),
@@ -126,21 +119,179 @@ impl InventoryController {
                 name: preset.name.clone(),
                 presetReference: item.0.clone(),
                 amount: item.1,
-                dmNote: if user_is_dm {
-                    self.get_dm_note(inventory_parsed.uuid.clone(), item.0.clone())?}
-                        else {"".to_string()},
+                dmNote: if is_dm {self.get_dm_note(searched_inventory_uuid.clone(), item.0.clone())?} else {"".to_string()} ,
                 description: preset.description.clone()
             });
         }
         Ok(inventory_parsed)
     }
 
-    pub fn get_inventories_parsed(&self, searcher_uuid: String) -> Result<Vec<InventoryReturn>, &'static str> {
+    pub fn get_inventories_parsed(&self, searcher_uuid: String, is_dm: bool) -> Result<Vec<InventoryReturn>, CStat> {
         let inv = self.get_all_inventories(searcher_uuid.clone())?;
         let mut inventories: Vec<InventoryReturn> = Vec::new();
         for i in inv.iter() {
-            inventories.push(self.get_inventory_parsed(searcher_uuid.clone(), i.uuid.clone())?);
+            inventories.push(self.get_inventory_parsed(i.uuid.clone(), is_dm)?);
         }
         Ok(inventories)
+    }
+
+    pub fn add_reader_to_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, CStat> {
+        let inv_read = InventoryReader {
+            user_uuid: reader_uuid,
+            inventory_uuid: searched_inventory_uuid.clone()
+        };
+        let query =  diesel::insert_into(inventory_reader::table)
+            .values(inv_read).execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert reader")?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        Ok(true)
+    }
+
+    pub fn add_writer_to_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, CStat> {
+        let inv_write = InventoryWriter {
+            user_uuid: writer_uuid,
+            inventory_uuid: searched_inventory_uuid.clone()
+        };
+        let query = diesel::insert_into(inventory_writer::table)
+            .values(inv_write).execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert writer")?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        Ok(true)
+    }
+
+    fn get_dm_accounts(&self) -> Result<Vec<String>, CStat> {
+        let accs = user.filter(user::dm.eq(1)).select(user::uuid).load::<String>(&mut self.get_conn());
+        format_result_to_cstat(accs, Status::InternalServerError, "Failed to load users")
+    }
+
+    pub fn insert_inventory(&self, inventory_name: String, creator_uuid: String) -> Result<Inventory, CStat> {
+        let new_inv = Inventory {
+            uuid: super::generate_uuid_v4(),
+            owner_uuid: creator_uuid.clone(),
+            money: 0,
+            name: inventory_name
+        };
+        let query = diesel::insert_into(inventory::table).values(&new_inv)
+            .execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert inventory")?;
+        self.add_writer_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
+        self.add_reader_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
+        for a in self.get_dm_accounts()? {
+            self.add_reader_to_inventory(new_inv.owner_uuid.clone(), a.clone())?;
+        }
+        report_change_on_inventory!(new_inv.uuid.clone());
+        Ok(new_inv)
+    }
+
+    fn preset_exists(&self, preset_uuid: String) -> Result<bool, CStat>{
+        let query = diesel::select(exists(
+            item_preset.filter(item_preset::dsl::uuid.eq(preset_uuid)))).get_result(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to load presets")
+    }
+
+    pub fn add_preset_to_inventory(&self, searched_inventory_uuid: String, preset_uuid: String, item_amount: i32)
+            -> Result<InventoryItem, CStat> {
+        if !self.preset_exists(preset_uuid.clone())? {
+            return Err(new_cstat_from_ref(Status::NotFound, "Preset does not exists"));
+        }
+        let preset_inventory_pair = InventoryItem {
+            inventory_uuid: searched_inventory_uuid.clone(),
+            item_preset_uuid: preset_uuid,
+            dm_note: "".to_string(),
+            amount: item_amount
+        };
+        let query = diesel::insert_into(inventory_item::table).values(&preset_inventory_pair)
+            .execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        Ok(preset_inventory_pair)
+    }
+
+    pub fn add_new_item_to_inventory(&self, searched_inventory_uuid: String,
+            preset_name: String, item_amount: i32, creator_uuid: String) -> Result<ItemPreset, CStat> {
+        let new_item_preset = ItemPreset {
+            name: preset_name,
+            uuid: super::generate_uuid_v4(),
+            price: 0,
+            description: "".to_string(),
+            creator: creator_uuid,
+            item_type: "".to_string()
+        };
+        let query = diesel::insert_into(item_preset::table).values(&new_item_preset)
+            .execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
+        self.add_preset_to_inventory(searched_inventory_uuid.clone(), new_item_preset.uuid.clone(), item_amount)?;
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        return Ok(new_item_preset);
+    }
+
+    pub fn edit_item_amount(&self, searched_inventory_uuid: String, searched_item_preset: String, new_amount:i32)
+        -> Result<bool, CStat> {
+        let query = diesel::update(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
+            .set(UpdateInventoryItem {
+                amount: Some(new_amount),
+                dm_note: None
+            }).execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
+        Ok(true)
+    }
+
+    pub fn edit_item_dm_note(&self, searched_inventory_uuid: String, searched_item_preset: String, new_dm_note:String)
+    -> Result<bool, CStat> {
+        let query = diesel::update(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
+            .set(UpdateInventoryItem {
+                amount: None,
+                dm_note: Some(new_dm_note)
+            }).execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to update item")?;
+        Ok(true)
+    }
+
+    pub fn delete_item_from_inventory(&self, searched_inventory_uuid: String, searched_item_preset: String)
+        -> Result<bool, CStat> {
+        let query = diesel::delete(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
+            .execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to delete Entry")?;
+        Ok(true)
+    }
+    pub fn edit_money_in_inventory(&self, searched_inventory_uuid: String, new_money:i32) -> Result<bool, CStat>{
+        let query = diesel::update(inventory.find(searched_inventory_uuid.clone()))
+            .set(UpdateInventoryMoney{
+            money: new_money
+        }).execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to update money")?;
+        Ok(true)
+    }
+
+
+    pub fn delete_inventory(&self, searched_inventory_uuid: String) -> Result<bool, CStat> {
+        let query =  diesel::delete(inventory.find(searched_inventory_uuid))
+            .execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to delete inventory")?;
+        Ok(true)
+    }
+
+    pub fn remove_reader_from_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, CStat> {
+        let query = diesel::delete(inventory_reader.find((searched_inventory_uuid.clone(), reader_uuid)))
+            .execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to remove pair")?;
+        Ok(true)
+    }
+
+    pub fn remove_writer_from_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, CStat> {
+        let query =  diesel::delete(inventory_writer.find((searched_inventory_uuid.clone(), writer_uuid)))
+            .execute(&mut self.get_conn());
+        report_change_on_inventory!(searched_inventory_uuid.clone());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to remove pair")?;
+        Ok(true)
+    }
+
+    pub fn is_creator_of_inventory(&self, searched_inventory_uuid: String, creator_canidate: String) -> Result<bool, CStat> {
+        Ok(self.get_inventory(searched_inventory_uuid)?.owner_uuid == creator_canidate)
     }
 }
