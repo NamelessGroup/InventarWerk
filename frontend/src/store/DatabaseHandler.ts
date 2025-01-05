@@ -3,6 +3,7 @@ import type { Inventory, DBInventory } from '@/model/Inventory'
 import { breakDownMoney, compactMoney } from '@/utils/moneyMath'
 import axios, { type AxiosResponse } from 'axios'
 import { store } from '.'
+import type { ItemPreset } from '@/model/ItemPreset'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
@@ -74,11 +75,36 @@ export class DatabaseHandler {
   }
 
   public async addItemByPreset(inventoryUuid: string, presetUuid: string, amount: number) {
-    
+    // Check if the inventory exists in the store
+    const inventory = store().inventories[inventoryUuid];
+    if (!inventory) return false
+
+    // Fetch preset details from the server
+    const presetData = await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], { 'preset_uuid': presetUuid });
+    if (!presetData) return false
+
+    // Update the inventory in the backend
+    await this.put<undefined>([DatabaseHandler.INVENTORY_END_POINT], { 'inventory_uuid': inventoryUuid, 'preset_uuid': presetUuid, 'amount': String(amount)});
+
+    // Add the item to the inventory
+    inventory.items.push({
+      name: presetData.name,
+      uuid: presetUuid,
+      amount,
+      dmNote: "",
+      description: presetData.description,
+      price: presetData.price,
+      creator: presetData.creator,
+      itemType: presetData.itemType
+    });
+
+    return true; 
   }
 
   public async getAllPresets() {
-
+    const presets = await this.get<ItemPreset[]>([DatabaseHandler.ITEM_END_POINT, "all"]);
+    if (!presets) return false
+    return presets
   }
 
   private setInventoryInStore(inventory: DBInventory) {
@@ -166,5 +192,3 @@ type URLParts = string[]
 type QueryParameter = Record<string, string>
 
 type LastUpdateResponse = { uuid: string; type: 'create' | 'patch' | 'delete' }[]
-
-type SimplePresetData = { name: string, type: string }
