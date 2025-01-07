@@ -22,6 +22,11 @@ pub struct AccountResponse {
     accounts: Vec<User>
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct LoggedInResponse {
+    logged_in: bool
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenResponse {
     access_token: String,
@@ -85,6 +90,19 @@ pub async fn login() -> Redirect {
 #[get("/account/info")]
 pub async fn account_info(user: super::AuthenticatedUser) -> String {
     format!("{}", user.user_id)
+}
+
+#[get("/account/isLoggedIn")]
+pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
+    if let Some(_cookie) = cookies.get_private("user_id") {
+        return Json(LoggedInResponse {
+            logged_in: true
+        })
+    } else {
+        return Json(LoggedInResponse {
+            logged_in: false
+        })
+    }
 }
 
 
