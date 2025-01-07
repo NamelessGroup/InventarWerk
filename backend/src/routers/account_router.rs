@@ -105,6 +105,15 @@ pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     }
 }
 
+#[get("/account/logut")]
+pub async fn logout(cookies: &CookieJar<'_>) -> Status {
+    if let Some(_cookie) = cookies.get_private("user_id") {
+        cookies.remove_private("user_id");
+        Status::NoContent
+    } else {
+        Status::BadRequest
+    }
+}
 
 #[get("/account/oauth/callback?<params..>")]
 pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>)
