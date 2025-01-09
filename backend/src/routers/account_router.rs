@@ -4,7 +4,7 @@ use rocket::State;
 use std::env;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
-use rocket::http::{Cookie, CookieJar, Status};
+use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use reqwest::Client;
 use rocket::response::status::Custom;
 
@@ -175,7 +175,16 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone());
     }
     // Speichern eines Cookies als Beispiel
-    cookies.add_private(Cookie::new("user_id", user_response.id.clone()));
+    let mut new_cookie = Cookie::build(("user_id", user_response.id.clone()));
 
-    Ok(Redirect::to(uri!("http://localhost:5173")))
+    #[cfg(feature = "dev")] {
+        new_cookie = new_cookie.same_site(SameSite::None).secure(true);
+    }
+
+    cookies.add_private(new_cookie);
+
+    #[cfg(feature = "dev")] {
+        return Ok(Redirect::to(uri!("http://localhost:5173")));
+    }
+    Ok(Redirect::to(uri!("/")))
 }
