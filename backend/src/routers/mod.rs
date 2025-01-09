@@ -19,7 +19,7 @@ pub fn get_inventory_routes() -> Vec<Route> {
 }
 
 pub fn get_account_routes() -> Vec<Route> {
-    routes![get_accounts, is_account_dm, callback, login, account_info, user_logged_in, logout]
+    routes![get_accounts, is_account_dm, callback, login, account_info, user_logged_in, logout, redirect]
 }
 
 pub fn get_last_changes_routes() -> Vec<Route> {

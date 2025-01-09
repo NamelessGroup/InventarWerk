@@ -18,6 +18,7 @@ use controller::inventory_controller::InventoryController;
 use dbmod::DbPool;
 use dbmod::establish_connection;
 use rocket::config::Config;
+use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 
 #[rocket::main]
 async fn main() {
@@ -35,8 +36,23 @@ async fn main() {
     let figment = Config::figment().merge(("secret_key", secret_key));
     let config = Config::from(figment);
 
+    // Configure CORS
+    let cors = CorsOptions {
+        allowed_origins: AllowedOrigins::all(), // Allow all origins, or customize this
+        allowed_methods: vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+            .into_iter()
+            .map(|method| method.parse().unwrap())
+            .collect(),
+        allowed_headers: AllowedHeaders::all(), // Allow all headers, or customize this
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()
+    .expect("Error configuring CORS");
+
     let _r = rocket::build()
         .configure(config)
+        .attach(cors) // Attach the CORS fairing
         .manage(inv_cont)
         .manage(acc_con)
         .manage(ip_con)

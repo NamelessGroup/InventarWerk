@@ -7,7 +7,7 @@ import type { ItemPreset } from '@/model/ItemPreset'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
-  private static BASE_URL = 'localhost:8080/'
+  public static readonly BASE_URL = 'http://localhost:8000/'
   private static INVENTORY_END_POINT = 'inventar'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'
@@ -15,14 +15,26 @@ export class DatabaseHandler {
   private lastFetch = 0
 
   private constructor() {
-    this.fetchUpdates()
+    //this.fetchUpdates()
   }
 
-  public getInstance() {
+  public static getInstance() {
     if (DatabaseHandler.INSTANCE == undefined) {
       DatabaseHandler.INSTANCE = new DatabaseHandler()
     }
     return DatabaseHandler.INSTANCE
+  }
+
+  public async isLoggedIn() {
+    const response = await this.get<{ logged_in: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isLoggedIn'])
+    if (!response) {
+      return false
+    }
+    return response.logged_in
+  }
+
+  public getLogInUrl() {
+    return DatabaseHandler.BASE_URL + DatabaseHandler.ACCOUNT_END_POINT + '/login'
   }
 
   public async fetchUpdates() {
@@ -123,6 +135,7 @@ export class DatabaseHandler {
   private async get<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
     const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params })
+    console.log(response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {

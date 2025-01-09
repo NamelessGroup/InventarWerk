@@ -177,5 +177,5 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
     // Speichern eines Cookies als Beispiel
     cookies.add_private(Cookie::new("user_id", user_response.id.clone()));
 
-    Ok(Redirect::to(uri!("/")))
+    Ok(Redirect::to(uri!("http://localhost:5173")))
 }

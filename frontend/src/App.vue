@@ -1,5 +1,6 @@
 <template>
   <div class="h-screen w-screen bg-slate-950 text-white">
+    <div v-if="isLoggedIn" class="h-full w-full">
     <div class="flex h-12 w-full items-center justify-end space-x-5 bg-fuchsia-950 px-2">
       <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900">
         <FontAwesomeIcon :icon="faGears" />
@@ -18,6 +19,8 @@
     </div>
   </div>
   <ErrorDisplay class="absolute z-20 bottom-0 w-screen" />
+  </div>
+  
 </template>
 
 <script setup lang="ts">
@@ -26,4 +29,15 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faGears, faPlus, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { store } from './store';
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue';
+import { ref } from 'vue';
+import { DatabaseHandler } from './store/DatabaseHandler';
+
+const isLoggedIn = ref(false)
+DatabaseHandler.getInstance().isLoggedIn().then((res) => {
+  isLoggedIn.value = res
+  console.log(res)
+  if (!res) {
+    //window.location.href = DatabaseHandler.getInstance().getLogInUrl()
+  }
+})
 </script>
