@@ -14,15 +14,15 @@ COPY ./backend/ ./
 RUN cargo build --release
 
 # 2. Frontend Build Stage
-#FROM node:22 AS frontend-builder
-#WORKDIR /frontend
+FROM node:22 AS frontend-builder
+WORKDIR /frontend
 
-# Copy Frontend source code
-#COPY frontend/package.json /frontend/
-#RUN npm install
+#Copy Frontend source code
+COPY frontend/package.json /frontend/
+RUN npm install
 
-#COPY frontend/ /frontend/
-#RUN npm run build
+COPY frontend/ /frontend/
+RUN npm run build
 
 
 # Runtime-Stage
