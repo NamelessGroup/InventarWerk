@@ -175,16 +175,13 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone());
     }
     // Speichern eines Cookies als Beispiel
-    let mut new_cookie = Cookie::build(("user_id", user_response.id.clone()));
-
-    #[cfg(feature = "dev")] {
-        new_cookie = new_cookie.same_site(SameSite::None).secure(true);
-    }
-
+    let new_cookie = Cookie::build(("user_id", user_response.id.clone())).http_only(false);
     cookies.add_private(new_cookie);
 
     #[cfg(feature = "dev")] {
         return Ok(Redirect::to(uri!("http://localhost:5173")));
     }
-    Ok(Redirect::to(uri!("/")))
+    #[cfg(not(feature = "dev"))] {
+        return Ok(Redirect::to(uri!("/")));
+    }
 }

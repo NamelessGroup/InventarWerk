@@ -134,7 +134,7 @@ export class DatabaseHandler {
 
   private async get<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params })
+    const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params, withCredentials:true })
     console.log(response)
     if (this.wasSuccess(response)) {
       return response.data
