@@ -105,7 +105,7 @@ pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     }
 }
 
-#[get("/account/logut")]
+#[get("/account/logout")]
 pub async fn logout(cookies: &CookieJar<'_>) -> Status {
     if let Some(_cookie) = cookies.get_private("user_id") {
         cookies.remove_private("user_id");

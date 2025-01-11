@@ -5,7 +5,7 @@
       <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900">
         <FontAwesomeIcon :icon="faGears" />
       </button>
-      <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900">
+      <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="logOut">
         <FontAwesomeIcon :icon="faRightFromBracket" />
       </button>
     </div>
@@ -79,6 +79,7 @@ if (acceptedCookies.value) {
 function checkLogIn() {
   DatabaseHandler.getInstance().isLoggedIn().then((res) => {
     isLoggedIn.value = res
+    console.log(res)
     if (!res) {
       window.location.href = DatabaseHandler.getInstance().getLogInUrl()
     }
@@ -93,5 +94,11 @@ function acceptCookies() {
   document.cookie = 'acceptedCookies=true'
   acceptedCookies.value = true
   checkLogIn()
+}
+
+function logOut() {
+  DatabaseHandler.getInstance().logOut().then(() => {
+    window.location.reload()
+  })
 }
 </script>

@@ -37,6 +37,10 @@ export class DatabaseHandler {
     return DatabaseHandler.BASE_URL + DatabaseHandler.ACCOUNT_END_POINT + '/login'
   }
 
+  public async logOut() {
+    await this.get<undefined>([DatabaseHandler.ACCOUNT_END_POINT, 'logout'])
+  }
+
   public async fetchUpdates() {
     // Time is stored here, so data that gets input between the request going out from the server and reaching the client is not lost
     const time = new Date().getTime()
