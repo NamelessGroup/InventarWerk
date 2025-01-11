@@ -16,7 +16,7 @@
       <div class="grid grid-cols-[auto_1fr] gap-2 grid-rows-3">
         <label for="name" class="row-start-1">Name:</label>
         <input id="name" v-model="nameFieldContent" type="text" class="row-start-1  rounded border border-amber-300 bg-fuchsia-900 outline-none px-1"/>  
-        <button class="row-start-2 col-span-2 rounded border border-amber-300 bg-fuchsia-900 p-1" @click="submit">Submit</button> 
+        <button class="row-start-2 col-span-2 rounded border border-amber-300 bg-fuchsia-900 p-1" @click="submitAddInventory">Submit</button> 
         <p class="row-start-3 col-span-2 text-red-500">{{ errorContent }}</p>
       </div>
     </PopUp>
@@ -29,6 +29,14 @@
     </div>
   </div>
   <ErrorDisplay class="absolute z-20 bottom-0 w-screen" />
+
+  <PopUp v-if="!acceptedCookies">
+    <div class="flex flex-col items-center space-y-2">
+      <p>This website uses cookies.<br />No you can not reject.</p>
+      <button class="w-full md:w-48 rounded border border-amber-300 bg-fuchsia-900 p-1" @click="acceptCookies">Accept Cookies</button>
+      <button class="w-full md:w-48 rounded border border-amber-300 bg-fuchsia-900 p-1" @click="acceptCookies">Also Accept Cookies</button>
+    </div>
+  </PopUp>
   </div>
   
 </template>
@@ -46,14 +54,14 @@ import PopUp from './components/PopUp.vue';
 const showCreation = ref(false)
 const nameFieldContent = ref('')
 const errorContent = ref('')
+const acceptedCookies = ref(document.cookie.includes('acceptedCookies=true'))
 
-async function submit() {
+async function submitAddInventory() {
   if (nameFieldContent.value == '') {
     errorContent.value = 'Name cannot be empty'
     return
   }
   const result = await DatabaseHandler.getInstance().createInventory(nameFieldContent.value)
-  console.log(result)
   if (result) {
     nameFieldContent.value = ''
     errorContent.value = ''
@@ -64,10 +72,26 @@ async function submit() {
 }
 
 const isLoggedIn = ref(false)
-DatabaseHandler.getInstance().isLoggedIn().then((res) => {
-  isLoggedIn.value = res
-  if (!res) {
-    window.location.href = DatabaseHandler.getInstance().getLogInUrl()
+if (acceptedCookies.value) {
+  checkLogIn()
+}
+
+function checkLogIn() {
+  DatabaseHandler.getInstance().isLoggedIn().then((res) => {
+    isLoggedIn.value = res
+    if (!res) {
+      window.location.href = DatabaseHandler.getInstance().getLogInUrl()
+    }
+  })
+}
+
+function acceptCookies() {
+  const oldCookies = document.cookie
+  if (oldCookies.includes('acceptedCookies=true')) {
+    return
   }
-})
+  document.cookie = 'acceptedCookies=true'
+  acceptedCookies.value = true
+  checkLogIn()
+}
 </script>
