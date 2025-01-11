@@ -11,7 +11,7 @@
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix --max-warnings 0",
     "format": "prettier --write src/",
-    "prepare": "cd.. && husky frontend/.husky"
+    "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
