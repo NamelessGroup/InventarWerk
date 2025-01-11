@@ -6,10 +6,10 @@
         v-for="[k, i] of moneyOptions"
         :key="k"
         type="number"
-        @submit="evaluateMoneyString($event.target.value, k)"
+        class="row-start-1 h-10 rounded border border-amber-300 bg-fuchsia-900 outline-none px-1"
         :value="inventory.money[k]"
         :class="`col-start-${i}`"
-        class="row-start-1 h-10 rounded border border-amber-300 bg-fuchsia-900 outline-none px-1"
+        @submit="e => evaluateMoneyString((e as unknown as any).target.value, k)"
       />
       <span
         v-for="[k, i, l] of moneyOptions"
@@ -53,7 +53,7 @@ function evaluateMoneyString(content: string, field: MoneyFields) {
     try {
       value = eval(content)
     } catch (e) {
-      ErrorHandler.getInstance().registerError(e)
+      ErrorHandler.getInstance().registerError(e as Error)
     }
   }
 

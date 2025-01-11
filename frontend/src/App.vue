@@ -9,12 +9,22 @@
         <FontAwesomeIcon :icon="faRightFromBracket" />
       </button>
     </div>
-    <button class="absolute bottom-2 right-2 z-10 h-10 w-10 rounded border border-amber-300 bg-fuchsia-900">
-        <FontAwesomeIcon :icon="faPlus" />
-      </button>
+    <button class="absolute bottom-2 right-2 z-10 h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="showCreation = true">
+      <FontAwesomeIcon :icon="faPlus" />
+    </button>
+    <PopUp v-if="showCreation" @close="showCreation = false">
+      <div class="grid grid-cols-[auto_1fr] gap-2 grid-rows-3">
+        <label for="name" class="row-start-1">Name:</label>
+        <input id="name" v-model="nameFieldContent" type="text" class="row-start-1  rounded border border-amber-300 bg-fuchsia-900 outline-none px-1"/>  
+        <button class="row-start-2 col-span-2 rounded border border-amber-300 bg-fuchsia-900 p-1" @click="submit">Submit</button> 
+        <p class="row-start-3 col-span-2 text-red-500">{{ errorContent }}</p>
+      </div>
+    </PopUp>
     <div class="p-5">
       <InventoryContainer
-        :inventory="store().getInvetory('123')"
+        v-for="inventory in store().inventories"
+        :key="inventory.uuid"
+        :inventory="inventory"
       />
     </div>
   </div>
@@ -31,13 +41,33 @@ import { store } from './store';
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue';
 import { ref } from 'vue';
 import { DatabaseHandler } from './store/DatabaseHandler';
+import PopUp from './components/PopUp.vue';
+
+const showCreation = ref(false)
+const nameFieldContent = ref('')
+const errorContent = ref('')
+
+async function submit() {
+  if (nameFieldContent.value == '') {
+    errorContent.value = 'Name cannot be empty'
+    return
+  }
+  const result = await DatabaseHandler.getInstance().createInventory(nameFieldContent.value)
+  console.log(result)
+  if (result) {
+    nameFieldContent.value = ''
+    errorContent.value = ''
+    showCreation.value = false
+  } else {
+    errorContent.value = 'Error creating inventory'
+  }
+}
 
 const isLoggedIn = ref(false)
 DatabaseHandler.getInstance().isLoggedIn().then((res) => {
   isLoggedIn.value = res
-  console.log(res)
   if (!res) {
-    //window.location.href = DatabaseHandler.getInstance().getLogInUrl()
+    window.location.href = DatabaseHandler.getInstance().getLogInUrl()
   }
 })
 </script>

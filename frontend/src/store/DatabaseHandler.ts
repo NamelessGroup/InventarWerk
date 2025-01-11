@@ -8,7 +8,7 @@ import type { ItemPreset } from '@/model/ItemPreset'
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
   public static readonly BASE_URL = 'http://localhost:8000/'
-  private static INVENTORY_END_POINT = 'inventar'
+  private static INVENTORY_END_POINT = 'inventory'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'
   private static ACCOUNT_END_POINT = 'account'
@@ -79,6 +79,7 @@ export class DatabaseHandler {
 
   public async createInventory(name: string) {
     const newInventory = await this.put<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], { 'name': name })
+    console.log(newInventory)
     if (!newInventory) return false
 
     this.setInventoryInStore(newInventory)
@@ -134,8 +135,7 @@ export class DatabaseHandler {
 
   private async get<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params, withCredentials:true })
-    console.log(response)
+    const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params, withCredentials:true }).then((response) => response).catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {
@@ -150,8 +150,9 @@ export class DatabaseHandler {
   private async post<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
     const response = await axios.post<T>(DatabaseHandler.BASE_URL + url.join('/'), {
-      params
-    })
+      params,
+      withCredentials: true
+    }).then((response) => response).catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {
@@ -166,8 +167,9 @@ export class DatabaseHandler {
   private async put<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
     const response = await axios.put<T>(DatabaseHandler.BASE_URL + url.join('/'), {
-      params
-    })
+      params,
+      withCredentials: true
+    }).then((response) => response).catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {
@@ -182,8 +184,9 @@ export class DatabaseHandler {
   private async patch<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
     const response = await axios.patch<T>(DatabaseHandler.BASE_URL + url.join('/'), {
-      params
-    })
+      params,
+      withCredentials: true
+    }).then((response) => response).catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {
