@@ -169,7 +169,7 @@ export class DatabaseHandler {
 
   private async put<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.put<T>(DatabaseHandler.BASE_URL + url.join('/'), {
+    const response = await axios.put<T>(DatabaseHandler.BASE_URL + url.join('/'), {}, {
       params,
       withCredentials: true
     }).then((response) => response).catch((error) => error.response)

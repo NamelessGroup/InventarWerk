@@ -174,10 +174,13 @@ impl InventoryController {
         let query = diesel::insert_into(inventory::table).values(&new_inv)
             .execute(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to insert inventory")?;
-        self.add_writer_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
-        self.add_reader_to_inventory(new_inv.owner_uuid.clone(), creator_uuid.clone())?;
+        self.add_writer_to_inventory(new_inv.uuid.clone(), creator_uuid.clone())?;
+        self.add_reader_to_inventory(new_inv.uuid.clone(), creator_uuid.clone())?;
         for a in self.get_dm_accounts()? {
-            self.add_reader_to_inventory(new_inv.owner_uuid.clone(), a.clone())?;
+            if a == creator_uuid {
+                continue;
+            }
+            self.add_reader_to_inventory(new_inv.uuid.clone(), a.clone())?;
         }
         report_change_on_inventory!(new_inv.uuid.clone());
         Ok(new_inv)

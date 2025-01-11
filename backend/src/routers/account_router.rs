@@ -4,7 +4,7 @@ use rocket::State;
 use std::env;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
-use rocket::http::{Cookie, CookieJar, SameSite, Status};
+use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
 use rocket::response::status::Custom;
 
