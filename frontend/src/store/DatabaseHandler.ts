@@ -47,7 +47,7 @@ export class DatabaseHandler {
 
     if (!inventoriesWithUpdates) return
 
-    await Promise.all(
+    /*await Promise.all(
       inventoriesWithUpdates.map(async (update) => {
         if (update.type == 'delete') {
           store().inventoryUuids = store().inventoryUuids.filter(u => u != update.uuid)
@@ -64,7 +64,7 @@ export class DatabaseHandler {
           store().inventoryUuids.push(update.uuid)
         }
       })
-    )
+    )*/
 
     this.lastFetch = time
   }
@@ -79,7 +79,6 @@ export class DatabaseHandler {
 
   public async createInventory(name: string) {
     const newInventory = await this.put<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], { 'name': name })
-    console.log(newInventory)
     if (!newInventory) return false
 
     this.setInventoryInStore(newInventory)
