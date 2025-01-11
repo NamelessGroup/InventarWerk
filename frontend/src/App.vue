@@ -28,7 +28,7 @@
       />
     </div>
   </div>
-  <ErrorDisplay class="absolute z-20 bottom-0 w-screen" />
+  <ErrorDisplay class="absolute z-50 bottom-0 w-screen" />
 
   <PopUp v-if="!acceptedCookies">
     <div class="flex flex-col items-center space-y-2">
