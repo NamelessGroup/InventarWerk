@@ -71,7 +71,6 @@ function deleteItem() {
 function editAmount() {
   let value = props.item.amount
   const content = amountValue.value
-  console.log('e', content)
   if (content == '') {
     value = 0
   } else if (content.match(/^[+-]?\d+$/)) {

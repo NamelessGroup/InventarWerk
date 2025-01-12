@@ -50,7 +50,7 @@ export const store = defineStore('store', {
       if (allAccounts) {
         this.inventories[inventoryUuid].reader = allAccounts
       }
-      DatabaseHandler.getInstance().addShare(inventoryUuid, {})
+      return DatabaseHandler.getInstance().addShare(inventoryUuid, {})
     },
     deleteInventory(inventoryUuid: string) {
       this.inventoryUuids = this.inventoryUuids.filter(uuid => uuid !== inventoryUuid)

@@ -7,7 +7,7 @@
       </button>
       <div class="flex-1"><!-- Spacer --></div>
       <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7">
-        <FontAwesomeIcon :icon="faShare" />
+        <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7" @click="deleteInventory">
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
@@ -38,8 +38,7 @@
 
     <button class="h-10 w-full rounded bg-fuchsia-900 text-center" @click="showAddItemPopup = true">+ Add item</button>
   </div>
-  <PopUp v-if="showSharePopup">
-  </PopUp>
+  <ShareInventoryPopUp v-if="showSharePopup" :inventory="inventory" @close="showSharePopup = false" />
   <AddItemPopUp v-if="showAddItemPopup" :inventory-uuid="inventory.uuid" @close="showAddItemPopup = false" />
 </template>
 
@@ -52,8 +51,8 @@ import { store } from '@/store';
 import { ErrorHandler } from '@/errorHandling/ErrorHandler';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import PopUp from './PopUp.vue';
 import AddItemPopUp from './AddItemPopUp.vue';
+import ShareInventoryPopUp from './ShareInventoryPopUp.vue';
 
 const props = defineProps({
   inventory: {

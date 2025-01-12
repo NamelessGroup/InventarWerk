@@ -1,5 +1,5 @@
 <template>
-  <PopUp @close="emit('close')">
+  <PopUp class="!m-0" @close="emit('close')">
     <div class="grid grid-cols-1 gap-2">
       <label for="amount">Amount:</label>
       <input id="amount" v-model="amountValue" class="rounded border border-amber-300 bg-fuchsia-900 outline-none px-1 w-full">

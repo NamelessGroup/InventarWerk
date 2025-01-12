@@ -5,6 +5,7 @@ import axios, { type AxiosResponse } from 'axios'
 import { store } from '.'
 import type { ItemPreset } from '@/model/ItemPreset'
 import type { Item } from '@/model/Item'
+import type { Account } from '@/model/Account'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
@@ -77,10 +78,15 @@ export class DatabaseHandler {
   public async initialize() {
     store().uuid = await this.getOwnUUID()
     store().itemPresets = await this.getAllPresets()
+    store().accounts = await this.getAllAccounts()
     const inventories = await this.getAllInventoriesFromDB()
     inventories.forEach(inventory => this.setInventoryInStore(inventory))
     store().inventoryUuids = inventories.map(inventory => inventory.uuid)
   } 
+
+  public async getAllAccounts() {
+    return (await this.get<{accounts: Account[]}>([DatabaseHandler.ACCOUNT_END_POINT, 'get']).then(r => r?.accounts)) ?? []
+  }
 
   private async getAllInventoriesFromDB() {
     return (await this.get<{inventories: DBInventory[]}>([DatabaseHandler.INVENTORY_END_POINT, 'all']).then(r => r?.inventories)) ?? []
