@@ -39,9 +39,9 @@ COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 COPY --from=builder /usr/src/app/target/release/backend ./
 COPY --from=builder /usr/src/app/migrations ./migrations
 
-COPY ./backend/static ./static
+#COPY ./backend/static ./static
 
-#COPY --from=frontend-builder /frontend/dist ./static
+COPY --from=frontend-builder /frontend/dist ./static
 # Startskript hinzufügen
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
