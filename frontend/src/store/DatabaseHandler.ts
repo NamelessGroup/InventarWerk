@@ -4,6 +4,7 @@ import { breakDownMoney, compactMoney, type Money } from '@/utils/moneyMath'
 import axios, { type AxiosResponse } from 'axios'
 import { store } from '.'
 import type { ItemPreset } from '@/model/ItemPreset'
+import type { Item } from '@/model/Item'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
@@ -75,6 +76,7 @@ export class DatabaseHandler {
 
   public async initialize() {
     store().uuid = await this.getOwnUUID()
+    store().itemPresets = await this.getAllPresets()
     const inventories = await this.getAllInventoriesFromDB()
     inventories.forEach(inventory => this.setInventoryInStore(inventory))
     store().inventoryUuids = inventories.map(inventory => inventory.uuid)
@@ -106,19 +108,17 @@ export class DatabaseHandler {
   }
 
   public async addItemByPreset(inventoryUuid: string, presetUuid: string, amount: number) {
-    // Check if the inventory exists in the store
-    const inventory = store().inventories[inventoryUuid];
-    if (!inventory) return false
-
     // Fetch preset details from the server
-    const presetData = await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], { 'preset_uuid': presetUuid });
+    const presetData = await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], { 'item_preset_uuid': presetUuid });
     if (!presetData) return false
 
     // Update the inventory in the backend
-    await this.put<undefined>([DatabaseHandler.INVENTORY_END_POINT], { 'inventory_uuid': inventoryUuid, 'preset_uuid': presetUuid, 'amount': String(amount)});
+    const r = await this.put<{}>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addPreset'], { 'inventory_uuid': inventoryUuid, 'preset_uuid': presetUuid, 'amount': String(amount)});
+
+    if (r === undefined) return false
 
     // Add the item to the inventory
-    inventory.items.push({
+    store().inventories[inventoryUuid].items.push({
       name: presetData.name,
       uuid: presetUuid,
       amount,
@@ -132,10 +132,21 @@ export class DatabaseHandler {
     return true; 
   }
 
+  public async addNewItem(inventoryUuid: string, name: string, amount: number) {
+    const response = await this.put<Item>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'], { 'inventory_uuid': inventoryUuid, 'name': name, 'amount': amount.toString() })
+    if (!response) return false
+
+    store().inventories[inventoryUuid].items.push({
+      ...response,
+      amount
+    })
+    return true
+  }
+
   public async getAllPresets() {
-    const presets = await this.get<ItemPreset[]>([DatabaseHandler.ITEM_END_POINT, "all"]);
-    if (!presets) return false
-    return presets
+    const presets = await this.get<{item_presets: ItemPreset[]}>([DatabaseHandler.ITEM_PRESET_END_POINT, "all"]);
+    if (!presets) return []
+    return presets.item_presets
   }
 
   private setInventoryInStore(inventory: DBInventory) {
@@ -216,7 +227,7 @@ export class DatabaseHandler {
       withCredentials: true
     }).then((response) => response).catch((error) => error.response)
     if (this.wasSuccess(response)) {
-      return response.data
+      return response.data as T
     } else {
       ErrorHandler.getInstance().registerError(
         new Error(

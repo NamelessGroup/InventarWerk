@@ -3,13 +3,15 @@ import { breakDownMoney, compactMoney, type MoneyFields } from '@/utils/moneyMat
 import { defineStore } from 'pinia'
 import { DatabaseHandler } from './DatabaseHandler'
 import type { Account } from '@/model/Account'
+import type { ItemPreset } from '@/model/ItemPreset'
 
 export const store = defineStore('store', {
   state: () => ({
     inventoryUuids: [],
     inventories: {},
     uuid: '',
-    accounts: []
+    accounts: [],
+    itemPresets: []
   } as State),
   getters: {
     getInvetory: (state) => (uuid: string): Inventory => {
@@ -62,6 +64,7 @@ interface State {
   inventories: Record<string, Inventory>
   uuid: string
   accounts: Account[]
+  itemPresets: ItemPreset[]
 }
 
 

@@ -9,7 +9,7 @@
       <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7">
         <FontAwesomeIcon :icon="faShare" />
       </button>
-      <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7" @click="store().deleteInventory(inventory.uuid)">
+      <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7" @click="deleteInventory">
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
       </button>
     </div>
@@ -36,10 +36,11 @@
       <ItemRowDisplay v-for="item in inventory.items" :key="item.uuid" :item="item" />
     </div>
 
-    <button class="h-10 w-full rounded bg-fuchsia-900 text-center">+ Add item</button>
+    <button class="h-10 w-full rounded bg-fuchsia-900 text-center" @click="showAddItemPopup = true">+ Add item</button>
   </div>
   <PopUp v-if="showSharePopup">
   </PopUp>
+  <AddItemPopUp v-if="showAddItemPopup" :inventory-uuid="inventory.uuid" @close="showAddItemPopup = false" />
 </template>
 
 <script setup lang="ts">
@@ -52,6 +53,7 @@ import { ErrorHandler } from '@/errorHandling/ErrorHandler';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import PopUp from './PopUp.vue';
+import AddItemPopUp from './AddItemPopUp.vue';
 
 const props = defineProps({
   inventory: {
@@ -63,6 +65,7 @@ const props = defineProps({
 const inventoryName = ref(props.inventory.name)
 const nameInput = ref<HTMLInputElement | null>(null)
 const showSharePopup = ref(false)
+const showAddItemPopup = ref(false)
 
 function editName() {
   if (nameInput.value) {
@@ -77,6 +80,14 @@ function updateName() {
   if (inventoryName.value == props.inventory.name) {
     return
   }
+}
+
+function deleteInventory() {
+  const result = confirm('This will delete the inventory forever')
+  if (!result) {
+    return
+  }
+  store().deleteInventory(props.inventory.uuid)
 }
 
 const moneyFieldValues = ref({

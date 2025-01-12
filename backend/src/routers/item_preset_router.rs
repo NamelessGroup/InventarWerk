@@ -68,7 +68,7 @@ pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::Auth
     Ok(Status::NoContent)
 }
 
-#[patch("/itemPreset/all")]
+#[get("/itemPreset/all")]
 pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
         ipc_con: &State<ItemPresetController>) -> Result<Json<GetItemPresetReturn>, CStat> {
     let mut ips: Vec<ItemPreset> = Vec::new();
