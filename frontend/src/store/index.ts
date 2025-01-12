@@ -22,6 +22,8 @@ export const store = defineStore('store', {
       oldMoney[field] = newValue
       const newMoney = breakDownMoney(compactMoney(oldMoney))
       this.inventories[inventoryUuid].money = newMoney
+
+      DatabaseHandler.getInstance().patchMoney(inventoryUuid, newMoney)
     },
     setName(inventoryUuid: string, newName: string) {
       this.inventories[inventoryUuid].name = newName

@@ -51,7 +51,7 @@ async fn main() {
          // Configure CORS
         let cors = CorsOptions {
             allowed_origins: AllowedOrigins::all(), // Allow all origins, or customize this
-            allowed_methods: vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+            allowed_methods: vec!["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
                 .into_iter()
                 .map(|method| method.parse().unwrap())
                 .collect(),

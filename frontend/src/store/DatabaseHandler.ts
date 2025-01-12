@@ -1,6 +1,6 @@
 import { ErrorHandler } from '@/errorHandling/ErrorHandler'
-import type { Inventory, DBInventory } from '@/model/Inventory'
-import { breakDownMoney, compactMoney } from '@/utils/moneyMath'
+import type { DBInventory } from '@/model/Inventory'
+import { breakDownMoney, compactMoney, type Money } from '@/utils/moneyMath'
 import axios, { type AxiosResponse } from 'axios'
 import { store } from '.'
 import type { ItemPreset } from '@/model/ItemPreset'
@@ -145,26 +145,26 @@ export class DatabaseHandler {
     }
   }
 
-  public patchMoney(inventory: Inventory) {
-    const newMoney = compactMoney(inventory.money)
+  public async patchMoney(inventoryUuid: string, money: Money) {
+    const newMoney = compactMoney(money)
 
-    this.patch([DatabaseHandler.INVENTORY_END_POINT, 'money'], { 'amount': newMoney.toString() })
+    await this.patch([DatabaseHandler.INVENTORY_END_POINT, 'money'], { 'inventory_uuid': inventoryUuid, 'amount': newMoney.toString() })
   }
 
   public async addShare(inventoryUuid: string, share: Share) {
     const params = this.buildShareParams(share)
-    params['uuid'] = inventoryUuid
+    params['inventory_uuid'] = inventoryUuid
     await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'addShare'], params)
   }
 
   public async removeShare(inventoryUuid: string, share: Share) {
     const params = this.buildShareParams(share)
-    params['uuid'] = inventoryUuid
+    params['inventory_uuid'] = inventoryUuid
     await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'removeShare'], params)
   }
 
   public async deleteInventory(inventoryUuid: string) {
-    await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'delete'], { 'uuid': inventoryUuid })
+    await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'delete'], { 'inventory_uuid': inventoryUuid })
   }
 
   private buildShareParams(share: Share) {
