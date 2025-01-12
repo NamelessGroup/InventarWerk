@@ -85,7 +85,7 @@ export class DatabaseHandler {
   }
 
   private async getOwnUUID() {
-    return (await this.get<string>([DatabaseHandler.ACCOUNT_END_POINT, 'info'])) ?? ''
+    return (await this.get<{uuid:string}>([DatabaseHandler.ACCOUNT_END_POINT, 'info']).then(r => r?.uuid)) ?? ''
   }
 
   private async fetchInventory(uuid: string) {
@@ -151,6 +151,33 @@ export class DatabaseHandler {
     this.patch([DatabaseHandler.INVENTORY_END_POINT, 'money'], { 'amount': newMoney.toString() })
   }
 
+  public async addShare(inventoryUuid: string, share: Share) {
+    const params = this.buildShareParams(share)
+    params['uuid'] = inventoryUuid
+    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'addShare'], params)
+  }
+
+  public async removeShare(inventoryUuid: string, share: Share) {
+    const params = this.buildShareParams(share)
+    params['uuid'] = inventoryUuid
+    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'removeShare'], params)
+  }
+
+  public async deleteInventory(inventoryUuid: string) {
+    await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'delete'], { 'uuid': inventoryUuid })
+  }
+
+  private buildShareParams(share: Share) {
+    const params: Record<string, string> = {}
+    if (share.read) {
+      params['reader'] = share.read.join(',')
+    }
+    if (share.write) {
+      params['writer'] = share.write.join(',')
+    }
+    return params
+  }
+
   private async get<T>(url: URLParts, queryParams?: QueryParameter): Promise<T|undefined> {
     const params = new URLSearchParams(queryParams)
     const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params, withCredentials:true }).then((response) => response).catch((error) => error.response)
@@ -167,7 +194,7 @@ export class DatabaseHandler {
 
   private async post<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.post<T>(DatabaseHandler.BASE_URL + url.join('/'), {
+    const response = await axios.post<T>(DatabaseHandler.BASE_URL + url.join('/'), {}, {
       params,
       withCredentials: true
     }).then((response) => response).catch((error) => error.response)
@@ -201,7 +228,7 @@ export class DatabaseHandler {
 
   private async patch<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.patch<T>(DatabaseHandler.BASE_URL + url.join('/'), {
+    const response = await axios.patch<T>(DatabaseHandler.BASE_URL + url.join('/'), {}, {
       params,
       withCredentials: true
     }).then((response) => response).catch((error) => error.response)
@@ -211,6 +238,23 @@ export class DatabaseHandler {
       ErrorHandler.getInstance().registerError(
         new Error(
           `Could not patch ${url.join('/')}?${params.toString()} due to: ${response.status} ${response.statusText}`
+        )
+      )
+    }
+  }
+
+  private async delete<T>(url: URLParts, queryParams?: QueryParameter) {
+    const params = new URLSearchParams(queryParams)
+    const response = await axios.delete<T>(DatabaseHandler.BASE_URL + url.join('/'), {
+      params,
+      withCredentials: true
+    }).then((response) => response).catch((error) => error.response)
+    if (this.wasSuccess(response)) {
+      return response.data
+    } else {
+      ErrorHandler.getInstance().registerError(
+        new Error(
+          `Could not delete ${url.join('/')}?${params.toString()} due to: ${response.status} ${response.statusText}`
         )
       )
     }
@@ -226,3 +270,5 @@ type URLParts = string[]
 type QueryParameter = Record<string, string>
 
 type LastUpdateResponse = { uuid: string; type: 'create' | 'patch' | 'delete' }[]
+
+interface Share { read?: string[], write?: string[] }

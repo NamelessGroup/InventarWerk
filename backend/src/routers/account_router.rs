@@ -12,7 +12,6 @@ use crate::controller::account_controller::AccountController;
 use crate::controller::CStat;
 use crate::model::User;
 
-
 #[derive(Serialize, Deserialize)]
 pub struct DMResponse {
     is_dm: bool
@@ -34,6 +33,11 @@ pub struct TokenResponse {
     expires_in: u64,
     refresh_token: String,
     scope: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InfoResponse {
+    uuid: String
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -88,8 +92,10 @@ pub async fn login() -> Redirect {
 }
 
 #[get("/account/info")]
-pub async fn account_info(user: super::AuthenticatedUser) -> String {
-    format!("{}", user.user_id)
+pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
+    return Json(InfoResponse {
+        uuid: user.user_id
+    })
 }
 
 #[get("/account/isLoggedIn")]
