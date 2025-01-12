@@ -20,23 +20,23 @@
         <p class="row-start-3 col-span-2 text-red-500">{{ errorContent }}</p>
       </div>
     </PopUp>
-    <div class="p-5">
+    <div class="p-5 space-y-5">
       <InventoryContainer
-        v-for="inventory in store().inventories"
-        :key="inventory.uuid"
-        :inventory="inventory"
+        v-for="uuid in store().inventoryUuids"
+        :key="uuid"
+        :inventory="store().inventories[uuid]"
       />
     </div>
   </div>
   <ErrorDisplay class="absolute z-50 bottom-0 w-screen" />
 
-  <PopUp v-if="!acceptedCookies">
+  <div v-if="!acceptedCookies" class="z-40 absolute top-0 left-0 right-0 bottom-0 bg-slate-900 p-10">
     <div class="flex flex-col items-center space-y-2">
       <p>This website uses cookies.<br />No you can not reject.</p>
       <button class="w-full md:w-48 rounded border border-amber-300 bg-fuchsia-900 p-1" @click="acceptCookies">Accept Cookies</button>
       <button class="w-full md:w-48 rounded border border-amber-300 bg-fuchsia-900 p-1" @click="acceptCookies">Also Accept Cookies</button>
     </div>
-  </PopUp>
+  </div>
   </div>
   
 </template>
@@ -79,9 +79,10 @@ if (acceptedCookies.value) {
 function checkLogIn() {
   DatabaseHandler.getInstance().isLoggedIn().then((res) => {
     isLoggedIn.value = res
-    console.log(res)
     if (!res) {
       window.location.href = DatabaseHandler.getInstance().getLogInUrl()
+    } else {
+      DatabaseHandler.getInstance().initialize()
     }
   })
 }

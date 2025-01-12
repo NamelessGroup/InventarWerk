@@ -4,8 +4,9 @@ import { defineStore } from 'pinia'
 
 export const store = defineStore('store', {
   state: () => ({
-    inventoryUuids: ['123'],
-    inventories: {}
+    inventoryUuids: [],
+    inventories: {},
+    uuid: ''
   } as State),
   getters: {
     getInvetory: (state) => (uuid: string): Inventory => {
@@ -25,6 +26,7 @@ export const store = defineStore('store', {
 interface State {
   inventoryUuids: string[]
   inventories: Record<string, Inventory>
+  uuid: string
 }
 /*
 enum ModificationSource {

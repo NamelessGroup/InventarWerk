@@ -73,6 +73,21 @@ export class DatabaseHandler {
     this.lastFetch = time
   }
 
+  public async initialize() {
+    store().uuid = await this.getOwnUUID()
+    const inventories = await this.getAllInventoriesFromDB()
+    inventories.forEach(inventory => this.setInventoryInStore(inventory))
+    store().inventoryUuids = inventories.map(inventory => inventory.uuid)
+  } 
+
+  private async getAllInventoriesFromDB() {
+    return (await this.get<{inventories: DBInventory[]}>([DatabaseHandler.INVENTORY_END_POINT, 'all']).then(r => r?.inventories)) ?? []
+  }
+
+  private async getOwnUUID() {
+    return (await this.get<string>([DatabaseHandler.ACCOUNT_END_POINT, 'info'])) ?? ''
+  }
+
   private async fetchInventory(uuid: string) {
     const inventory = await this.get<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], { 'inventory_uuid': uuid })
     if (!inventory) return false
@@ -136,11 +151,11 @@ export class DatabaseHandler {
     this.patch([DatabaseHandler.INVENTORY_END_POINT, 'money'], { 'amount': newMoney.toString() })
   }
 
-  private async get<T>(url: URLParts, queryParams?: QueryParameter) {
+  private async get<T>(url: URLParts, queryParams?: QueryParameter): Promise<T|undefined> {
     const params = new URLSearchParams(queryParams)
     const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params, withCredentials:true }).then((response) => response).catch((error) => error.response)
     if (this.wasSuccess(response)) {
-      return response.data
+      return response.data as T
     } else {
       ErrorHandler.getInstance().registerError(
         new Error(

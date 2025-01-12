@@ -1,6 +1,18 @@
 <template>
   <div class="space-y-2 rounded border-2 border-amber-300 bg-fuchsia-950 p-2">
-    <h1 class="bold text-xl">{{ inventory.name }}</h1>
+    <div class="flex gap-2">
+      <input v-model="inventoryName" :readonly="inventory.owner !== store().uuid" class="bold text-xl bg-transparent outline-none border-none max-w-96 flex-1">
+      <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7">
+        <FontAwesomeIcon :icon="faPen" />
+      </button>
+      <div class="flex-1"><!-- Spacer --></div>
+      <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7">
+        <FontAwesomeIcon :icon="faShare" />
+      </button>
+      <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7">
+        <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
+      </button>
+    </div>
     <div class="grid max-w-full grid-cols-4 gap-x-2">
       <input
         v-for="[k, i] of moneyOptions"
@@ -29,12 +41,14 @@
 </template>
 
 <script setup lang="ts">
-import { type PropType } from 'vue'
+import { ref, type PropType } from 'vue'
 import type { Inventory } from '../model/Inventory'
 import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath';
 import { store } from '@/store';
 import { ErrorHandler } from '@/errorHandling/ErrorHandler';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 
 const props = defineProps({
   inventory: {
@@ -42,6 +56,10 @@ const props = defineProps({
     required: true
   }
 })
+
+console.log(props.inventory.owner, store().uuid)
+
+const inventoryName = ref(props.inventory.name)
 
 function evaluateMoneyString(content: string, field: MoneyFields) {
   let value = props.inventory.money[field]
