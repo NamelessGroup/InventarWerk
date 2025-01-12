@@ -135,7 +135,7 @@ pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedU
     Ok(Status::NoContent)
 }
 
-#[get("/inventory/item/remove?<params..>")]
+#[delete("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {

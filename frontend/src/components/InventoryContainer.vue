@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 rounded border-2 border-amber-300 bg-fuchsia-950 p-2">
+  <div class="space-y-2 rounded border-2 border-amber-300 bg-fuchsia-950 p-2 overflow-hidden">
     <div class="flex gap-2">
       <input ref="nameInput" v-model="inventoryName" :readonly="true" class="bold text-xl bg-transparent outline-none border-none max-w-96 flex-1" @blur="updateName">
       <button v-if="false" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7"  @click="editName">
@@ -13,7 +13,7 @@
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
       </button>
     </div>
-    <div class="grid max-w-full grid-cols-4 gap-x-2">
+    <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
       <input
         v-for="[k, i] of moneyOptions"
         :key="k"
@@ -32,8 +32,8 @@
       >
     </div>
 
-    <div>
-      <ItemRowDisplay v-for="item in inventory.items" :key="item.uuid" :item="item" />
+    <div class="space-y-2">
+      <ItemRowDisplay v-for="item in inventory.items" :key="item.presetReference" :item="item" :inventory-uuid="inventory.uuid" />
     </div>
 
     <button class="h-10 w-full rounded bg-fuchsia-900 text-center" @click="showAddItemPopup = true">+ Add item</button>

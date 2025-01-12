@@ -55,6 +55,14 @@ export const store = defineStore('store', {
     deleteInventory(inventoryUuid: string) {
       this.inventoryUuids = this.inventoryUuids.filter(uuid => uuid !== inventoryUuid)
       DatabaseHandler.getInstance().deleteInventory(inventoryUuid)
+    },
+    removeItem(inventoryUuid: string, itemUuid: string) {
+      this.inventories[inventoryUuid].items = this.inventories[inventoryUuid].items.filter(item => item.presetReference !== itemUuid)
+      DatabaseHandler.getInstance().removeItem(inventoryUuid, itemUuid)
+    },
+    changeItemAmount(inventoryUuid: string, itemUuid: string, newAmount: number) {
+      this.inventories[inventoryUuid].items.find(item => item.presetReference === itemUuid)!.amount = newAmount
+      DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
     }
   }
 })

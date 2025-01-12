@@ -113,14 +113,14 @@ export class DatabaseHandler {
     if (!presetData) return false
 
     // Update the inventory in the backend
-    const r = await this.put<{}>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addPreset'], { 'inventory_uuid': inventoryUuid, 'preset_uuid': presetUuid, 'amount': String(amount)});
+    const r = await this.put<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addPreset'], { 'inventory_uuid': inventoryUuid, 'preset_uuid': presetUuid, 'amount': String(amount)});
 
     if (r === undefined) return false
 
     // Add the item to the inventory
     store().inventories[inventoryUuid].items.push({
       name: presetData.name,
-      uuid: presetUuid,
+      presetReference: presetUuid,
       amount,
       dmNote: "",
       description: presetData.description,
@@ -132,6 +132,10 @@ export class DatabaseHandler {
     return true; 
   }
 
+  public async changeItemAmount(inventoryUuid: string, itemUuid: string, newAmount: number) {
+    await this.patch<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid, 'amount': newAmount.toString() })
+  }
+
   public async addNewItem(inventoryUuid: string, name: string, amount: number) {
     const response = await this.put<Item>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'], { 'inventory_uuid': inventoryUuid, 'name': name, 'amount': amount.toString() })
     if (!response) return false
@@ -141,6 +145,10 @@ export class DatabaseHandler {
       amount
     })
     return true
+  }
+
+  public async removeItem(inventoryUuid: string, itemUuid: string) {
+    await this.delete<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'remove'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid })
   }
 
   public async getAllPresets() {
