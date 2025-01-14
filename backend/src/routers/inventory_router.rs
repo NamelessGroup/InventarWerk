@@ -24,7 +24,10 @@ pub struct ItemDeleteParams {
 pub struct ItemEditParams {
     inventory_uuid: String,
     item_preset_uuid: String,
-    amount: i32
+    amount: Option<i32>,
+    weight: Option<i32>,
+    sorting: Option<i32>,
+    inventory_item_note: Option<String>
 }
 
 #[derive(FromForm)]
@@ -121,7 +124,7 @@ pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, i
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
-    inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount)?;
+    inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount, params.sorting, params.weight, params.inventory_item_note)?;
     Ok(Status::NoContent)
 }
 

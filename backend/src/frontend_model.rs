@@ -7,7 +7,10 @@ pub struct Item {
     pub presetReference: String,
     pub amount: i32,
     pub dmNote: String,
-    pub description: String
+    pub description: String,
+    pub weight: i32,
+    pub sorting: i32,
+    pub InventoryItemNote: String
 }
 
 #[derive(Serialize, Deserialize)]

@@ -38,6 +38,12 @@ classDiagram
         amount: number
         dmNote: string
         description: string
+        price: number
+        presetCreator: string
+        itemType: string
+        weight: number
+        sorting: number
+        inventoryItemNote: String
     }
 
     Inventar --> Item
@@ -117,7 +123,7 @@ Response:
 
 }
 ```
-#### /inventory/item/edit?inventory_uuid="",item_preset_uuid="",amount=""
+#### /inventory/item/edit?inventory_uuid="",item_preset_uuid="",amount="",weight="",sorting="",inventory_item_note=""
 Patch
 changes the amount of an itemPreset in an inventory
 Response: 204
@@ -134,17 +140,17 @@ Response: 204
 Patch
 Edits the Amount of Money in an Inventory
 Response: 204
-#### /inventory/addShare?uuid="",reader_uuid="",writer_uuid=""
+#### /inventory/addShare?inventory_uuid="",reader_uuid="",writer_uuid=""
 Patch
 Makes an inventory visible to other members of the site
 reader_uuid and writer_uuid contains the uuid of the members that shoud get read/write access to the inventory
 reader_uuid and writer_uuid are optional, if they both dont exists, all members get read acces to the inventory
 Response:204
-#### /inventory/removeShare?uuid="",reader_uuid="",writer_uuid=""
+#### /inventory/removeShare?inventory_uuid="",reader_uuid="",writer_uuid=""
 Patch
 Removes given shares
 Response:204
-#### /inventory/delete?uuid=""
+#### /inventory/delete?inventory_uuid=""
 Delete
 deletes an inventory
 Response: 204
@@ -306,5 +312,8 @@ erDiagram
         text itempreset_uuid PK
         text dm_note
         integer amount
+        integer weight
+        integer sorting
+        text inventory_item_note
     }
 ```

@@ -66,10 +66,9 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Failed to load inventory writers")
     }
 
-    fn get_items_in_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<(String, i32)>, CStat> {
+    fn get_items_in_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<InventoryItem>, CStat> {
         let query = inventory_item.filter(inventory_item::inventory_uuid.eq(searched_inventory_uuid))
-        .select((inventory_item::dsl::item_preset_uuid, inventory_item::dsl::amount))
-        .load::<(String, i32)>(&mut self.get_conn());
+        .load::<InventoryItem>(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to load items in inventory")
     }
 
@@ -114,13 +113,16 @@ impl InventoryController {
             Err(e) => return Err(e)
         };
         for item in items.iter() {
-            let preset = self.get_item_preset(item.0.clone())?;
+            let preset = self.get_item_preset(item.item_preset_uuid.clone())?;
             inventory_parsed.items.push(Item {
                 name: preset.name.clone(),
-                presetReference: item.0.clone(),
-                amount: item.1,
-                dmNote: if is_dm {self.get_dm_note(searched_inventory_uuid.clone(), item.0.clone())?} else {"".to_string()} ,
-                description: preset.description.clone()
+                presetReference: item.item_preset_uuid.clone(),
+                amount: item.amount,
+                dmNote: if is_dm {self.get_dm_note(searched_inventory_uuid.clone(), item.item_preset_uuid.clone())?} else {"".to_string()} ,
+                description: preset.description.clone(),
+                weight: item.weight,
+                sorting: item.sorting,
+                InventoryItemNote: item.inventory_item_note.clone()
             });
         }
         Ok(inventory_parsed)
@@ -201,7 +203,10 @@ impl InventoryController {
             inventory_uuid: searched_inventory_uuid.clone(),
             item_preset_uuid: preset_uuid,
             dm_note: "".to_string(),
-            amount: item_amount
+            amount: item_amount,
+            inventory_item_note: "".to_string(),
+            sorting: 0,
+            weight: 0
         };
         let query = diesel::insert_into(inventory_item::table).values(&preset_inventory_pair)
             .execute(&mut self.get_conn());
@@ -228,12 +233,15 @@ impl InventoryController {
         return Ok(new_item_preset);
     }
 
-    pub fn edit_item_amount(&self, searched_inventory_uuid: String, searched_item_preset: String, new_amount:i32)
-        -> Result<bool, CStat> {
+    pub fn edit_item_amount(&self, searched_inventory_uuid: String, searched_item_preset: String, new_amount:Option<i32>,
+        new_sorting: Option<i32>, new_weight: Option<i32>, new_inventory_item_note: Option<String>)-> Result<bool, CStat> {
         let query = diesel::update(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
             .set(UpdateInventoryItem {
-                amount: Some(new_amount),
-                dm_note: None
+                amount: new_amount,
+                dm_note: None,
+                weight: new_weight,
+                sorting: new_sorting,
+                inventory_item_note: new_inventory_item_note
             }).execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
@@ -245,7 +253,10 @@ impl InventoryController {
         let query = diesel::update(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
             .set(UpdateInventoryItem {
                 amount: None,
-                dm_note: Some(new_dm_note)
+                dm_note: Some(new_dm_note),
+                weight: None,
+                sorting: None,
+                inventory_item_note: None
             }).execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to update item")?;
