@@ -87,8 +87,8 @@ export class DatabaseHandler {
 
   public async isDM(user?: string) {
     const uuid = user ?? store().uuid
-    const result = await this.get<{is_dm: boolean}>([DatabaseHandler.ACCOUNT_END_POINT, 'isDm'], { 'account_uuid': uuid })
-    return result?.is_dm ?? false
+    const result = await this.get<{isDM: boolean}>([DatabaseHandler.ACCOUNT_END_POINT, 'isDm'], { 'account_uuid': uuid })
+    return result?.isDM ?? false
   }
 
   public async getAllAccounts() {
