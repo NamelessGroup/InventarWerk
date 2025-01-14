@@ -1,4 +1,4 @@
-use diesel::dsl::exists;
+use diesel::dsl::{exists, max};
 use diesel::r2d2::ConnectionManager;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
@@ -199,13 +199,16 @@ impl InventoryController {
         if !self.preset_exists(preset_uuid.clone())? {
             return Err(new_cstat_from_ref(Status::NotFound, "Preset does not exists"));
         }
+        let max_sorting_query = inventory_item.select(max(inventory_item::sorting)).first::<Option<i32>>(&mut self.get_conn());
+        let max_sorting = format_result_to_cstat(max_sorting_query, Status::InternalServerError, "Coudn't load sorting")?.unwrap_or(0);
+
         let preset_inventory_pair = InventoryItem {
             inventory_uuid: searched_inventory_uuid.clone(),
             item_preset_uuid: preset_uuid,
             dm_note: "".to_string(),
             amount: item_amount,
             inventory_item_note: "".to_string(),
-            sorting: 0,
+            sorting: max_sorting,
             weight: 0
         };
         let query = diesel::insert_into(inventory_item::table).values(&preset_inventory_pair)

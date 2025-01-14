@@ -80,6 +80,7 @@ import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
 import { ref } from 'vue'
 import { DatabaseHandler } from './store/DatabaseHandler'
 import PopUp from './components/PopUp.vue'
+import {parseItem} from './utils/itemParser'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
@@ -164,6 +165,7 @@ function handleItemFile(file: File) {
   function onItemFileRead() {
     const textContent = fileReader.result as string
     const jsonContent = JSON.parse(textContent)
+    parseItem(jsonContent)
   }
 }
 

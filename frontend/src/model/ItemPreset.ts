@@ -5,4 +5,5 @@ export interface ItemPreset {
   price: number
   creator: string
   itemType: string
+  weight: number
 }
