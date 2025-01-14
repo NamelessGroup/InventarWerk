@@ -44,6 +44,9 @@ CREATE TABLE inventory_item(
     item_preset_uuid TEXT NOT NULL,
     dm_note TEXT NOT NULL,
     amount INTEGER NOT NULL,
+    weight INTEGER NOT NULL,
+    sorting INTEGER NOT NULL,
+    inventory_item_note TEXT NOT NULL,
     PRIMARY KEY(inventory_uuid, item_preset_uuid),
     FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid) ON DELETE CASCADE,
     FOREIGN KEY(item_preset_uuid) REFERENCES item_preset(uuid) ON DELETE CASCADE

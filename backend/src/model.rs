@@ -65,6 +65,9 @@ pub struct InventoryItem {
     pub item_preset_uuid: String,
     pub dm_note: String,
     pub amount: i32,
+    pub weight: i32,
+    pub sorting: i32,
+    pub inventory_item_note: String,
 }
 
 #[derive(AsChangeset)]
@@ -72,6 +75,9 @@ pub struct InventoryItem {
 pub struct UpdateInventoryItem {
     pub dm_note: Option<String>,
     pub amount: Option<i32>,
+    pub weight: Option<i32>,
+    pub sorting: Option<i32>,
+    pub inventory_item_note: Option<String>
 }
 
 #[derive(AsChangeset)]

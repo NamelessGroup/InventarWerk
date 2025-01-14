@@ -35,8 +35,8 @@ async fn main() {
     let figment = Config::figment().merge(("secret_key", secret_key));
     let config = Config::from(figment);    
 
-    let mut r = rocket::build()
-        .configure(config)
+    let mut r = rocket::build();
+    r = r.configure(config)
         .manage(inv_cont)
         .manage(acc_con)
         .manage(ip_con)
