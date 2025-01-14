@@ -2,6 +2,9 @@
   <div class="w-screen text-white bg-slate-950">
     <div v-if="isLoggedIn" class="w-full bg-slate-950">
       <div class="flex h-12 w-full items-center justify-end space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
+        <button v-if="store().userIsDm" class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="loadItemFile">
+          <FontAwesomeIcon :icon="faUpload" />
+        </button>
         <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900">
           <FontAwesomeIcon :icon="faGears" />
         </button>
@@ -71,7 +74,7 @@
 <script setup lang="ts">
 import InventoryContainer from './components/InventoryContainer.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faGears, faPlus, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
+import { faGears, faPlus, faRightFromBracket, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { store } from './store'
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
 import { ref } from 'vue'
@@ -133,4 +136,36 @@ function logOut() {
       window.location.reload()
     })
 }
+
+function loadItemFile() {
+  let input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.zip,.json'
+  input.multiple = false
+  input.onchange = () => {
+    const files = input.files
+    if (!files) {
+      return
+    }
+    const file = files.item(0)
+    if (!file) {
+      return
+    }
+    handleItemFile(file)
+  }
+  input.click()
+}
+
+function handleItemFile(file: File) {
+  const fileReader = new FileReader()
+  fileReader.onload = onItemFileRead
+  fileReader.readAsText(file)
+
+  function onItemFileRead() {
+    const textContent = fileReader.result as string
+    const jsonContent = JSON.parse(textContent)
+  }
+}
+
+
 </script>

@@ -79,10 +79,17 @@ export class DatabaseHandler {
     store().uuid = await this.getOwnUUID()
     store().itemPresets = await this.getAllPresets()
     store().accounts = await this.getAllAccounts()
+    store().userIsDm = await this.isDM()
     const inventories = await this.getAllInventoriesFromDB()
     inventories.forEach(inventory => this.setInventoryInStore(inventory))
     store().inventoryUuids = inventories.map(inventory => inventory.uuid)
   } 
+
+  public async isDM(user?: string) {
+    const uuid = user ?? store().uuid
+    const result = await this.get<{is_dm: boolean}>([DatabaseHandler.ACCOUNT_END_POINT, 'isDm'], { 'account_uuid': uuid })
+    return result?.is_dm ?? false
+  }
 
   public async getAllAccounts() {
     return (await this.get<{accounts: Account[]}>([DatabaseHandler.ACCOUNT_END_POINT, 'get']).then(r => r?.accounts)) ?? []

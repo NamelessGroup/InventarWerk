@@ -11,7 +11,8 @@ export const store = defineStore('store', {
     inventories: {},
     uuid: '',
     accounts: [],
-    itemPresets: []
+    itemPresets: [],
+    userIsDm: false
   } as State),
   getters: {
     getInvetory: (state) => (uuid: string): Inventory => {
@@ -73,6 +74,7 @@ interface State {
   uuid: string
   accounts: Account[]
   itemPresets: ItemPreset[]
+  userIsDm: boolean
 }
 
 
