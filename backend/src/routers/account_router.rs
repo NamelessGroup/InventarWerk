@@ -11,10 +11,10 @@ use rocket::response::status::Custom;
 use crate::controller::account_controller::AccountController;
 use crate::controller::CStat;
 use crate::model::User;
-
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct DMResponse {
-    is_dm: bool
+    isDm: bool
 }
 #[derive(Serialize, Deserialize)]
 pub struct AccountResponse {
@@ -75,7 +75,7 @@ pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::Authenticat
  -> Result<Json<DMResponse>, CStat> {
     let user_is_dm =  acc_con.user_is_dm(params.account_uuid)?;
     Ok(Json(DMResponse {
-        is_dm: user_is_dm
+        isDm: user_is_dm
     }))
     
 }
