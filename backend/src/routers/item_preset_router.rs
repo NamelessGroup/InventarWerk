@@ -24,6 +24,16 @@ pub struct ItemModifyParams {
     item_type: Option<String>
 }
 
+#[derive(FromForm)]
+pub struct ItemPresetCreateExternParams {
+    name: String,
+    price:i32,
+    description: String,
+    creator: String,
+    item_type: String
+}
+
+
 fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con: &State<InventoryController>) -> Result<bool, CStat> {
     let mut has_access = false;
     for i in inventories {
@@ -81,4 +91,11 @@ pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &Stat
             item_presets: ips
         }
     ))
+}
+
+#[put("/itemPreset/addExtern?<params..>")]
+pub async fn add_extern(params: ItemPresetCreateExternParams, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
+    -> Result<Status, CStat>  {
+    ipc_con.add_extern_preset(params.name, params.price, params.description, params.creator, params.item_type)?;
+    Ok(Status::NoContent)
 }

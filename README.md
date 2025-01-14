@@ -225,8 +225,11 @@ debug page, displays the account id
 Get
 time stamp of last fetch in millis
 Response: {uuid: string, type: 'create'|'patch'|'delete'}[]
-
-
+### Special Endpoints
+#### /itemPreset/addExtern?name="",price="",description="",creator="",item_type=""
+Put
+Requires the requestor to be a dm
+Adds an ItemPreset i.e. from an external source, allows creators other than the logged in users
 # Backend
 ##
 fields in .env in backend/
