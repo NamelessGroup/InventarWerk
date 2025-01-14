@@ -1,4 +1,7 @@
+import { ErrorHandler } from "@/errorHandling/ErrorHandler"
 import type { ItemPreset } from "@/model/ItemPreset"
+import { DatabaseHandler } from "@/store/DatabaseHandler"
+import axios from "axios"
 import { isInterfaceDeclaration } from "typescript"
 
 interface ItemJSON {
@@ -184,7 +187,7 @@ function tableParser(entry: ComplexEntry) {
 }
 
 
-export function parseItem(itemList: ItemListJSON) {
+export async function parseItem(itemList: ItemListJSON) {
     const parsedItemList: Array<ItemPreset> = []
 
     for (const x  of itemList.item) {
@@ -214,5 +217,34 @@ export function parseItem(itemList: ItemListJSON) {
         parsedItemList.push(parsedItem)
 
     }
-    console.log(parsedItemList[200])
+    for (const item of parsedItemList) {
+        pushPresetToServer(item)
+        await (new Promise( resolve => setTimeout(resolve, 50) ));
+    }
+    
+}
+
+
+async function pushPresetToServer(itemPreset: ItemPreset) {
+    let params = new URLSearchParams({
+        "creator": itemPreset.creator,
+        "description": itemPreset.description,
+        "item_type": itemPreset.itemType,
+        "name": itemPreset.name,
+        "price": "" + itemPreset.price,
+        "weight": "" + itemPreset.weight
+    })
+    const response = await axios.put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', {}, {
+        params,
+        withCredentials: true
+      }).then((response) => response).catch((error) => error.response)
+    if (response && response.status >= 200 && response.status < 300) {
+      return
+    } else {
+      ErrorHandler.getInstance().registerError(
+        new Error(
+          `Could put extern itemPreset ${itemPreset.name} to Server due to: ${response.status} ${response.statusText}`
+        )
+      )
+    }
 }

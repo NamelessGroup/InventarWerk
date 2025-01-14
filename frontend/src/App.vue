@@ -162,10 +162,10 @@ function handleItemFile(file: File) {
   fileReader.onload = onItemFileRead
   fileReader.readAsText(file)
 
-  function onItemFileRead() {
+  async function onItemFileRead() {
     const textContent = fileReader.result as string
     const jsonContent = JSON.parse(textContent)
-    parseItem(jsonContent)
+    await parseItem(jsonContent)
   }
 }
 

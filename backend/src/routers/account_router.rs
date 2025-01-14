@@ -16,6 +16,7 @@ use crate::model::User;
 pub struct DMResponse {
     isDm: bool
 }
+
 #[derive(Serialize, Deserialize)]
 pub struct AccountResponse {
     accounts: Vec<User>
