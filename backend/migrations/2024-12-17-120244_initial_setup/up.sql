@@ -9,6 +9,7 @@ CREATE TABLE item_preset (
     uuid TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     price INTEGER NOT NULL,
+    weight INTEGER NOT NULL,
     description TEXT NOT NULL,
     creator TEXT NOT NULL,
     item_type TEXT NOT Null
@@ -44,7 +45,6 @@ CREATE TABLE inventory_item(
     item_preset_uuid TEXT NOT NULL,
     dm_note TEXT NOT NULL,
     amount INTEGER NOT NULL,
-    weight INTEGER NOT NULL,
     sorting INTEGER NOT NULL,
     inventory_item_note TEXT NOT NULL,
     PRIMARY KEY(inventory_uuid, item_preset_uuid),

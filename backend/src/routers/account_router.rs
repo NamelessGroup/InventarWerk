@@ -11,6 +11,7 @@ use rocket::response::status::Custom;
 use crate::controller::account_controller::AccountController;
 use crate::controller::CStat;
 use crate::model::User;
+
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct DMResponse {
@@ -22,9 +23,10 @@ pub struct AccountResponse {
     accounts: Vec<User>
 }
 
+#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct LoggedInResponse {
-    logged_in: bool
+    loggedIn: bool
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,9 +38,10 @@ pub struct TokenResponse {
     scope: String,
 }
 
+#[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfoResponse {
-    uuid: String
+    userUUID: String
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -90,36 +93,6 @@ pub async fn login() -> Redirect {
         client_id, redirect_uri
     );
     Redirect::to(url)
-}
-
-#[get("/account/info")]
-pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
-    return Json(InfoResponse {
-        uuid: user.user_id
-    })
-}
-
-#[get("/account/isLoggedIn")]
-pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
-    if let Some(_cookie) = cookies.get_private("user_id") {
-        return Json(LoggedInResponse {
-            logged_in: true
-        })
-    } else {
-        return Json(LoggedInResponse {
-            logged_in: false
-        })
-    }
-}
-
-#[get("/account/logout")]
-pub async fn logout(cookies: &CookieJar<'_>) -> Status {
-    if let Some(_cookie) = cookies.get_private("user_id") {
-        cookies.remove_private("user_id");
-        Status::NoContent
-    } else {
-        Status::BadRequest
-    }
 }
 
 #[get("/account/oauth/callback?<params..>")]
@@ -190,5 +163,29 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
     }
     #[cfg(not(feature = "dev"))] {
         return Ok(Redirect::to(uri!("/")));
+    }
+}
+
+#[get("/account/info")]
+pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
+    return Json(InfoResponse {
+        userUUID: user.user_id
+    })
+}
+
+#[get("/account/isLoggedIn")]
+pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
+    return Json(LoggedInResponse {
+        loggedIn: cookies.get_private("user_id") == None
+    });
+}
+
+#[get("/account/logout")]
+pub async fn logout(cookies: &CookieJar<'_>) -> Status {
+    if let Some(_cookie) = cookies.get_private("user_id") {
+        cookies.remove_private("user_id");
+        Status::NoContent
+    } else {
+        Status::BadRequest
     }
 }

@@ -20,6 +20,7 @@ pub struct ItemModifyParams {
     item_preset_uuid: String,
     name: Option<String>,
     price:Option<i32>,
+    weight: Option<i32>,
     description: Option<String>,
     item_type: Option<String>
 }
@@ -28,6 +29,7 @@ pub struct ItemModifyParams {
 pub struct ItemPresetCreateExternParams {
     name: String,
     price:i32,
+    weight: i32,
     description: String,
     creator: String,
     item_type: String
@@ -62,7 +64,7 @@ pub async fn modify_item_preset(params: ItemModifyParams,  user: super::Authenti
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
         return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
     }
-    ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.description, params.item_type)?;
+    ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.weight, params.description, params.item_type)?;
     Ok(Status::NoContent)
 }
 
@@ -96,6 +98,6 @@ pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &Stat
 #[put("/itemPreset/addExtern?<params..>")]
 pub async fn add_extern(params: ItemPresetCreateExternParams, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
     -> Result<Status, CStat>  {
-    ipc_con.add_extern_preset(params.name, params.price, params.description, params.creator, params.item_type)?;
+    ipc_con.add_extern_preset(params.name, params.price, params.weight, params.description, params.creator, params.item_type)?;
     Ok(Status::NoContent)
 }

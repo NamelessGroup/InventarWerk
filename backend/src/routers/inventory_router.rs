@@ -25,7 +25,6 @@ pub struct ItemEditParams {
     inventory_uuid: String,
     item_preset_uuid: String,
     amount: Option<i32>,
-    weight: Option<i32>,
     sorting: Option<i32>,
     inventory_item_note: Option<String>
 }
@@ -48,7 +47,7 @@ pub struct InventoryCreateParams {
 }
 
 #[derive(FromForm)]
-pub struct InvnetoryAddItemByNameParams {
+pub struct InventoryAddItemByNameParams {
     inventory_uuid: String,
     name: String,
     amount:i32
@@ -109,7 +108,7 @@ pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  us
 }
 
 #[put("/inventory/item/addNew?<params..>")]
-pub async fn add_new_item_to_inventory(params:InvnetoryAddItemByNameParams,  user: super::AuthenticatedUser,
+pub async fn add_new_item_to_inventory(params:InventoryAddItemByNameParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<ItemPreset>, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
@@ -124,11 +123,11 @@ pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, i
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
-    inv_con.edit_item_amount(params.inventory_uuid, params.item_preset_uuid, params.amount, params.sorting, params.weight, params.inventory_item_note)?;
+    inv_con.edit_inventory_item(params.inventory_uuid, params.item_preset_uuid, params.amount, params.sorting, params.inventory_item_note)?;
     Ok(Status::NoContent)
 }
 
-#[get("/inventory/item/addNote?<params..>")]
+#[patch("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
         acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_is_dm(user.user_id.clone())? {

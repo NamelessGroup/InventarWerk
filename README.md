@@ -123,7 +123,7 @@ Response:
 
 }
 ```
-#### /inventory/item/edit?inventory_uuid="",item_preset_uuid="",amount="",weight="",sorting="",inventory_item_note=""
+#### /inventory/item/edit?inventory_uuid="",item_preset_uuid="",amount="",sorting="",inventory_item_note=""
 Patch
 changes the amount of an itemPreset in an inventory
 Response: 204
@@ -132,7 +132,7 @@ Patch
 Adds an dm note to an item
 REQUIRES AN DM ACCOUNT
 Response:201
-#### /inventory/item/remove?innventory_uuid="",item_preset_uuid=""
+#### /inventory/item/remove?inventory_uuid="",item_preset_uuid=""
 Delete
 Deletes the given item preset from the given iventory
 Response: 204
@@ -179,7 +179,7 @@ Deletes an itemPreset
 Response: 204
 #### /itemPreset/all
 Get
-Returns all itemPreset reduced
+Returns all itemPreset
 Response:
 ```json
 {
@@ -200,12 +200,13 @@ Response:
     "accounts": [
         {
             "name":"name",
-            "uuid":"uuid"
+            "uuid":"uuid",
+            "dm": 0|1
         }//,...
     ]
 }
 ```
-#### /account/isDm?uuid=""
+#### /account/isDm?account_uuid=""
 Get
 Returns if the account is dm
 Response:
@@ -219,7 +220,26 @@ redirects to the discord login page
 #### /account/oauth/callback
 handles the redirect from the oauth
 #### /account/info
-debug page, displays the account id
+Get
+returns the own userid
+Response:
+```json
+{
+    "userUUID": "your userid"
+}
+```
+#### /account/isLoggedIn
+Get
+Does not requires Authentication
+Response:
+```json
+{
+    "loggedIn":true // or false
+}
+```
+#### /account/logout
+Get
+Deletes the authtoken from the users page
 ### last Changes
 #### /lastChanges?timestamp=""
 Get

@@ -28,11 +28,11 @@ export class DatabaseHandler {
   }
 
   public async isLoggedIn() {
-    const response = await this.get<{ logged_in: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isLoggedIn'])
+    const response = await this.get<{ loggedIn: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isLoggedIn'])
     if (!response) {
       return false
     }
-    return response.logged_in
+    return response.loggedIn
   }
 
   public getLogInUrl() {
@@ -100,7 +100,7 @@ export class DatabaseHandler {
   }
 
   private async getOwnUUID() {
-    return (await this.get<{uuid:string}>([DatabaseHandler.ACCOUNT_END_POINT, 'info']).then(r => r?.uuid)) ?? ''
+    return (await this.get<{userUUID:string}>([DatabaseHandler.ACCOUNT_END_POINT, 'info']).then(r => r?.userUUID)) ?? ''
   }
 
   private async fetchInventory(uuid: string) {
