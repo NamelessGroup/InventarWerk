@@ -176,7 +176,7 @@ pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> 
 #[get("/account/isLoggedIn")]
 pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     return Json(LoggedInResponse {
-        loggedIn: cookies.get_private("user_id") == None
+        loggedIn: cookies.get_private("user_id") != None
     });
 }
 
