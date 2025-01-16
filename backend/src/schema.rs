@@ -39,7 +39,7 @@ diesel::table! {
         uuid -> Text,
         name -> Text,
         price -> Integer,
-        weight -> Integer,
+        weight -> Float,
         description -> Text,
         creator -> Text,
         item_type -> Text,

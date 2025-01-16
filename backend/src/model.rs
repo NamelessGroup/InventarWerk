@@ -50,7 +50,7 @@ pub struct ItemPreset {
     pub uuid: String,
     pub name: String,
     pub price: i32,
-    pub weight: i32,
+    pub weight: f32,
     pub description: String,
     pub creator: String,
     pub item_type: String,
@@ -90,7 +90,7 @@ pub struct UpdateInventoryMoney {
 pub struct UpdateItemPreset {
     pub name: Option<String>,
     pub price: Option<i32>,
-    pub weight: Option<i32>,
+    pub weight: Option<f32>,
     pub description: Option<String>,
     pub item_type: Option<String>,
 }

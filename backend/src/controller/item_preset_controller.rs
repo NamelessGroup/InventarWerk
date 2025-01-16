@@ -40,7 +40,7 @@ impl ItemPresetController {
     }
 
     pub fn edit_item_preset(&self, searched_item_preset_uuid: String, new_name: Option<String>, new_price: Option<i32>, 
-            new_weight: Option<i32>, new_description: Option<String>, new_type: Option<String>) -> Result<bool, CStat> {
+            new_weight: Option<f32>, new_description: Option<String>, new_type: Option<String>) -> Result<bool, CStat> {
         let item_preset_changes = UpdateItemPreset {
             name: new_name,
             price: new_price,
@@ -74,7 +74,7 @@ impl ItemPresetController {
         }
         Ok(true)
     }
-    pub fn add_extern_preset(&self, preset_name: String, item_price:i32, preset_weight: i32,
+    pub fn add_extern_preset(&self, preset_name: String, item_price:i32, preset_weight: f32,
         item_description: String, creator_uuid: String, i_type: String) -> Result<ItemPreset, CStat> {
     let new_item_preset = ItemPreset {
         name: preset_name,

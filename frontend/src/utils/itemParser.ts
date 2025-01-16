@@ -3,7 +3,6 @@ import type { ItemPreset } from "@/model/ItemPreset"
 import { DatabaseHandler } from "@/store/DatabaseHandler"
 import axios from "axios"
 import { isInterfaceDeclaration } from "typescript"
-
 interface ItemJSON {
     name: string,
     source?: string,
@@ -128,7 +127,7 @@ function entryParser(entry: ComplexEntry) {
         }
     }
     if (lines.length == 0) lines.push("")
-    lines[0] = `**${entry.name??""}**${lines[0]}`
+    lines[0] = `**${entry.name??""}**. ${lines[0]}`
     return lines.join("\n\n")
 }
 
@@ -201,7 +200,7 @@ export async function parseItem(itemList: ItemListJSON) {
         weight: 0,
         }
         parsedItem.name = x.name
-        parsedItem.price = x.value?? 0
+        parsedItem.price = Math.round(x.value?? 0)
         parsedItem.weight = x.weight?? 0
         parsedItem.itemType = typeTranslator[x.type??"undefined"] ?? (() => {console.log(`Missing Type: ${x.type}`)})
         let lines: Array<String> = []
@@ -217,27 +216,23 @@ export async function parseItem(itemList: ItemListJSON) {
         parsedItemList.push(parsedItem)
 
     }
+
     for (const item of parsedItemList) {
-        pushPresetToServer(item)
-        await (new Promise( resolve => setTimeout(resolve, 50) ));
+        await pushPresetToServer(item)
+        await (new Promise( resolve => setTimeout(resolve, 200) ));
     }
     
 }
 
 
 async function pushPresetToServer(itemPreset: ItemPreset) {
-    let params = new URLSearchParams({
-        "creator": itemPreset.creator,
-        "description": itemPreset.description,
-        "item_type": itemPreset.itemType,
-        "name": itemPreset.name,
-        "price": "" + itemPreset.price,
-        "weight": "" + itemPreset.weight
-    })
-    const response = await axios.put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', {}, {
-        params,
+    const response = await axios.put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(itemPreset), {
         withCredentials: true
       }).then((response) => response).catch((error) => error.response)
+    if (response && response.status == 500) {
+        await (new Promise( resolve => setTimeout(resolve, 1000) ));
+        await pushPresetToServer(itemPreset)
+    }
     if (response && response.status >= 200 && response.status < 300) {
       return
     } else {

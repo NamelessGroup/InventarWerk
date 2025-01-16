@@ -20,20 +20,12 @@ pub struct ItemModifyParams {
     item_preset_uuid: String,
     name: Option<String>,
     price:Option<i32>,
-    weight: Option<i32>,
+    weight: Option<f32>,
     description: Option<String>,
     item_type: Option<String>
 }
 
-#[derive(FromForm)]
-pub struct ItemPresetCreateExternParams {
-    name: String,
-    price:i32,
-    weight: i32,
-    description: String,
-    creator: String,
-    item_type: String
-}
+
 
 
 fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con: &State<InventoryController>) -> Result<bool, CStat> {
@@ -95,9 +87,21 @@ pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &Stat
     ))
 }
 
-#[put("/itemPreset/addExtern?<params..>")]
-pub async fn add_extern(params: ItemPresetCreateExternParams, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize)]
+pub struct ExternPresetData {
+    name: String,
+    uuid: String,
+    price: i32,
+    weight: f32,
+    description: String,
+    creator: String,
+    itemType: String
+}
+
+#[put("/itemPreset/addExtern", data="<json_data>")]
+pub async fn add_extern(json_data: Json<ExternPresetData>, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
     -> Result<Status, CStat>  {
-    ipc_con.add_extern_preset(params.name, params.price, params.weight, params.description, params.creator, params.item_type)?;
+    ipc_con.add_extern_preset(json_data.name.clone(), json_data.price, json_data.weight, json_data.description.clone(), json_data.creator.clone(), json_data.itemType.clone())?;
     Ok(Status::NoContent)
 }

@@ -223,7 +223,7 @@ impl InventoryController {
             name: preset_name,
             uuid: super::generate_uuid_v4(),
             price: 0,
-            weight: 0,
+            weight: 0.0,
             description: "".to_string(),
             creator: creator_uuid,
             item_type: "".to_string()
