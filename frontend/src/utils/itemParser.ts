@@ -115,7 +115,7 @@ function quoteParser(entry: ComplexEntry) {
     return lines.join("\n")
 }
 
-function entryParser(entry: ComplexEntry) {
+function entryParser(entry: ComplexEntry, section?: boolean) {
     let lines: Array<string> = []
     //Should at least have one string line
     for (const line of entry.entries??"") {
@@ -127,7 +127,11 @@ function entryParser(entry: ComplexEntry) {
         }
     }
     if (lines.length == 0) lines.push("")
-    lines[0] = `**${entry.name??""}**. ${lines[0]}`
+    if ((section??false) == true && entry.name) {
+        lines.unshift(`## ${entry.name}`)
+    } else {
+        lines[0] = `${entry.name?"**" + entry.name + "**. ":""}${lines[0]}`
+    }
     return lines.join("\n\n")
 }
 
@@ -160,14 +164,14 @@ function listParser(entry: ComplexEntry) {
 
 function sectionParser(entry: ComplexEntry) {
     let lines: Array<string> = [
-        `## ${entry.name??""}`
     ]
     for (const line of entry.entries??"") {
         if (typeof line === "string") {
             lines.push(line)
         } else {
             const complexEntry:ComplexEntry = line
-            lines.push(descriptionTranslator[line.type](complexEntry))
+            if (line.type == "entries") lines.push(descriptionTranslator[line.type](complexEntry, true))
+            else lines.push(descriptionTranslator[line.type](complexEntry))
         }
     }
     return lines.join("\n\n")
@@ -182,7 +186,7 @@ function tableParser(entry: ComplexEntry) {
     for (const row of entry.rows ?? []) {
         lines.push(`|${row.join("|")}|`)
     }
-    return lines.join("\n\n")
+    return lines.join("\n")
 }
 
 
@@ -206,6 +210,7 @@ export async function parseItem(itemList: ItemListJSON) {
         weight: 0,
         }
         parsedItem.name = x.name
+        if (x.source) parsedItem.name += ` (${x.source})`
         parsedItem.price = Math.round(x.value?? 0)
         parsedItem.weight = x.weight?? 0
         parsedItem.itemType = typeTranslator[x.type??"undefined"] ?? (() => {console.log(`Missing Type: ${x.type}`)})
@@ -228,6 +233,9 @@ export async function parseItem(itemList: ItemListJSON) {
         parsedItem.description = parsedItem.description.replace(regex3, (match, group1) => {
             return group1;
         });
+        if (x.reqAttune) parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n` + parsedItem.description
+        
+        if (x.source) parsedItem.description += `\n\n*From ${x.source + (x.page? " p." + x.page: "")}*`
         parsedItemList.push(parsedItem)
 
     }
