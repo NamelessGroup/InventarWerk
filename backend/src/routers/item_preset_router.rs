@@ -99,9 +99,16 @@ pub struct ExternPresetData {
     itemType: String
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct ExternPresetDataList {
+    presets: Vec<ExternPresetData>
+}
+
 #[put("/itemPreset/addExtern", data="<json_data>")]
-pub async fn add_extern(json_data: Json<ExternPresetData>, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
+pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
     -> Result<Status, CStat>  {
-    ipc_con.add_extern_preset(json_data.name.clone(), json_data.price, json_data.weight, json_data.description.clone(), json_data.creator.clone(), json_data.itemType.clone())?;
+    for x in &json_data.presets{
+        ipc_con.add_extern_preset(x.name.clone(), x.price, x.weight, x.description.clone(), x.creator.clone(), x.itemType.clone())?;
+    }
     Ok(Status::NoContent)
 }

@@ -189,6 +189,12 @@ function tableParser(entry: ComplexEntry) {
 export async function parseItem(itemList: ItemListJSON) {
     const parsedItemList: Array<ItemPreset> = []
 
+    const regex1 = /\{@[^\s|}]+ ([^|}]+)}/g;
+
+    const regex2 = /\{@[^\s|}]+ ([^|}]+)\|[^|}]+}/g;
+
+    const regex3 = /\{@[^\s|}]+ [^|}]+\|[^|}]+\|([^|}]+)}/g;
+
     for (const x  of itemList.item) {
         const parsedItem: ItemPreset = {
         name: "",
@@ -213,18 +219,74 @@ export async function parseItem(itemList: ItemListJSON) {
             }
         }
         parsedItem.description = lines.join("\n\n")
+        parsedItem.description = parsedItem.description.replace(regex1, (match, group1) => {
+            return group1;
+        });
+        parsedItem.description = parsedItem.description.replace(regex2, (match, group1) => {
+            return group1;
+        });
+        parsedItem.description = parsedItem.description.replace(regex3, (match, group1) => {
+            return group1;
+        });
         parsedItemList.push(parsedItem)
 
     }
 
-    for (const item of parsedItemList) {
-        await pushPresetToServer(item)
-        await (new Promise( resolve => setTimeout(resolve, 200) ));
+    const LOWER_BOUND_SIZE = 100 * 1000
+    const UPPER_BOUND_SIZE = 200 * 1000
+    while (parsedItemList.length != 0) {
+        let currentTransferList:PresetList = {
+            presets: []
+        }
+        while (getJsonSizeInBytes(currentTransferList) < LOWER_BOUND_SIZE && parsedItemList.length != 0) {
+            const elementsMoving = parsedItemList.splice(0, 100);
+            currentTransferList.presets.push(...elementsMoving)
+        }
+        if (getJsonSizeInBytes(currentTransferList) > UPPER_BOUND_SIZE) {
+            const elementsMoving = currentTransferList.presets.splice(0, 100);
+            parsedItemList.push(...elementsMoving)
+        }
+        await pushPresetListToServer(currentTransferList)
+        await (new Promise( resolve => setTimeout(resolve, 2000))); 
     }
+
+    // not used anymore, but should be kept to debug changes in the future
+    //for (const item of parsedItemList) {
+    //    await pushPresetToServer(item)
+    //    await (new Promise( resolve => setTimeout(resolve, 200) ));
+    //}
     
 }
 
+function getJsonSizeInBytes(data: any): number {
+    const jsonString = JSON.stringify(data);
+    return new TextEncoder().encode(jsonString).length; 
+}
 
+interface PresetList {
+    presets: ItemPreset[]
+}
+
+async function pushPresetListToServer(presetList: PresetList) {
+    const response = await axios.put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(presetList), {
+        withCredentials: true
+      }).then((response) => response).catch((error) => error.response)
+    if (response && response.status == 500) {
+        await (new Promise( resolve => setTimeout(resolve, 1000) ));
+        await pushPresetListToServer(presetList)
+    }
+    if (response && response.status >= 200 && response.status < 300) {
+      return
+    } else {
+      ErrorHandler.getInstance().registerError(
+        new Error(
+          `Could put extern preset List to Server due to: ${response.status} ${response.statusText}`
+        )
+      )
+    }
+}
+
+// not used anymore, but should be kept to debug changes in the future
 async function pushPresetToServer(itemPreset: ItemPreset) {
     const response = await axios.put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(itemPreset), {
         withCredentials: true
