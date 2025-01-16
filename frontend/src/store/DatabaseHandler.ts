@@ -136,10 +136,12 @@ export class DatabaseHandler {
       presetReference: presetUuid,
       amount,
       dmNote: "",
+      weight: presetData.weight,
       description: presetData.description,
       price: presetData.price,
       creator: presetData.creator,
-      itemType: presetData.itemType
+      itemType: presetData.itemType,
+      sorting: Math.max(...store().inventories[inventoryUuid].items.map(i => i.sorting), 0) + 1
     });
 
     return true; 

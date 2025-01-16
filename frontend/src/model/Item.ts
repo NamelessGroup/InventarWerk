@@ -5,6 +5,8 @@ export interface Item {
   description: string
   price: number
   creator: string
+  weight: number
+  sorting: number
   itemType: string
   presetReference: string
 }
