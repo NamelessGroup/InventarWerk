@@ -8,7 +8,7 @@ pub struct Item {
     pub amount: i32,
     pub dmNote: String,
     pub description: String,
-    pub weight: i32,
+    pub weight: f32,
     pub sorting: i32,
     pub InventoryItemNote: String
 }

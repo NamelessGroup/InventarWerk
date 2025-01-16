@@ -1,4 +1,4 @@
-use diesel::dsl::exists;
+use diesel::dsl::{exists, max};
 use diesel::r2d2::ConnectionManager;
 use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
@@ -120,7 +120,7 @@ impl InventoryController {
                 amount: item.amount,
                 dmNote: if is_dm {self.get_dm_note(searched_inventory_uuid.clone(), item.item_preset_uuid.clone())?} else {"".to_string()} ,
                 description: preset.description.clone(),
-                weight: item.weight,
+                weight: preset.weight,
                 sorting: item.sorting,
                 InventoryItemNote: item.inventory_item_note.clone()
             });
@@ -199,14 +199,16 @@ impl InventoryController {
         if !self.preset_exists(preset_uuid.clone())? {
             return Err(new_cstat_from_ref(Status::NotFound, "Preset does not exists"));
         }
+        let max_sorting_query = inventory_item.select(max(inventory_item::sorting)).first::<Option<i32>>(&mut self.get_conn());
+        let max_sorting = format_result_to_cstat(max_sorting_query, Status::InternalServerError, "Coudn't load sorting")?.unwrap_or(0);
+
         let preset_inventory_pair = InventoryItem {
             inventory_uuid: searched_inventory_uuid.clone(),
             item_preset_uuid: preset_uuid,
             dm_note: "".to_string(),
             amount: item_amount,
             inventory_item_note: "".to_string(),
-            sorting: 0,
-            weight: 0
+            sorting: max_sorting
         };
         let query = diesel::insert_into(inventory_item::table).values(&preset_inventory_pair)
             .execute(&mut self.get_conn());
@@ -221,6 +223,7 @@ impl InventoryController {
             name: preset_name,
             uuid: super::generate_uuid_v4(),
             price: 0,
+            weight: 0.0,
             description: "".to_string(),
             creator: creator_uuid,
             item_type: "".to_string()
@@ -233,13 +236,12 @@ impl InventoryController {
         return Ok(new_item_preset);
     }
 
-    pub fn edit_item_amount(&self, searched_inventory_uuid: String, searched_item_preset: String, new_amount:Option<i32>,
-        new_sorting: Option<i32>, new_weight: Option<i32>, new_inventory_item_note: Option<String>)-> Result<bool, CStat> {
+    pub fn edit_inventory_item(&self, searched_inventory_uuid: String, searched_item_preset: String, new_amount:Option<i32>,
+        new_sorting: Option<i32>, new_inventory_item_note: Option<String>)-> Result<bool, CStat> {
         let query = diesel::update(inventory_item.find((searched_inventory_uuid.clone(), searched_item_preset)))
             .set(UpdateInventoryItem {
                 amount: new_amount,
                 dm_note: None,
-                weight: new_weight,
                 sorting: new_sorting,
                 inventory_item_note: new_inventory_item_note
             }).execute(&mut self.get_conn());
@@ -254,7 +256,6 @@ impl InventoryController {
             .set(UpdateInventoryItem {
                 amount: None,
                 dm_note: Some(new_dm_note),
-                weight: None,
                 sorting: None,
                 inventory_item_note: None
             }).execute(&mut self.get_conn());

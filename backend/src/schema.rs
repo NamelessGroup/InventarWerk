@@ -15,7 +15,6 @@ diesel::table! {
         item_preset_uuid -> Text,
         dm_note -> Text,
         amount -> Integer,
-        weight -> Integer,
         sorting -> Integer,
         inventory_item_note -> Text,
     }
@@ -40,6 +39,7 @@ diesel::table! {
         uuid -> Text,
         name -> Text,
         price -> Integer,
+        weight -> Float,
         description -> Text,
         creator -> Text,
         item_type -> Text,

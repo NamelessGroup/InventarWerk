@@ -20,9 +20,13 @@ pub struct ItemModifyParams {
     item_preset_uuid: String,
     name: Option<String>,
     price:Option<i32>,
+    weight: Option<f32>,
     description: Option<String>,
     item_type: Option<String>
 }
+
+
+
 
 fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con: &State<InventoryController>) -> Result<bool, CStat> {
     let mut has_access = false;
@@ -52,7 +56,7 @@ pub async fn modify_item_preset(params: ItemModifyParams,  user: super::Authenti
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
         return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
     }
-    ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.description, params.item_type)?;
+    ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.weight, params.description, params.item_type)?;
     Ok(Status::NoContent)
 }
 
@@ -81,4 +85,23 @@ pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &Stat
             item_presets: ips
         }
     ))
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize)]
+pub struct ExternPresetData {
+    name: String,
+    uuid: String,
+    price: i32,
+    weight: f32,
+    description: String,
+    creator: String,
+    itemType: String
+}
+
+#[put("/itemPreset/addExtern", data="<json_data>")]
+pub async fn add_extern(json_data: Json<ExternPresetData>, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
+    -> Result<Status, CStat>  {
+    ipc_con.add_extern_preset(json_data.name.clone(), json_data.price, json_data.weight, json_data.description.clone(), json_data.creator.clone(), json_data.itemType.clone())?;
+    Ok(Status::NoContent)
 }

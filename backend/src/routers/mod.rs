@@ -27,7 +27,7 @@ pub fn get_last_changes_routes() -> Vec<Route> {
 }
 
 pub fn get_item_preset_routes() -> Vec<Route> {
-    routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_presets]
+    routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_presets, add_extern]
 }
 
 

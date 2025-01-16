@@ -50,6 +50,7 @@ pub struct ItemPreset {
     pub uuid: String,
     pub name: String,
     pub price: i32,
+    pub weight: f32,
     pub description: String,
     pub creator: String,
     pub item_type: String,
@@ -65,7 +66,6 @@ pub struct InventoryItem {
     pub item_preset_uuid: String,
     pub dm_note: String,
     pub amount: i32,
-    pub weight: i32,
     pub sorting: i32,
     pub inventory_item_note: String,
 }
@@ -75,7 +75,6 @@ pub struct InventoryItem {
 pub struct UpdateInventoryItem {
     pub dm_note: Option<String>,
     pub amount: Option<i32>,
-    pub weight: Option<i32>,
     pub sorting: Option<i32>,
     pub inventory_item_note: Option<String>
 }
@@ -91,6 +90,7 @@ pub struct UpdateInventoryMoney {
 pub struct UpdateItemPreset {
     pub name: Option<String>,
     pub price: Option<i32>,
+    pub weight: Option<f32>,
     pub description: Option<String>,
     pub item_type: Option<String>,
 }
