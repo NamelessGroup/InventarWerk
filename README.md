@@ -256,6 +256,7 @@ Takes an item preset list in the body:
 ```
 Requires the requestor to be a dm
 Adds an ItemPreset i.e. from an external source, allows creators other than the logged in users
+Response: 204
 # Backend
 ##
 fields in .env in backend/

@@ -278,19 +278,21 @@ interface PresetList {
 async function pushPresetListToServer(presetList: PresetList) {
     const response = await axios.put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(presetList), {
         withCredentials: true
-      }).then((response) => response).catch((error) => error.response)
-    if (response && response.status == 500) {
-        await (new Promise( resolve => setTimeout(resolve, 1000) ));
-        await pushPresetListToServer(presetList)
-    }
+    }).then((response) => response).catch((error) => error.response)
     if (response && response.status >= 200 && response.status < 300) {
-      return
+        if (response.statusText != "")
+            ErrorHandler.getInstance().registerError(
+                new Error(
+                    `Following items couldn't be added to the server: ${response.statusText}`
+                )
+            )
+        return
     } else {
-      ErrorHandler.getInstance().registerError(
-        new Error(
-          `Could put extern preset List to Server due to: ${response.status} ${response.statusText}`
+        ErrorHandler.getInstance().registerError(
+            new Error(
+                `Could put extern preset List to Server due to: ${response.status} ${response.statusText}`
+            )
         )
-      )
     }
 }
 
