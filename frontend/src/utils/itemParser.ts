@@ -7,7 +7,7 @@ interface ItemJSON {
     name: string,
     source?: string,
     page?: number,
-    reqAttune?: string,
+    reqAttune?: string | boolean,
     weight?: number,
     entries: Entry[],
     value?: number,
@@ -233,7 +233,10 @@ export async function parseItem(itemList: ItemListJSON) {
         parsedItem.description = parsedItem.description.replace(regex3, (match, group1) => {
             return group1;
         });
-        if (x.reqAttune) parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n` + parsedItem.description
+        if (x.reqAttune) {
+            if (x.reqAttune === true) parsedItem.description = `*Requires Attunement*\n\n` + parsedItem.description
+            else parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n` + parsedItem.description
+        } 
         
         if (x.source) parsedItem.description += `\n\n*From ${x.source + (x.page? " p." + x.page: "")}*`
         parsedItemList.push(parsedItem)
@@ -280,12 +283,6 @@ async function pushPresetListToServer(presetList: PresetList) {
         withCredentials: true
     }).then((response) => response).catch((error) => error.response)
     if (response && response.status >= 200 && response.status < 300) {
-        if (response.statusText != "")
-            ErrorHandler.getInstance().registerError(
-                new Error(
-                    `Following items couldn't be added to the server: ${response.statusText}`
-                )
-            )
         return
     } else {
         ErrorHandler.getInstance().registerError(

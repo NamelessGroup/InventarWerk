@@ -109,8 +109,7 @@ pub struct ExternPresetDataList {
 
 #[put("/itemPreset/addExtern", data="<json_data>")]
 pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
-    -> Result<CStat, CStat>  {
-    let mut unsuccessfull:Vec<String> = Vec::new();
+    -> Result<Status, CStat>  {
     for x in &json_data.presets {
         loop {
             let res = ipc_con.add_extern_preset(x.name.clone(), x.price, x.weight, x.description.clone(), x.creator.clone(), x.itemType.clone());
@@ -118,8 +117,7 @@ pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::Aut
                 Ok(_res) => break,
                 Err(e) => {
                     if !(e.0 == Status::InternalServerError && e.1.contains("locked")) {
-                        println!("{} not added to the db!", x.name);
-                        unsuccessfull.push(x.name.clone());
+                        println!("Didn't added {} to the Database, why did this happen?", x.name);
                         break;
                     }
                     thread::sleep(Duration::from_secs(1));
@@ -130,5 +128,5 @@ pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::Aut
         }
     }
     
-    Ok(new_cstat(Status::NoContent, unsuccessfull.join("; ")))
+    Ok(Status::NoContent)
 }
