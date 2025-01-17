@@ -64,7 +64,12 @@ impl ItemPresetController {
         format_result_to_cstat(query, Status::InternalServerError, "Failed to load tables inventory_item and item_preset")
     }
 
-    fn report_change_on_item_preset(&self, searched_item_preset_uuid: String) -> Result<bool, CStat> {
+    pub fn get_public_item_presets(&self) -> Result<Vec<ItemPreset>, CStat> {
+        let query = item_preset.filter(item_preset::creator.like("public%")).load::<ItemPreset>(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Couldn't load item presets")
+    }
+
+    fn report_change_on_item_preset(&self, searched_item_preset_uuid: String) -> Result<bool, CStat>{
         let query = inventory_item.filter(inventory_item::item_preset_uuid.eq(searched_item_preset_uuid))
             .select(inventory_item::inventory_uuid).load::<String>(&mut self.get_conn());
         let inventories = format_result_to_cstat(query, Status::InternalServerError,
