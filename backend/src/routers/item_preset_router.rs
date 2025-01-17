@@ -1,6 +1,9 @@
+use std::thread;
+use std::time::Duration;
+
 use rocket::{form::FromForm, http::Status, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
-use crate::controller::{CStat, new_cstat_from_ref};
+use crate::controller::{new_cstat, new_cstat_from_ref, CStat};
 use crate::{controller::item_preset_controller::ItemPresetController, model::ItemPreset};
 use crate::controller::inventory_controller::InventoryController;
 
@@ -106,9 +109,26 @@ pub struct ExternPresetDataList {
 
 #[put("/itemPreset/addExtern", data="<json_data>")]
 pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>)
-    -> Result<Status, CStat>  {
-    for x in &json_data.presets{
-        ipc_con.add_extern_preset(x.name.clone(), x.price, x.weight, x.description.clone(), x.creator.clone(), x.itemType.clone())?;
+    -> Result<CStat, CStat>  {
+    let mut unsuccessfull:Vec<String> = Vec::new();
+    for x in &json_data.presets {
+        loop {
+            let res = ipc_con.add_extern_preset(x.name.clone(), x.price, x.weight, x.description.clone(), x.creator.clone(), x.itemType.clone());
+            match res {
+                Ok(_res) => break,
+                Err(e) => {
+                    if !(e.0 == Status::InternalServerError && e.1.contains("locked")) {
+                        println!("{} not added to the db!", x.name);
+                        unsuccessfull.push(x.name.clone());
+                        break;
+                    }
+                    thread::sleep(Duration::from_secs(1));
+                }
+
+            }
+        
+        }
     }
-    Ok(Status::NoContent)
+    
+    Ok(new_cstat(Status::NoContent, unsuccessfull.join("; ")))
 }
