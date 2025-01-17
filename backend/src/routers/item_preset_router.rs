@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use rocket::{form::FromForm, http::Status, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
-use crate::controller::{new_cstat, new_cstat_from_ref, CStat};
+use crate::controller::{new_cstat_from_ref, CStat};
 use crate::{controller::item_preset_controller::ItemPresetController, model::ItemPreset};
 use crate::controller::inventory_controller::InventoryController;
 
