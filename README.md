@@ -143,12 +143,12 @@ Response: 204
 #### /inventory/addShare?inventory_uuid="",reader_uuid="",writer_uuid=""
 Patch
 Makes an inventory visible to other members of the site
-reader_uuid and writer_uuid contains the uuid of the members that shoud get read/write access to the inventory
-reader_uuid and writer_uuid are optional, if they both dont exists, all members get read acces to the inventory
+reader_uuid and writer_uuid contains the uuid of the member that shoud get read/write access to the inventory
+reader_uuid and writer_uuid are optional, if they both dont exists, all current users get read acces to the inventory
 Response:204
 #### /inventory/removeShare?inventory_uuid="",reader_uuid="",writer_uuid=""
 Patch
-Removes given shares
+Removes given share
 Response:204
 #### /inventory/delete?inventory_uuid=""
 Delete

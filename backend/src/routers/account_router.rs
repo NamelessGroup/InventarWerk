@@ -70,8 +70,6 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<Accou
             accounts: all_users
         }
     ))
-
-    
 }
 
 #[get("/account/isDm?<params..>")]
