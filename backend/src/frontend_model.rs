@@ -7,6 +7,7 @@ pub struct Item {
     pub presetReference: String,
     pub amount: i32,
     pub dmNote: String,
+    pub creator: String,
     pub description: String,
     pub weight: f32,
     pub sorting: i32,

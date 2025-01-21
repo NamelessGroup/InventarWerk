@@ -17,6 +17,7 @@ pub struct GetAllInventoriesReturn{
     inventories: Vec<InventoryReturn>
 }
 
+/// Handles the `/inventory/all` route, returns all inventories in the InventoryReturn form
 #[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Json<GetAllInventoriesReturn>, CStat>  {
@@ -163,6 +164,9 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
     }
     let reader = params.reader_uuid;
     let writer = params.writer_uuid;
+    if reader == None && writer == None {
+        //TODO: make public
+    }
     if let Some(reader) = reader {
         let _ = inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
     }
