@@ -9,7 +9,7 @@ import type { Account } from '@/model/Account'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
-  public static readonly BASE_URL = 'http://localhost:8000/'
+  public static readonly BASE_URL = 'http://inventarwerk.de/'
   private static INVENTORY_END_POINT = 'inventory'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'
@@ -203,11 +203,11 @@ export class DatabaseHandler {
 
   private buildShareParams(share: Share) {
     const params: Record<string, string> = {}
-    if (share.read) {
-      params['reader'] = share.read.join(',')
+    if (share.reader_uuid) {
+      params['reader_uuid'] = share.reader_uuid
     }
-    if (share.write) {
-      params['writer'] = share.write.join(',')
+    if (share.writer_uuid) {
+      params['writer_uuid'] = share.writer_uuid
     }
     return params
   }
@@ -305,4 +305,4 @@ type QueryParameter = Record<string, string>
 
 type LastUpdateResponse = { uuid: string; type: 'create' | 'patch' | 'delete' }[]
 
-interface Share { read?: string[], write?: string[] }
+interface Share { reader_uuid?: string, writer_uuid?: string }
