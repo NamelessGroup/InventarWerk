@@ -52,7 +52,7 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Failed to load any Inventory")
     }
 
-    fn get_readers_for_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<String>, CStat> {
+    pub fn get_readers_for_inventory(&self, searched_inventory_uuid: String) -> Result<Vec<String>, CStat> {
         let query = inventory_reader.filter(inventory_reader::inventory_uuid.eq(searched_inventory_uuid))
         .select(inventory_reader::dsl::user_uuid)
         .load::<String>(&mut self.get_conn());

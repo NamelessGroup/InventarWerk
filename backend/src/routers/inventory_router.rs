@@ -158,20 +158,27 @@ pub struct InventoryShareParams {
 
 #[patch("/inventory/addShare?<params..>")] //TODO: Add Public
 pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
-        inv_con: &State<InventoryController>) -> Result<Status, CStat> {
+        inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
     }
     let reader = params.reader_uuid;
     let writer = params.writer_uuid;
     if reader == None && writer == None {
-        //TODO: make public
+        let users = (acc_con.get_all_users()?).into_iter().map(|x| x.uuid.clone());
+        let current_readers = inv_con.get_readers_for_inventory(params.inventory_uuid.clone())?;
+        for reader in users {
+            if (current_readers.contains(&reader)) {
+                continue;
+            }
+            inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
+        }
     }
     if let Some(reader) = reader {
-        let _ = inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
+        inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
     }
     if let Some(writer) = writer {
-        let _ = inv_con.add_writer_to_inventory(params.inventory_uuid.clone(), writer)?;
+        inv_con.add_writer_to_inventory(params.inventory_uuid.clone(), writer)?;
     }
     Ok(Status::NoContent)
 }
