@@ -179,11 +179,12 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Failed to insert inventory")?;
         self.add_writer_to_inventory(new_inv.uuid.clone(), creator_uuid.clone())?;
         self.add_reader_to_inventory(new_inv.uuid.clone(), creator_uuid.clone())?;
-        for a in self.get_dm_accounts()? {
-            if a == creator_uuid {
+        for acc in self.get_dm_accounts()? {
+            if acc == creator_uuid {
                 continue;
             }
-            self.add_reader_to_inventory(new_inv.uuid.clone(), a.clone())?;
+            self.add_reader_to_inventory(new_inv.uuid.clone(), acc.clone())?;
+            self.add_writer_to_inventory(new_inv.uuid.clone(), acc.clone())?;
         }
         report_change_on_inventory!(new_inv.uuid.clone());
         Ok(new_inv)
