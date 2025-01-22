@@ -168,7 +168,7 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
         let users = (acc_con.get_all_users()?).into_iter().map(|x| x.uuid.clone());
         let current_readers = inv_con.get_readers_for_inventory(params.inventory_uuid.clone())?;
         for reader in users {
-            if (current_readers.contains(&reader)) {
+            if current_readers.contains(&reader) {
                 continue;
             }
             inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
