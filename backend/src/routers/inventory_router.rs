@@ -194,10 +194,10 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
     let writer = params.writer_uuid;
 
     if let Some(reader) = reader {
-        inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
+        inv_con.remove_reader_from_inventory(params.inventory_uuid.clone(), reader)?;
     }
     if let Some(writer) = writer {
-        inv_con.add_writer_to_inventory(params.inventory_uuid.clone(), writer)?;
+        inv_con.remove_writer_from_inventory(params.inventory_uuid.clone(), writer)?;
     }
     
     Ok(Status::NoContent)
