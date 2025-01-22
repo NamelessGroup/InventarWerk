@@ -1,3 +1,4 @@
+ARG FEATURES=""
 # Build-Stage
 FROM rust:latest as builder
 WORKDIR /usr/src/app
@@ -11,7 +12,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && r
 
 # Anwendung bauen
 COPY ./backend/ ./
-RUN cargo build --release
+RUN cargo build ${FEATURES} --release
 
 # 2. Frontend Build Stage
 FROM node:22 AS frontend-builder

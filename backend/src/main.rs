@@ -46,7 +46,7 @@ async fn main() {
         .mount("/", routers::get_item_preset_routes())
         .mount("/", routers::get_last_changes_routes());
 
-    #[cfg(feature = "dev")] {
+    #[cfg(any(feature = "dev", feature="dev-deploy"))] {
         use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
          // Configure CORS
         let cors = CorsOptions {
