@@ -78,14 +78,14 @@ pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::Auth
 #[get("/itemPreset/all")]
 pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
         ipc_con: &State<ItemPresetController>) -> Result<Json<GetItemPresetReturn>, CStat> {
-    let mut ips: Vec<ItemPreset> = Vec::new();
+    let mut itempresets = ipc_con.get_public_item_presets()?;
     let invs = inv_con.get_all_inventories_ids(user.user_id)?;
     for i in invs {
-        ips.extend(ipc_con.get_item_preset_in_inventory(i)?)
+        itempresets.extend(ipc_con.get_item_preset_in_inventory(i)?)
     }
     Ok(Json(
         GetItemPresetReturn {
-            item_presets: ips
+            item_presets: itempresets
         }
     ))
 }

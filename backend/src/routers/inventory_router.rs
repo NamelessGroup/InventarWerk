@@ -156,7 +156,7 @@ pub struct InventoryShareParams {
     writer_uuid: Option<String>
 }
 
-#[patch("/inventory/addShare?<params..>")] //TODO: Add Public
+#[patch("/inventory/addShare?<params..>")]
 pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
