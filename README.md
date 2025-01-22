@@ -171,6 +171,7 @@ Response:
 ```
 #### /itemPreset/modify?item_preset_uuid="",name="",price="",description="",item_type=""
 Patch
+requires the user to be the creator of the preset
 all optional expect item_preset_uuid
 Response: 204
 #### /itemPreset/delete?item_preset_uuid=""

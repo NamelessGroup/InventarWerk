@@ -54,10 +54,10 @@ pub async fn get_item_preset(params: ItemPresetUUIDParams,  user: super::Authent
 
 #[patch("/itemPreset/modify?<params..>")]
 pub async fn modify_item_preset(params: ItemModifyParams,  user: super::AuthenticatedUser,
-        ipc_con: &State<ItemPresetController>, inv_con: &State<InventoryController>) -> Result<Status, CStat> {
-    let invs = inv_con.get_all_inventories_ids_with_read_access(user.user_id)?;
-    if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
+        ipc_con: &State<ItemPresetController>) -> Result<Status, CStat> {
+    let preset = ipc_con.get_item_preset(params.item_preset_uuid.clone())?;
+    if preset.creator != user.user_id {
+        return Err(new_cstat_from_ref(Status::Forbidden, "No access"))
     }
     ipc_con.edit_item_preset(params.item_preset_uuid, params.name, params.price, params.weight, params.description, params.item_type)?;
     Ok(Status::NoContent)
