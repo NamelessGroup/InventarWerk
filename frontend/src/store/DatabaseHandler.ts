@@ -5,7 +5,7 @@ import axios, { type AxiosResponse } from 'axios'
 import { store } from '.'
 import type { ItemPreset } from '@/model/ItemPreset'
 import type { Item } from '@/model/Item'
-import type { Account } from '@/model/Account'
+import type { DBAccount } from '@/model/Account'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
@@ -91,7 +91,12 @@ export class DatabaseHandler {
   }
 
   public async getAllAccounts() {
-    return (await this.get<{accounts: Account[]}>([DatabaseHandler.ACCOUNT_END_POINT, 'get']).then(r => r?.accounts)) ?? []
+    const accounts = (await this.get<{accounts: DBAccount[]}>([DatabaseHandler.ACCOUNT_END_POINT, 'get']).then(r => r?.accounts)) ?? []
+    
+    return accounts.map(account => ({
+      ...account,
+      dm: account.dm == 1
+    }))
   }
 
   private async getAllInventoriesFromDB() {

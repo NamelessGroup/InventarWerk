@@ -34,7 +34,7 @@ const accounts = computed(() => store().accounts.map(account => {
   const hasRead = props.inventory.reader.includes(account.uuid);
   const hasWrite = props.inventory.writer.includes(account.uuid);
   return { ...account, hasRead, hasWrite }
-}).filter(account => account.uuid != props.inventory.owner))
+}).filter(account => account.uuid != props.inventory.owner && !account.dm))
 
 const accountsWithWriteAccess = computed(() => accounts.value.filter(account => account.hasWrite));
 const accountsWithReadAccess = computed(() => accounts.value.filter(account => account.hasRead && !account.hasWrite));
