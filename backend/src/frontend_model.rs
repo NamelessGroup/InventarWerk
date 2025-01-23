@@ -11,6 +11,7 @@ pub struct Item {
     pub description: String,
     pub weight: f32,
     pub sorting: i32,
+    pub price: i32,
     pub InventoryItemNote: String
 }
 
