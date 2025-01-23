@@ -9,7 +9,7 @@ import type { Account } from '@/model/Account'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
-  public static readonly BASE_URL = 'http://localhost:8000/'
+  public static readonly BASE_URL = (import.meta.env.MODE == 'prod') ? 'http://test.inventarwerk.de/' : 'http://localhost:8000/'
   private static INVENTORY_END_POINT = 'inventory'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'
@@ -17,7 +17,6 @@ export class DatabaseHandler {
   private lastFetch = 0
 
   private constructor() {
-    //this.fetchUpdates()
   }
 
   public static getInstance() {
