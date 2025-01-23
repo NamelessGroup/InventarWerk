@@ -1,5 +1,6 @@
 # InventarWerk
-
+## Dockerfile
+The Dockerfile supports build args i.e. "features=dev-deploy"
 ## Anforderungen
 - Verschiede Inventare
   - Teil-Stufen: privat (geteilt nur mit dir), geteilt (m r/w), public

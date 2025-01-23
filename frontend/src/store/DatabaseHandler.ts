@@ -9,7 +9,7 @@ import type { Account } from '@/model/Account'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
-  public static readonly BASE_URL = 'http://localhost:8000/'
+  public static readonly BASE_URL = 'http://test.inventarwerk.de/'
   private static INVENTORY_END_POINT = 'inventory'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'

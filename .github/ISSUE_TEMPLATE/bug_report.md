@@ -10,6 +10,9 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
+**Error Message**
+If the issue belongs to a failed request that is displayed as an error message in the frontend, please insert the response to the request here.
+
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
