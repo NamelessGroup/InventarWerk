@@ -5,7 +5,7 @@
         <button v-if="store().userIsDm" class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="loadItemFile">
           <FontAwesomeIcon :icon="faUpload" />
         </button>
-        <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900">
+        <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="showSettings = true">
           <FontAwesomeIcon :icon="faGears" />
         </button>
         <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="logOut">
@@ -39,6 +39,7 @@
       </div>
     </div>
     <ErrorDisplay class="absolute bottom-0 z-50 w-screen" />
+    <SettingsPopUp v-if="showSettings" @close="showSettings = false"></SettingsPopUp>
 
     <button
     v-if="isLoggedIn"
@@ -81,11 +82,13 @@ import { ref } from 'vue'
 import { DatabaseHandler } from './store/DatabaseHandler'
 import PopUp from './components/PopUp.vue'
 import {parseItem} from './utils/itemParser'
+import SettingsPopUp from './components/SettingsPopUp.vue'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
 const errorContent = ref('')
 const acceptedCookies = ref(document.cookie.includes('acceptedCookies=true'))
+const showSettings = ref(false)
 
 async function submitAddInventory() {
   if (nameFieldContent.value == '') {

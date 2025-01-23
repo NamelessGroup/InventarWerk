@@ -1,3 +1,5 @@
+import { Settings } from "@/store/Settings"
+
 export interface Money {
   copper: number,
   silver: number,
@@ -8,11 +10,20 @@ export interface Money {
 export type MoneyFields = 'platinum'|'gold'|'silver'|'copper'
 
 export function breakDownMoney(money: number): Money {
-  return {
-    copper: money % 10,
-    silver: Math.floor(money/10) % 10,
-    gold: Math.floor(money/100) % 10,
-    platinum: Math.floor(money/1000)
+  if (Settings.getInstance().breakDownGold) {
+    return {
+      copper: money % 10,
+      silver: Math.floor(money/10) % 10,
+      gold: Math.floor(money/100) % 10,
+      platinum: Math.floor(money/1000)
+    }
+  } else {
+    return {
+      copper: money % 10,
+      silver: Math.floor(money/10) % 10,
+      gold: Math.floor(money/100),
+      platinum: 0
+    }
   }
 }
 
