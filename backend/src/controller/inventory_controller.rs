@@ -124,7 +124,7 @@ impl InventoryController {
                 description: preset.description.clone(),
                 weight: preset.weight,
                 sorting: item.sorting,
-                InventoryItemNote: item.inventory_item_note.clone()
+                inventoryItemNote: item.inventory_item_note.clone()
             });
         }
         Ok(inventory_parsed)

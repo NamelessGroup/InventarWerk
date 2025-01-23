@@ -12,7 +12,7 @@ pub struct Item {
     pub weight: f32,
     pub sorting: i32,
     pub price: i32,
-    pub InventoryItemNote: String
+    pub inventoryItemNote: String
 }
 
 #[derive(Serialize, Deserialize)]
