@@ -8,8 +8,10 @@ mod schema;
 mod frontend_model;
 mod last_changes_map_macro;
 
+
 use controller::account_controller::AccountController;
 use controller::item_preset_controller::ItemPresetController;
+use diesel::RunQueryDsl;
 use openssl::rand::rand_bytes;
 use rocket::fs::{FileServer, relative};
 use dotenvy::dotenv;
@@ -24,6 +26,19 @@ async fn main() {
     dotenv().ok();
     
     let dbconn:DbPool = establish_connection();
+
+    let mut conn = dbconn.get().expect("Failed to get connection from pool");
+
+
+    
+    diesel::sql_query("PRAGMA journal_mode = WAL;")
+        .execute(&mut conn)
+        .expect("Failed to set journal mode");
+
+        // Aktiviere Foreign Key Constraints
+    diesel::sql_query("PRAGMA foreign_keys = ON;")
+        .execute(&mut conn)
+        .expect("Failed to enable foreign key constraints");
 
     let inv_cont = InventoryController::new(dbconn.clone());
     let acc_con = AccountController::new(dbconn.clone());
