@@ -118,7 +118,7 @@ impl InventoryController {
                 name: preset.name.clone(),
                 presetReference: item.item_preset_uuid.clone(),
                 amount: item.amount,
-                creator: preset.creator,
+                presetCreator: preset.creator,
                 dmNote: if is_dm {self.get_dm_note(searched_inventory_uuid.clone(), item.item_preset_uuid.clone())?} else {"".to_string()} ,
                 description: preset.description.clone(),
                 weight: preset.weight,
