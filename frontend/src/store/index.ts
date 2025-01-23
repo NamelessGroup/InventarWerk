@@ -78,6 +78,14 @@ export const store = defineStore('store', {
         item.weight = changes.weight
         item.itemType = changes.itemType
         return true
+    },
+    async editItemNote(inventoryUuid: string, itemUuid: string, note: string) {
+      this.inventories[inventoryUuid].items.find(item => item.presetReference === itemUuid)!.inventoryItemNote = note
+      await DatabaseHandler.getInstance().editItemNote(inventoryUuid, itemUuid, note)
+    },
+    async editDmNote(inventoryUuid: string, itemUuid: string, note: string) {
+      this.inventories[inventoryUuid].items.find(item => item.presetReference === itemUuid)!.dmNote = note
+      await DatabaseHandler.getInstance().editDmNote(inventoryUuid, itemUuid, note)
     }
   }
 })

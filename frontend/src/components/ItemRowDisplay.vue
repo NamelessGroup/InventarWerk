@@ -35,12 +35,12 @@
       </button>
     </div>
     <div v-show="expanded">
-      <div class="relative min-h-12">
+      <div class="relative min-h-12 flex flex-col ">
         <p class="text-xs">Price: {{ item.price }}</p>
-        <p class="text-xs">Weight: {{ item.weight }}</p>
-        <p class="text-xs markdown" v-html="description"></p>
-        <p class="text-xs text-fuchsia-300">{{ item.dmNote }}</p>
-        <p class="text-xs text-amber-300">{{ item.dmNote }}</p>
+        <p class="text-xs mb-1">Weight: {{ item.weight }}</p>
+        <p class="text-xs markdown mb-1" v-html="description"></p>
+        <textarea v-model="itemNote" class="text-xs text-fuchsia-300 border-amber-300 border outline-none rounded bg-fuchsia-900" placeholder="Notes"  @click="e => e.stopPropagation()" @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"></textarea>
+        <textarea v-if="store().userIsDm" v-model="dmNote" class="text-xs text-amber-300 border-amber-300 border outline-none rounded bg-fuchsia-900 mt-1" placeholder="DM Note" @click="e => e.stopPropagation()" @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"></textarea>
 
         <button v-if="store().uuid == item.creator" class=" absolute top-2 right-0 h-6 text-xs w-6 rounded border border-amber-300 bg-fuchsia-950" @click="e => openEdit(e)">
           <FontAwesomeIcon :icon="faPen" />
@@ -75,6 +75,8 @@ const props = defineProps({
 const expanded = ref(false)
 const amountValue = ref(props.item.amount.toString())
 const description = computed(() => marked.parse(props.item.description))
+const itemNote = ref(props.item.inventoryItemNote)
+const dmNote = ref(props.item.dmNote)
 
 function deleteItem() {
   store().removeItem(props.inventoryUuid, props.item.presetReference)
@@ -108,6 +110,12 @@ function openEdit(e: Event) {
 watch(() => props.item.amount, (newValue) => {
   amountValue.value = newValue.toString()
 })  
+watch(() => props.item.inventoryItemNote, (newValue) => {
+  itemNote.value = newValue
+})
+watch(() => props.item.dmNote, (newValue) => {
+  dmNote.value = newValue
+})
 </script>
 
 <style scoped lang="postcss">

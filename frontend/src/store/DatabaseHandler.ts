@@ -149,7 +149,8 @@ export class DatabaseHandler {
       price: presetData.price,
       creator: presetData.creator,
       itemType: presetData.itemType,
-      sorting: Math.max(...store().inventories[inventoryUuid].items.map(i => i.sorting), 0) + 1
+      sorting: Math.max(...store().inventories[inventoryUuid].items.map(i => i.sorting), 0) + 1,
+      inventoryItemNote: ""
     });
 
     return true; 
@@ -184,11 +185,20 @@ export class DatabaseHandler {
     store().inventories[inventory.uuid] = {
       ...inventory,
       items: inventory.items.map(item => ({
-        ...item,
-        price: 0
+        ...item
       })),
       money: breakDownMoney(inventory.money)
     }
+  }
+
+  public async editItemNote(inventoryUuid: string, itemUuid: string, note: string) {
+    const result = await this.patch<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid, 'inventory_item_note': note })
+    return result !== undefined
+  }
+
+  public async editDmNote(inventoryUuid: string, itemUuid: string, note: string) {
+    const result = await this.patch<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNote'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid, 'note': note })
+    return result !== undefined
   }
 
   public async patchMoney(inventoryUuid: string, money: Money) {

@@ -9,4 +9,5 @@ export interface Item {
   sorting: number
   itemType: string
   presetReference: string
+  inventoryItemNote: string
 }
