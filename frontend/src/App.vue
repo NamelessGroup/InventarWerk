@@ -1,8 +1,10 @@
 <template>
   <div class="w-screen text-white bg-slate-950">
     <div v-if="isLoggedIn" class="w-full bg-slate-950">
-      <div class="flex h-12 w-full items-center justify-end space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
-        <button v-if="store().userIsDm" class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="loadItemFile">
+      <div class="flex h-12 w-full items-center space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
+        <img src="./assets/logo.png" class="h-10" />
+        <div class="flex-1 justify-end items-center flex space-x-5">
+          <button v-if="store().userIsDm" class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="loadItemFile">
           <FontAwesomeIcon :icon="faUpload" />
         </button>
         <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="showSettings = true">
@@ -11,6 +13,7 @@
         <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="logOut">
           <FontAwesomeIcon :icon="faRightFromBracket" />
         </button>
+        </div>
       </div>
       <PopUp v-if="showCreation" @close="showCreation = false">
         <div class="grid grid-cols-[auto_1fr] grid-rows-3 gap-2">
@@ -105,7 +108,7 @@ async function submitAddInventory() {
   }
 }
 
-const isLoggedIn = ref(false)
+const isLoggedIn = ref(true)
 if (acceptedCookies.value) {
   checkLogIn()
 }
