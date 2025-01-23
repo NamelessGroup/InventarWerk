@@ -12,15 +12,14 @@
       </button>
     </div>
     <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
-      <input
+      <NumericInput 
         v-for="[k, i] of moneyOptions"
         :key="k"
         v-model="moneyFieldValues[k]"
         class="row-start-1 h-10 rounded border border-amber-300 bg-fuchsia-900 outline-none px-1"
         :class="`col-start-${i}`"
-        @keydown="e => { if (e.key === 'Enter') { evaluateMoneyString((e as unknown as any).target.value, k) } }"
-        @blur="e => evaluateMoneyString(moneyFieldValues[k], k)"
-      />
+        @update="v => updateMoney(v, k)"
+      />      
       <span
         v-for="[k, i, l] of moneyOptions"
         :key="k + 'l'"
@@ -46,11 +45,11 @@ import type { Inventory } from '../model/Inventory'
 import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath';
 import { store } from '@/store';
-import { ErrorHandler } from '@/errorHandling/ErrorHandler';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import AddItemPopUp from './AddItemPopUp.vue';
 import ShareInventoryPopUp from './ShareInventoryPopUp.vue';
+import NumericInput from './NumericInput.vue';
 
 const props = defineProps({
   inventory: {
@@ -90,34 +89,21 @@ function deleteInventory() {
 }
 
 const moneyFieldValues = ref({
-  platinum: props.inventory.money.platinum.toString(),
-  gold: props.inventory.money.gold.toString(),
-  silver: props.inventory.money.silver.toString(),
-  copper: props.inventory.money.copper.toString()
+  platinum: props.inventory.money.platinum,
+  gold: props.inventory.money.gold,
+  silver: props.inventory.money.silver,
+  copper: props.inventory.money.copper
 })
-function evaluateMoneyString(content: string, field: MoneyFields) {
-  let value = props.inventory.money[field]
-  if (content == '') {
-    value = 0
-  } else if (content.match(/^[+-]?\d+$/)) {
-    value = parseInt(content)
-  } else {
-    try {
-      value = eval(content)
-    } catch (e) {
-      ErrorHandler.getInstance().registerError(e as Error)
-    }
-  }
-
-  store().updateMoney(props.inventory.uuid, value, field)
+function updateMoney(content: number, field: MoneyFields) {
+  store().updateMoney(props.inventory.uuid, content, field)
 }
 
 watch(() => props.inventory.money, (newMoney) => {
   moneyFieldValues.value = {
-    platinum: newMoney.platinum.toString(),
-    gold: newMoney.gold.toString(),
-    silver: newMoney.silver.toString(),
-    copper: newMoney.copper.toString()
+    platinum: newMoney.platinum,
+    gold: newMoney.gold,
+    silver: newMoney.silver,
+    copper: newMoney.copper
   }
 })
 

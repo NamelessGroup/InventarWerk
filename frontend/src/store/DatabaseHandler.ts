@@ -81,8 +81,6 @@ export class DatabaseHandler {
     store().accounts = await this.getAllAccounts()
     store().userIsDm = await this.isDM()
     const inventories = await this.getAllInventoriesFromDB()
-    console.log(inventories)
-    console.log(store().userIsDm, store().uuid)
     inventories.forEach(inventory => this.setInventoryInStore(inventory))
     store().inventoryUuids = inventories.map(inventory => inventory.uuid)
   } 

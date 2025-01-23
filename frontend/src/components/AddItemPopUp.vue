@@ -2,7 +2,7 @@
   <PopUp class="!m-0" @close="emit('close')">
     <div class="grid grid-cols-1 gap-2">
       <label for="amount">Amount:</label>
-      <input id="amount" v-model="amountValue" class="rounded border border-amber-300 bg-fuchsia-900 outline-none px-1 w-full">
+      <NumericInput id="amount" v-model="amountValue" :default-value="1" class="rounded border border-amber-300 bg-fuchsia-900 outline-none px-1 w-full" />
       <label for="name">Name:</label>
       <input id="name" ref="nameInput" v-model="nameValue" autocomplete="off" class="rounded border border-amber-300 bg-fuchsia-900 outline-none px-1 w-full">
       <button class="rounded border border-amber-300 bg-fuchsia-900 outline-none p-1 w-full" @click="addNewItem">Add item</button>
@@ -17,6 +17,7 @@ import PopUp from './PopUp.vue';
 import autocomplete, { type AutocompleteItem } from 'autocompleter';
 import { store } from '@/store';
 import { DatabaseHandler } from '@/store/DatabaseHandler';
+import NumericInput from './NumericInput.vue';
 
 const props = defineProps({
   inventoryUuid: {
@@ -29,7 +30,7 @@ const emit = defineEmits(['close'])
 
 const nameInput = ref<HTMLInputElement | null>(null)
 const nameValue = ref('')
-const amountValue = ref('1')
+const amountValue = ref(1)
 const errorText = ref('')
 
 const completionItems = computed(() => {
@@ -51,11 +52,11 @@ async function addNewItem() {
     errorText.value = 'Name cannot be empty'
     return
   }
-  const success = await DatabaseHandler.getInstance().addNewItem(props.inventoryUuid, nameValue.value, getAmount())
+  const success = await DatabaseHandler.getInstance().addNewItem(props.inventoryUuid, nameValue.value, amountValue.value)
   if (success) {
     errorText.value = ''
     nameValue.value = ''
-    amountValue.value = '1'
+    amountValue.value = 1
     emit('close')
   } else {
     errorText.value = 'Failed to add item'
@@ -65,23 +66,15 @@ async function addNewItem() {
 async function addItemByPreset(item: MyCompletionItem) {
   nameValue.value = item.label
 
-  const success = await DatabaseHandler.getInstance().addItemByPreset(props.inventoryUuid, item.uuid, getAmount())
+  const success = await DatabaseHandler.getInstance().addItemByPreset(props.inventoryUuid, item.uuid, amountValue.value)
   if (success) {
     errorText.value = ''
     nameValue.value = ''
-    amountValue.value = '1'
+    amountValue.value = 1
     emit('close')
   } else {
     errorText.value = 'Failed to add item ' + item.label
   }
-}
-
-function getAmount() {
-  const result = parseInt(amountValue.value)
-  if (isNaN(result)) {
-    return 1
-  }
-  return result
 }
 
 onMounted(() => {

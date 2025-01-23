@@ -8,18 +8,15 @@
     @click="expanded = !expanded"
   >
     <div class="grid grid-cols-[auto_1fr_auto]">
-      <input
+      <NumericInput 
         v-model="amountValue"
-        type="text"
-        autocomplete="off"
         class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950 px-1 text-right outline-none"
         @click="
-          (e) => {
+          (e: Event) => {
             e.stopPropagation()
           }
         "
-        @keydown="e => { if (e.key === 'Enter') { e.preventDefault(); editAmount() } }"
-        @blur="e => editAmount()"
+        @update="v => editAmount(v)"
       />
       <span class="row-start-1 flex items-center px-2">{{ item.name }}</span>
       <button
@@ -57,10 +54,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref, type PropType, watch, computed } from 'vue'
 import { faPen, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { store } from '@/store'
-import { ErrorHandler } from '@/errorHandling/ErrorHandler'
 import { marked } from 'marked'
 import EditItemPopUp from './EditItemPopUp.vue'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
+import NumericInput from './NumericInput.vue'
 
 const props = defineProps({
   item: {
@@ -74,7 +71,7 @@ const props = defineProps({
 })
 
 const expanded = ref(false)
-const amountValue = ref(props.item.amount.toString())
+const amountValue = ref(props.item.amount)
 const description = computed(() => marked.parse(props.item.description))
 const itemNote = ref(props.item.inventoryItemNote)
 const dmNote = ref(props.item.dmNote)
@@ -106,21 +103,7 @@ function deleteItem() {
   store().removeItem(props.inventoryUuid, props.item.presetReference)
 }
 
-function editAmount() {
-  let value = props.item.amount
-  const content = amountValue.value
-  if (content == '') {
-    value = 0
-  } else if (content.match(/^[+-]?\d+$/)) {
-    value = parseInt(content)
-  } else {
-    try {
-      value = eval(content)
-    } catch (e) {
-      ErrorHandler.getInstance().registerError(e as Error)
-    }
-  }
-
+function editAmount(value: number) {
   store().changeItemAmount(props.inventoryUuid, props.item.presetReference, value)
 }
 
@@ -132,7 +115,7 @@ function openEdit(e: Event) {
 }
 
 watch(() => props.item.amount, (newValue) => {
-  amountValue.value = newValue.toString()
+  amountValue.value = newValue
 })  
 watch(() => props.item.inventoryItemNote, (newValue) => {
   itemNote.value = newValue
