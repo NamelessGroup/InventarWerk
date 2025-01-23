@@ -35,20 +35,31 @@
       </button>
     </div>
     <div v-show="expanded">
-      <p class="text-xs">Price: {{ item.price }}</p>
-      <p class="text-xs">{{ item.description }}</p>
-      <p class="text-xs text-fuchsia-300">{{ item.dmNote }}</p>
+      <div class="relative min-h-12">
+        <p class="text-xs">Price: {{ item.price }}</p>
+        <p class="text-xs">Weight: {{ item.weight }}</p>
+        <p class="text-xs markdown" v-html="description"></p>
+        <p class="text-xs text-fuchsia-300">{{ item.dmNote }}</p>
+        <p class="text-xs text-amber-300">{{ item.dmNote }}</p>
+
+        <button v-if="store().uuid == item.creator" class=" absolute top-2 right-0 h-6 text-xs w-6 rounded border border-amber-300 bg-fuchsia-950" @click="e => openEdit(e)">
+          <FontAwesomeIcon :icon="faPen" />
+        </button>
+      </div>
     </div>
   </div>
+  <EditItemPopUp v-if="showItemEdit" :item="item" :inventory-uuid="inventoryUuid" @close="showItemEdit = false" />
 </template>
 
 <script setup lang="ts">
 import type { Item } from '@/model/Item'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { ref, type PropType, watch } from 'vue'
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { ref, type PropType, watch, computed } from 'vue'
+import { faPen, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { store } from '@/store'
 import { ErrorHandler } from '@/errorHandling/ErrorHandler'
+import { marked } from 'marked'
+import EditItemPopUp from './EditItemPopUp.vue'
 
 const props = defineProps({
   item: {
@@ -63,6 +74,7 @@ const props = defineProps({
 
 const expanded = ref(false)
 const amountValue = ref(props.item.amount.toString())
+const description = computed(() => marked.parse(props.item.description))
 
 function deleteItem() {
   store().removeItem(props.inventoryUuid, props.item.presetReference)
@@ -86,12 +98,19 @@ function editAmount() {
   store().changeItemAmount(props.inventoryUuid, props.item.presetReference, value)
 }
 
+
+const showItemEdit = ref(false)
+function openEdit(e: Event) {
+  e.stopPropagation()
+  showItemEdit.value = true
+}
+
 watch(() => props.item.amount, (newValue) => {
   amountValue.value = newValue.toString()
 })  
 </script>
 
-<style scoped>
+<style scoped lang="postcss">
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {

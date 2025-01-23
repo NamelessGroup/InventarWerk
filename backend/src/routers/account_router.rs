@@ -159,9 +159,7 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
     #[cfg(feature = "dev")] {
         return Ok(Redirect::to(uri!("http://localhost:5173")));
     }
-    #[cfg(not(feature = "dev"))] {
-        return Ok(Redirect::to(uri!("/")));
-    }
+    return Ok(Redirect::to(uri!("/")));
 }
 
 #[get("/account/info")]

@@ -64,6 +64,20 @@ export const store = defineStore('store', {
     changeItemAmount(inventoryUuid: string, itemUuid: string, newAmount: number) {
       this.inventories[inventoryUuid].items.find(item => item.presetReference === itemUuid)!.amount = newAmount
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
+    },
+    async editItem(inventoryUuid: string, itemUuid: string, changes: {
+      name: string, description: string, price: number, weight: number, itemType: string }) {
+        const result = await DatabaseHandler.getInstance().editItem(itemUuid, changes)
+        if (!result) {
+          return false
+        }
+        const item = this.inventories[inventoryUuid].items.find(item => item.presetReference === itemUuid)!
+        item.name = changes.name
+        item.description = changes.description
+        item.price = changes.price
+        item.weight = changes.weight
+        item.itemType = changes.itemType
+        return true
     }
   }
 })

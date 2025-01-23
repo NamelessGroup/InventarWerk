@@ -9,7 +9,7 @@ import type { Account } from '@/model/Account'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
-  public static readonly BASE_URL = 'http://test.inventarwerk.de/'
+  public static readonly BASE_URL = 'http://localhost:8000/'
   private static INVENTORY_END_POINT = 'inventory'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'
@@ -111,6 +111,14 @@ export class DatabaseHandler {
     return true
   }
 
+  public async editItem(itemUuid: string, settings: {
+    name: string, price: number, weight: number, description: string, itemType: string
+  }) {
+    const result = await this.patch<unknown>([DatabaseHandler.ITEM_PRESET_END_POINT, 'modify'], { 'item_preset_uuid': itemUuid, item_type: settings.itemType, name: settings.name, price: settings.price.toString(), weight: settings.weight.toString(), description: settings.description })
+
+    return result !== undefined
+  }
+
   public async createInventory(name: string) {
     const newInventory = await this.put<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], { 'name': name })
     if (!newInventory) return false
@@ -175,6 +183,10 @@ export class DatabaseHandler {
   private setInventoryInStore(inventory: DBInventory) {
     store().inventories[inventory.uuid] = {
       ...inventory,
+      items: inventory.items.map(item => ({
+        ...item,
+        price: 0
+      })),
       money: breakDownMoney(inventory.money)
     }
   }
