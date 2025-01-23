@@ -30,7 +30,7 @@
           <p class="col-span-2 row-start-3 text-red-500">{{ errorContent }}</p>
         </div>
       </PopUp>
-      <div class="gap-5 overflow-auto p-5 grid md:grid-cols-3 md:mt-12">
+      <div class="gap-5 overflow-auto p-5 grid md:grid-cols-2 lg:grid-cols-3 md:mt-12">
         <InventoryContainer
           v-for="uuid in store().inventoryUuids"
           :key="uuid"

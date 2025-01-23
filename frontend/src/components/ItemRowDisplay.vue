@@ -36,13 +36,13 @@
     </div>
     <div v-show="expanded">
       <div class="relative min-h-12 flex flex-col ">
-        <p class="text-xs">Price: {{ item.price }}</p>
-        <p class="text-xs mb-1">Weight: {{ item.weight }}</p>
+        <p class="text-xs">Price: {{ priceString }}</p>
+        <p class="text-xs mb-1">Weight: {{ item.weight }} lbs.</p>
         <p class="text-xs markdown mb-1" v-html="description"></p>
         <textarea v-model="itemNote" class="text-xs text-fuchsia-300 border-amber-300 border outline-none rounded bg-fuchsia-900" placeholder="Notes"  @click="e => e.stopPropagation()" @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"></textarea>
         <textarea v-if="store().userIsDm" v-model="dmNote" class="text-xs text-amber-300 border-amber-300 border outline-none rounded bg-fuchsia-900 mt-1" placeholder="DM Note" @click="e => e.stopPropagation()" @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"></textarea>
 
-        <button v-if="store().uuid == item.creator" class=" absolute top-2 right-0 h-6 text-xs w-6 rounded border border-amber-300 bg-fuchsia-950" @click="e => openEdit(e)">
+        <button v-if="store().uuid == item.presetCreator" class=" absolute top-2 right-0 h-6 text-xs w-6 rounded border border-amber-300 bg-fuchsia-950" @click="e => openEdit(e)">
           <FontAwesomeIcon :icon="faPen" />
         </button>
       </div>
@@ -60,6 +60,7 @@ import { store } from '@/store'
 import { ErrorHandler } from '@/errorHandling/ErrorHandler'
 import { marked } from 'marked'
 import EditItemPopUp from './EditItemPopUp.vue'
+import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
 
 const props = defineProps({
   item: {
@@ -77,6 +78,29 @@ const amountValue = ref(props.item.amount.toString())
 const description = computed(() => marked.parse(props.item.description))
 const itemNote = ref(props.item.inventoryItemNote)
 const dmNote = ref(props.item.dmNote)
+
+const moneySynonym: Record<MoneyFields, string> = {
+  platinum: 'pp',
+  gold: 'gp',
+  silver: 'sp',
+  copper: 'cp'
+}
+
+const priceString = computed(() => {
+  if (props.item.price == 0) {
+    return '0cp'
+  }
+  const money = breakDownMoney(props.item.price)
+  const result = [] as string[]
+  for (const k of (['platinum', 'gold', 'silver', 'copper'] as MoneyFields[])) {
+    if (money[k] != 0) {
+      result.push(`${money[k]}${moneySynonym[k]}`)
+    }
+  }
+
+  return result.join(' ')
+})
+
 
 function deleteItem() {
   store().removeItem(props.inventoryUuid, props.item.presetReference)

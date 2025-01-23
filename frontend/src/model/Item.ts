@@ -4,7 +4,7 @@ export interface Item {
   dmNote: string
   description: string
   price: number
-  creator: string
+  presetCreator: string
   weight: number
   sorting: number
   itemType: string

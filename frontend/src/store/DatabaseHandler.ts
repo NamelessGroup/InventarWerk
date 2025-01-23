@@ -81,6 +81,8 @@ export class DatabaseHandler {
     store().accounts = await this.getAllAccounts()
     store().userIsDm = await this.isDM()
     const inventories = await this.getAllInventoriesFromDB()
+    console.log(inventories)
+    console.log(store().userIsDm, store().uuid)
     inventories.forEach(inventory => this.setInventoryInStore(inventory))
     store().inventoryUuids = inventories.map(inventory => inventory.uuid)
   } 
@@ -147,7 +149,7 @@ export class DatabaseHandler {
       weight: presetData.weight,
       description: presetData.description,
       price: presetData.price,
-      creator: presetData.creator,
+      presetCreator: presetData.creator,
       itemType: presetData.itemType,
       sorting: Math.max(...store().inventories[inventoryUuid].items.map(i => i.sorting), 0) + 1,
       inventoryItemNote: ""

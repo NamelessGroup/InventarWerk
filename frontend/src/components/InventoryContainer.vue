@@ -1,10 +1,8 @@
 <template>
   <div class="space-y-2 rounded border-2 border-amber-300 bg-fuchsia-950 p-2 overflow-hidden">
-    <div class="flex gap-2">
-      <input ref="nameInput" v-model="inventoryName" :readonly="true" class="bold text-xl bg-transparent outline-none border-none max-w-96 flex-1" @blur="updateName">
-      <button v-if="false" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7"  @click="editName">
-        <FontAwesomeIcon :icon="faPen" />
-      </button>
+    <div class="flex gap-2 align-middle">
+      <div class="bold text-xl bg-transparent outline-none border-none pr-5" >{{ inventory.name }}</div>
+      <div>({{ inventory.items.map(i => i.weight).reduce((a,b) => a+b, 0) }} lbs.)</div>
       <div class="flex-1"><!-- Spacer --></div>
       <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7">
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
@@ -50,7 +48,7 @@ import type { MoneyFields } from '@/utils/moneyMath';
 import { store } from '@/store';
 import { ErrorHandler } from '@/errorHandling/ErrorHandler';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import AddItemPopUp from './AddItemPopUp.vue';
 import ShareInventoryPopUp from './ShareInventoryPopUp.vue';
 
@@ -66,12 +64,14 @@ const nameInput = ref<HTMLInputElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function editName() {
   if (nameInput.value) {
     nameInput.value.focus()
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function updateName() {
   if (inventoryName.value.length == 0) {
     return
