@@ -122,4 +122,8 @@ interface MyCompletionItem extends AutocompleteItem {
 .autocomplete-item:hover {
   @apply bg-fuchsia-700;
 }
+
+.autocomplete {
+  @apply bottom-0 rounded-b;
+}
 </style>
