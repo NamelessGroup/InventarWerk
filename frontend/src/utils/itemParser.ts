@@ -257,8 +257,7 @@ export async function parseItem(itemList: ItemListJSON) {
             const elementsMoving = currentTransferList.presets.splice(0, 100);
             parsedItemList.push(...elementsMoving)
         }
-        await pushPresetListToServer(currentTransferList)
-        await (new Promise( resolve => setTimeout(resolve, 2000))); 
+        pushPresetListToServer(currentTransferList)
     }
 
     // not used anymore, but should be kept to debug changes in the future

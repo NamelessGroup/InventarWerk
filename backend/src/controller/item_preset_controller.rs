@@ -81,19 +81,19 @@ impl ItemPresetController {
     }
     pub fn add_extern_preset(&self, preset_name: String, item_price:i32, preset_weight: f32,
         item_description: String, creator_uuid: String, i_type: String) -> Result<ItemPreset, CStat> {
-    let new_item_preset = ItemPreset {
-        name: preset_name,
-        uuid: super::generate_uuid_v4(),
-        price: item_price,
-        weight: preset_weight,
-        description: item_description,
-        creator: creator_uuid,
-        item_type: i_type
-    };
-    let query = diesel::insert_into(item_preset::table).values(&new_item_preset)
-        .execute(&mut self.get_conn());
-    format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
-    return Ok(new_item_preset);
-}
+        let new_item_preset = ItemPreset {
+            name: preset_name,
+            uuid: super::generate_uuid_v4(),
+            price: item_price,
+            weight: preset_weight,
+            description: item_description,
+            creator: creator_uuid,
+            item_type: i_type
+        };
+        let query = diesel::insert_into(item_preset::table).values(&new_item_preset)
+            .execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to insert into table")?;
+        return Ok(new_item_preset);
+    }
 
 }
