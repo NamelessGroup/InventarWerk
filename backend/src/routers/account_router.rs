@@ -150,7 +150,8 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
 
     let has_user = acc_con.has_user(user_response.id.clone()).unwrap_or_default();
     if !has_user {
-        let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone());
+        let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone(),
+            user_response.avatar.clone().unwrap_or("".to_string()));
     }
     // Speichern eines Cookies als Beispiel
     let new_cookie = Cookie::build(("user_id", user_response.id.clone())).http_only(false);

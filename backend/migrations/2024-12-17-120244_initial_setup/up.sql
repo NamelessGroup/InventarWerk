@@ -2,6 +2,7 @@
 CREATE TABLE user (
     uuid TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
+    avatar TEXT NOT NULL,
     dm INTEGER NOT NULL
 );
 

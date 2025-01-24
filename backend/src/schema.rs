@@ -50,6 +50,7 @@ diesel::table! {
     user (uuid) {
         uuid -> Text,
         name -> Text,
+        avatar -> Text,
         dm -> Integer,
     }
 }

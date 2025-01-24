@@ -9,6 +9,7 @@ use crate::schema::{inventory, inventory_reader, inventory_writer, item_preset, 
 pub struct User {
     pub uuid: String,
     pub name: String,
+    pub avatar: String,
     pub dm: i32,
 }
 

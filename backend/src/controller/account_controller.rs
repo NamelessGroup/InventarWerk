@@ -37,7 +37,7 @@ impl AccountController {
         format_result_to_cstat(result, Status::InternalServerError, "Failed to load user table")
     }
 
-    pub fn add_user(&self, id:String, user_name: String) -> Result<User, CStat> {
+    pub fn add_user(&self, id:String, user_name: String, user_avatar: String) -> Result<User, CStat> {
         if self.has_user(id.clone())? {
             return Err(new_cstat_from_ref(Status::BadRequest, "User already exists"))
         }
@@ -46,6 +46,7 @@ impl AccountController {
         let new_user = User {
             uuid: id,
             name: user_name,
+            avatar: user_avatar,
             dm: !db_has_users as i32
         };
         let query_result = diesel::insert_into(user::table()).values(&new_user)
