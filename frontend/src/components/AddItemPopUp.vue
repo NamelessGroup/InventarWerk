@@ -89,7 +89,7 @@ onMounted(() => {
       onSelect: (item) => {
         addItemByPreset(item)
       },
-      className: 'autocomplete, z-50',
+      className: 'autocomplete z-50 overflow-y-auto',
       render: (item: MyCompletionItem, currentValue: string): HTMLDivElement => {
         const div = document.createElement('div')
         const start = item.label.toLowerCase().indexOf(currentValue.toLowerCase())
