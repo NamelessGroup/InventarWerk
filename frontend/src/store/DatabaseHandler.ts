@@ -9,7 +9,7 @@ import type { DBAccount } from '@/model/Account'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
-  public static readonly BASE_URL = (import.meta.env.MODE == 'prod') ? 'http://test.inventarwerk.de/' : 'http://localhost:8000/'
+  public static readonly BASE_URL = (import.meta.env.MODE == 'prod') ? `${window.location.origin}/` : 'http://localhost:8000/'
   private static INVENTORY_END_POINT = 'inventory'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'
