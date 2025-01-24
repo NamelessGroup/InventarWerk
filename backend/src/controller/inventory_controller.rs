@@ -302,7 +302,7 @@ impl InventoryController {
     }
 
     pub fn remove_writer_from_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, CStat> {
-        let query =  diesel::delete(inventory_writer.find((searched_inventory_uuid.clone(), writer_uuid)))
+        let query =  diesel::delete(inventory_writer.find((writer_uuid, searched_inventory_uuid.clone())))
             .execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to remove pair")?;
