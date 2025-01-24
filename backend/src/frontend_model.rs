@@ -25,3 +25,15 @@ pub struct InventoryReturn {
     pub reader: Vec<String>,
     pub writer: Vec<String>
 }
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize)]
+pub struct FrontendItemPreset {
+    pub uuid: String,
+    pub name: String,
+    pub price: i32,
+    pub weight: f32,
+    pub description: String,
+    pub creator: String,
+    pub itemType: String,
+}

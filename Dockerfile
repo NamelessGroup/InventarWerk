@@ -26,7 +26,7 @@ COPY frontend/package.json /frontend/
 RUN npm install
 
 COPY frontend/ /frontend/
-RUN npm run build
+RUN npm run build:prod
 
 
 # Runtime-Stage

@@ -4,13 +4,14 @@ use std::time::Duration;
 use rocket::{form::FromForm, http::Status, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 use crate::controller::{new_cstat_from_ref, CStat};
+use crate::frontend_model::FrontendItemPreset;
 use crate::{controller::item_preset_controller::ItemPresetController, model::ItemPreset};
 use crate::controller::inventory_controller::InventoryController;
 
 
 #[derive(Serialize, Deserialize)]
 pub struct GetItemPresetReturn{
-    item_presets: Vec<ItemPreset>
+    item_presets: Vec<FrontendItemPreset>
 }
 
 #[derive(FromForm)]
@@ -29,6 +30,17 @@ pub struct ItemModifyParams {
 }
 
 
+fn convert_item_preset_to_frontend(preset: ItemPreset) -> FrontendItemPreset {
+    FrontendItemPreset {
+        uuid: preset.uuid,
+        name: preset.name,
+        price: preset.price,
+        weight: preset.weight,
+        description: preset.description,
+        creator: preset.creator,
+        itemType: preset.item_type
+    }
+}
 
 
 fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con: &State<InventoryController>) -> Result<bool, CStat> {
@@ -43,13 +55,13 @@ fn has_access_to(searched_item_preset: String, inventories: Vec<String>, inv_con
 
 #[get("/itemPreset?<params..>")]
 pub async fn get_item_preset(params: ItemPresetUUIDParams,  user: super::AuthenticatedUser, ipc_con: &State<ItemPresetController>,
-        inv_con: &State<InventoryController>) -> Result<Json<ItemPreset>, CStat> {
+        inv_con: &State<InventoryController>) -> Result<Json<FrontendItemPreset>, CStat> {
     let invs = inv_con.get_all_inventories_ids(user.user_id)?;
     
     if !has_access_to(params.item_preset_uuid.clone(), invs, inv_con)? {
         return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
     }
-    Ok(Json(ipc_con.get_item_preset(params.item_preset_uuid)?))
+    Ok(Json(convert_item_preset_to_frontend(ipc_con.get_item_preset(params.item_preset_uuid)?)))
 }
 
 #[patch("/itemPreset/modify?<params..>")]
@@ -78,14 +90,18 @@ pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::Auth
 #[get("/itemPreset/all")]
 pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_con: &State<InventoryController>,
         ipc_con: &State<ItemPresetController>) -> Result<Json<GetItemPresetReturn>, CStat> {
-    let mut itempresets = ipc_con.get_public_item_presets()?;
+    let mut item_presets = ipc_con.get_public_item_presets()?;
+    let mut frontend_presets: Vec<FrontendItemPreset> = Vec::new();
     let invs = inv_con.get_all_inventories_ids(user.user_id)?;
     for i in invs {
-        itempresets.extend(ipc_con.get_item_preset_in_inventory(i)?)
+        item_presets.extend(ipc_con.get_item_preset_in_inventory(i)?);
+    }
+    for i in item_presets{
+        frontend_presets.push(convert_item_preset_to_frontend(i));
     }
     Ok(Json(
         GetItemPresetReturn {
-            item_presets: itempresets
+            item_presets: frontend_presets
         }
     ))
 }
