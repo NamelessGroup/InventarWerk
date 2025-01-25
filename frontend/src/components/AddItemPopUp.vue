@@ -34,6 +34,7 @@ const amountValue = ref(1)
 const errorText = ref('')
 
 const completionItems = computed(() => {
+  const itemsInInventory = store().inventories[props.inventoryUuid].items.map(item => item.presetReference)
   return store().itemPresets.map(item => {
     let group = item.itemType ?? 'Other'
     if (group === '') {
@@ -44,7 +45,7 @@ const completionItems = computed(() => {
       group: group,
       uuid: item.uuid
     }
-  }).sort((a,b) => {
+  }).filter(i => !itemsInInventory.includes(i.uuid)).sort((a,b) => {
     if (a.group == b.group) {
       return a.label.localeCompare(b.label)
     }
