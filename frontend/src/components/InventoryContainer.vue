@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-2 rounded border-2 border-amber-300 bg-fuchsia-950 p-2 overflow-hidden">
-    <div class="flex gap-2 align-middle">
+    <div class="flex gap-2 items-center">
       <div class="bold text-xl bg-transparent outline-none border-none pr-5" >{{ inventory.name }}</div>
       <div>({{ inventory.items.map(i => i.weight).reduce((a,b) => a+b, 0) }} lbs.)</div>
       <div class="flex-1"><!-- Spacer --></div>
