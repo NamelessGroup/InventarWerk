@@ -44,6 +44,17 @@ const completionItems = computed(() => {
       group: group,
       uuid: item.uuid
     }
+  }).sort((a,b) => {
+    if (a.group == b.group) {
+      return a.label.localeCompare(b.label)
+    }
+    if (a.group == 'Other') {
+      return 1
+    }
+    if (b.group == 'Other') {
+      return -1
+    }
+    return a.group.localeCompare(b.group)
   })
 })
 
