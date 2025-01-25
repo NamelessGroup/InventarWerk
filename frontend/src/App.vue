@@ -1,18 +1,31 @@
 <template>
-  <div class="w-screen text-white bg-slate-950">
+  <div class="w-screen bg-slate-950 text-white">
     <div v-if="isLoggedIn" class="w-full bg-slate-950">
       <div class="flex h-12 w-full items-center space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
         <img src="./assets/logo.png" class="h-10" />
-        <div class="flex-1 justify-end items-center flex space-x-5">
-          <button v-if="store().userIsDm" class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="loadItemFile">
-          <FontAwesomeIcon :icon="faUpload" />
-        </button>
-        <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="showSettings = true">
-          <FontAwesomeIcon :icon="faGears" />
-        </button>
-        <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="logOut">
-          <FontAwesomeIcon :icon="faRightFromBracket" />
-        </button>
+        <div class="flex flex-1 items-center justify-end space-x-5">
+          <button
+            v-if="store().userIsDm"
+            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            @click="loadItemFile"
+          >
+            <FontAwesomeIcon :icon="faUpload" />
+          </button>
+          <button
+              class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+              @click="showManagePresets = true"
+            >
+              <FontAwesomeIcon :icon="faList" />
+          </button>
+          <button
+            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            @click="showSettings = true"
+          >
+            <FontAwesomeIcon :icon="faGears" />
+          </button>
+          <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="logOut">
+            <FontAwesomeIcon :icon="faRightFromBracket" />
+          </button>
         </div>
       </div>
       <PopUp v-if="showCreation" @close="showCreation = false">
@@ -33,7 +46,7 @@
           <p class="col-span-2 row-start-3 text-red-500">{{ errorContent }}</p>
         </div>
       </PopUp>
-      <div class="gap-5 overflow-auto p-5 grid md:grid-cols-2 lg:grid-cols-3 md:mt-12">
+      <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
         <InventoryContainer
           v-for="uuid in store().inventoryUuids"
           :key="uuid"
@@ -43,14 +56,15 @@
     </div>
     <ErrorDisplay class="absolute bottom-0 z-50 w-screen" />
     <SettingsPopUp v-if="showSettings" @close="showSettings = false"></SettingsPopUp>
+    <ManagePresetsPopUp v-if="showManagePresets" @close="showManagePresets = false"></ManagePresetsPopUp>
 
     <button
-    v-if="isLoggedIn"
-        class="fixed bottom-2 right-2 z-10 h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
-        @click="showCreation = true"
-      >
-        <FontAwesomeIcon :icon="faPlus" />
-      </button>
+      v-if="isLoggedIn"
+      class="fixed bottom-2 right-2 z-10 h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+      @click="showCreation = true"
+    >
+      <FontAwesomeIcon :icon="faPlus" />
+    </button>
 
     <div
       v-if="!acceptedCookies"
@@ -78,20 +92,22 @@
 <script setup lang="ts">
 import InventoryContainer from './components/InventoryContainer.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faGears, faPlus, faRightFromBracket, faUpload } from '@fortawesome/free-solid-svg-icons'
+import { faGears, faList, faPlus, faRightFromBracket, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { store } from './store'
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
 import { ref } from 'vue'
 import { DatabaseHandler } from './store/DatabaseHandler'
 import PopUp from './components/PopUp.vue'
-import {parseItem} from './utils/itemParser'
+import { parseItem } from './utils/itemParser'
 import SettingsPopUp from './components/SettingsPopUp.vue'
+import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
 const errorContent = ref('')
 const acceptedCookies = ref(document.cookie.includes('acceptedCookies=true'))
 const showSettings = ref(false)
+const showManagePresets = ref(false)
 
 async function submitAddInventory() {
   if (nameFieldContent.value == '') {
@@ -174,6 +190,4 @@ function handleItemFile(file: File) {
     await parseItem(jsonContent)
   }
 }
-
-
 </script>

@@ -123,6 +123,10 @@ export class DatabaseHandler {
     return result !== undefined
   }
 
+  public async getPreset(itemUuid: string) {
+    return await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], { 'item_preset_uuid': itemUuid })
+  }
+
   public async createInventory(name: string) {
     const newInventory = await this.put<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], { 'name': name })
     if (!newInventory) return false
