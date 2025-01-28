@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { ErrorHandler } from '@/errorHandling/ErrorHandler'
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
