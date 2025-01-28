@@ -116,30 +116,30 @@ const dmgTypeTranslator: Record<string,string> = {
 }
 
 const propTranslator: Record<string, string> = {
-  "AF|DMG": "unknown", // shotgun
-  "2H": "two handed",
-  "AF|XDMG": "uknwown",
-  "RLD|XDMG": "reload",
-  "2H|XPHB": "two handed",
-  "BF|DMG": "unknown", //Automatic rifle
-  "BF|XDMG": "unknown",
-  "V": "versatile",
-  "V|XPHB": "versatile",
-  "A": "ammuntition",
-  "LD": "loading",
-  "A|XPHB": "ammuntition",
-  "LD|XPHB": "loading",
-  "L": "light",
-  "L|XPHB": "light",
-  "F": "finesse",
-  "T": "thrown",
-  "F|XPHB": "finesse",
-  "T|XPHB": "thrown",
-  "S": "special",
-  "H": "heavy",
-  "R": "reach",
-  "H|XPHB": "heavy",
-  "R|XPHB": "reach"
+  "AF|DMG": "AF", // shotgun
+  "2H": "Two handed",
+  "AF|XDMG": "AF",
+  "RLD|XDMG": "Reload",
+  "2H|XPHB": "Two handed",
+  "BF|DMG": "BF", //Automatic rifle
+  "BF|XDMG": "BF",
+  "V": "Versatile",
+  "V|XPHB": "Versatile",
+  "A": "Ammuntition",
+  "LD": "Loading",
+  "A|XPHB": "Ammuntition",
+  "LD|XPHB": "Loading",
+  "L": "Light",
+  "L|XPHB": "Light",
+  "F": "Finesse",
+  "T": "Thrown",
+  "F|XPHB": "Finesse",
+  "T|XPHB": "Thrown",
+  "S": "Special",
+  "H": "Heavy",
+  "R": "Reach",
+  "H|XPHB": "Heavy",
+  "R|XPHB": "Reach"
 }
 
 type LineType = 'entries' | 'inset' | 'list' | 'section' | 'table' | 'quote'
