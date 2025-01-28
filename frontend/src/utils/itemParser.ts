@@ -338,10 +338,10 @@ export async function parseItems(itemList: ItemListJSON) {
   }
 
   // not used anymore, but should be kept to debug changes in the future
-  for (const item of parsedItemList) {
-      await pushPresetToServer(item)
-  }
-  return
+  //for (const item of parsedItemList) {
+  //    await pushPresetToServer(item)
+  //}
+  //return
 
   const LOWER_BOUND_SIZE = 100 * 1000
   const UPPER_BOUND_SIZE = 200 * 1000
