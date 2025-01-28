@@ -6,6 +6,7 @@ import { store } from '.'
 import type { ItemPreset } from '@/model/ItemPreset'
 import type { Item } from '@/model/Item'
 import type { DBAccount } from '@/model/Account'
+import { Settings } from './Settings'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
@@ -15,8 +16,10 @@ export class DatabaseHandler {
   private static ITEM_PRESET_END_POINT = 'itemPreset'
   private static ACCOUNT_END_POINT = 'account'
   private lastFetch = 0
+  private fetchProcess: number|undefined
 
   private constructor() {
+    this.setFetchInterval(Settings.getInstance().timeBetweenFetches)
   }
 
   public static getInstance() {
@@ -52,26 +55,32 @@ export class DatabaseHandler {
 
     if (!inventoriesWithUpdates) return
 
-    /*await Promise.all(
-      inventoriesWithUpdates.map(async (update) => {
-        if (update.type == 'delete') {
-          store().inventoryUuids = store().inventoryUuids.filter(u => u != update.uuid)
-          delete store().inventories[update.uuid]
-          return
-        }
-        
-        const fetchResult = await this.fetchInventory(update.uuid)
-        if (!fetchResult) {
-          return
-        }
+    const keys = Object.keys(inventoriesWithUpdates)
 
-        if (update.type == 'create') {
-          store().inventoryUuids.push(update.uuid)
-        }
-      })
-    )*/
+    const deletedInventories = store().inventoryUuids.filter(uuid => !keys.includes(uuid))
+    for (const uuid of deletedInventories) {
+      delete store().inventories[uuid]
+      store().inventoryUuids = store().inventoryUuids.filter(u => u != uuid)
+    }
+    
+    for (const uuid of keys) {
+      if (this.lastFetch < inventoriesWithUpdates[uuid]) {
+        await this.fetchInventory(uuid)
+      }
+    }
+
+    store().inventoryUuids = keys
 
     this.lastFetch = time
+  }
+
+  public setFetchInterval(interval: number) {
+    if (this.fetchProcess !== undefined) {
+      clearInterval(this.fetchProcess)
+    }
+    this.fetchProcess = setInterval(() => {
+      this.fetchUpdates()
+    }, interval * 1000)
   }
 
   public async initialize() {
@@ -333,6 +342,6 @@ type URLParts = string[]
 
 type QueryParameter = Record<string, string>
 
-type LastUpdateResponse = { uuid: string; type: 'create' | 'patch' | 'delete' }[]
+type LastUpdateResponse = Record<string, number>
 
 interface Share { reader_uuid?: string, writer_uuid?: string }

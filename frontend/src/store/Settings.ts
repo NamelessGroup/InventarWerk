@@ -1,7 +1,10 @@
+import { DatabaseHandler } from "./DatabaseHandler"
+
 export class Settings {
   private static INSTACE: Settings|null = null
   private settings: SettingsState = {
-    breakDownGold: true
+    breakDownGold: true,
+    timeBetweenFetches: 5
   }
 
   private constructor() {
@@ -19,9 +22,19 @@ export class Settings {
     return this.settings.breakDownGold
   }
 
+  public get timeBetweenFetches(): number {
+    return this.settings.timeBetweenFetches
+  }
+
   public set breakDownGold(breakDownGold: boolean) {
     this.settings.breakDownGold = breakDownGold
     this.save()
+  }
+
+  public set timeBetweenFetches(timeBetweenFetches: number) {
+    this.settings.timeBetweenFetches = timeBetweenFetches
+    this.save()
+    DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
   }
 
   private save() {
@@ -38,4 +51,5 @@ export class Settings {
 
 export interface SettingsState {
   breakDownGold: boolean
+  timeBetweenFetches: number
 }
