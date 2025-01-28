@@ -9,13 +9,14 @@ import { Settings } from './Settings'
 
 export class DatabaseHandler {
   private static INSTANCE: DatabaseHandler | undefined
-  public static readonly BASE_URL = (import.meta.env.MODE == 'prod') ? `${window.location.origin}/` : 'http://localhost:8000/'
+  public static readonly BASE_URL =
+    import.meta.env.MODE == 'prod' ? `${window.location.origin}/` : 'http://localhost:8000/'
   private static INVENTORY_END_POINT = 'inventory'
   private static ITEM_END_POINT = 'item'
   private static ITEM_PRESET_END_POINT = 'itemPreset'
   private static ACCOUNT_END_POINT = 'account'
   private lastFetch = 0
-  private fetchProcess: number|undefined
+  private fetchProcess: number | undefined
 
   private constructor() {
     this.setFetchInterval(Settings.getInstance().timeBetweenFetches)
@@ -29,7 +30,10 @@ export class DatabaseHandler {
   }
 
   public async isLoggedIn() {
-    const response = await this.get<{ loggedIn: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isLoggedIn'])
+    const response = await this.get<{ loggedIn: boolean }>([
+      DatabaseHandler.ACCOUNT_END_POINT,
+      'isLoggedIn'
+    ])
     if (!response) {
       return false
     }
@@ -56,12 +60,12 @@ export class DatabaseHandler {
 
     const keys = Object.keys(inventoriesWithUpdates)
 
-    const deletedInventories = store().inventoryUuids.filter(uuid => !keys.includes(uuid))
+    const deletedInventories = store().inventoryUuids.filter((uuid) => !keys.includes(uuid))
     for (const uuid of deletedInventories) {
       delete store().inventories[uuid]
-      store().inventoryUuids = store().inventoryUuids.filter(u => u != uuid)
+      store().inventoryUuids = store().inventoryUuids.filter((u) => u != uuid)
     }
-    
+
     for (const uuid of keys) {
       if (this.lastFetch < inventoriesWithUpdates[uuid]) {
         await this.fetchInventory(uuid)
@@ -89,55 +93,89 @@ export class DatabaseHandler {
     store().accounts = await this.getAllAccounts()
     store().userIsDm = await this.isDM()
     const inventories = await this.getAllInventoriesFromDB()
-    inventories.forEach(inventory => this.setInventoryInStore(inventory))
-    store().inventoryUuids = inventories.map(inventory => inventory.uuid).sort()
-  } 
+    inventories.forEach((inventory) => this.setInventoryInStore(inventory))
+    store().inventoryUuids = inventories.map((inventory) => inventory.uuid).sort()
+  }
 
   public async isDM(user?: string) {
     const uuid = user ?? store().uuid
-    const result = await this.get<{isDm: boolean}>([DatabaseHandler.ACCOUNT_END_POINT, 'isDm'], { 'account_uuid': uuid })
+    const result = await this.get<{ isDm: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isDm'], {
+      account_uuid: uuid
+    })
     return result?.isDm ?? false
   }
 
   public async getAllAccounts() {
-    const accounts = (await this.get<{accounts: DBAccount[]}>([DatabaseHandler.ACCOUNT_END_POINT, 'get']).then(r => r?.accounts)) ?? []
-    
-    return accounts.map(account => ({
+    const accounts =
+      (await this.get<{ accounts: DBAccount[] }>([DatabaseHandler.ACCOUNT_END_POINT, 'get']).then(
+        (r) => r?.accounts
+      )) ?? []
+
+    return accounts.map((account) => ({
       ...account,
       dm: account.dm == 1
     }))
   }
 
   private async getAllInventoriesFromDB() {
-    return (await this.get<{inventories: DBInventory[]}>([DatabaseHandler.INVENTORY_END_POINT, 'all']).then(r => r?.inventories)) ?? []
+    return (
+      (await this.get<{ inventories: DBInventory[] }>([
+        DatabaseHandler.INVENTORY_END_POINT,
+        'all'
+      ]).then((r) => r?.inventories)) ?? []
+    )
   }
 
   private async getOwnUUID() {
-    return (await this.get<{userUUID:string}>([DatabaseHandler.ACCOUNT_END_POINT, 'info']).then(r => r?.userUUID)) ?? ''
+    return (
+      (await this.get<{ userUUID: string }>([DatabaseHandler.ACCOUNT_END_POINT, 'info']).then(
+        (r) => r?.userUUID
+      )) ?? ''
+    )
   }
 
   private async fetchInventory(uuid: string) {
-    const inventory = await this.get<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], { 'inventory_uuid': uuid })
+    const inventory = await this.get<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], {
+      inventory_uuid: uuid
+    })
     if (!inventory) return false
 
     this.setInventoryInStore(inventory)
     return true
   }
 
-  public async editItem(itemUuid: string, settings: {
-    name: string, price: number, weight: number, description: string, itemType: string
-  }) {
-    const result = await this.patch<unknown>([DatabaseHandler.ITEM_PRESET_END_POINT, 'modify'], { 'item_preset_uuid': itemUuid, item_type: settings.itemType, name: settings.name, price: settings.price.toString(), weight: settings.weight.toString(), description: settings.description })
+  public async editItem(
+    itemUuid: string,
+    settings: {
+      name: string
+      price: number
+      weight: number
+      description: string
+      itemType: string
+    }
+  ) {
+    const result = await this.patch<unknown>([DatabaseHandler.ITEM_PRESET_END_POINT, 'modify'], {
+      item_preset_uuid: itemUuid,
+      item_type: settings.itemType,
+      name: settings.name,
+      price: settings.price.toString(),
+      weight: settings.weight.toString(),
+      description: settings.description
+    })
 
     return result !== undefined
   }
 
   public async getPreset(itemUuid: string) {
-    return await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], { 'item_preset_uuid': itemUuid })
+    return await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], {
+      item_preset_uuid: itemUuid
+    })
   }
 
   public async createInventory(name: string) {
-    const newInventory = await this.put<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], { 'name': name })
+    const newInventory = await this.put<DBInventory>([DatabaseHandler.INVENTORY_END_POINT], {
+      name: name
+    })
     if (!newInventory) return false
 
     this.setInventoryInStore(newInventory)
@@ -147,11 +185,16 @@ export class DatabaseHandler {
 
   public async addItemByPreset(inventoryUuid: string, presetUuid: string, amount: number) {
     // Fetch preset details from the server
-    const presetData = await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], { 'item_preset_uuid': presetUuid });
+    const presetData = await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], {
+      item_preset_uuid: presetUuid
+    })
     if (!presetData) return false
 
     // Update the inventory in the backend
-    const r = await this.put<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addPreset'], { 'inventory_uuid': inventoryUuid, 'preset_uuid': presetUuid, 'amount': String(amount)});
+    const r = await this.put<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addPreset'],
+      { inventory_uuid: inventoryUuid, preset_uuid: presetUuid, amount: String(amount) }
+    )
 
     if (r === undefined) return false
 
@@ -160,25 +203,31 @@ export class DatabaseHandler {
       name: presetData.name,
       presetReference: presetUuid,
       amount,
-      dmNote: "",
+      dmNote: '',
       weight: presetData.weight,
       description: presetData.description,
       price: presetData.price,
       presetCreator: presetData.creator,
       itemType: presetData.itemType,
-      sorting: Math.max(...store().inventories[inventoryUuid].items.map(i => i.sorting), 0) + 1,
-      inventoryItemNote: ""
-    });
+      sorting: Math.max(...store().inventories[inventoryUuid].items.map((i) => i.sorting), 0) + 1,
+      inventoryItemNote: ''
+    })
 
-    return true; 
+    return true
   }
 
   public async changeItemAmount(inventoryUuid: string, itemUuid: string, newAmount: number) {
-    await this.patch<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid, 'amount': newAmount.toString() })
+    await this.patch<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'],
+      { inventory_uuid: inventoryUuid, item_preset_uuid: itemUuid, amount: newAmount.toString() }
+    )
   }
 
   public async addNewItem(inventoryUuid: string, name: string, amount: number) {
-    const response = await this.put<ItemPreset>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'], { 'inventory_uuid': inventoryUuid, 'name': name, 'amount': amount.toString() })
+    const response = await this.put<ItemPreset>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'],
+      { inventory_uuid: inventoryUuid, name: name, amount: amount.toString() }
+    )
     if (!response) return false
 
     store().inventories[inventoryUuid].items.push({
@@ -188,9 +237,9 @@ export class DatabaseHandler {
       price: response.price,
       weight: response.weight,
       itemType: response.itemType,
-      dmNote: "",
-      inventoryItemNote: "",
-      sorting: Math.max(...store().inventories[inventoryUuid].items.map(i => i.sorting), 0) + 1,
+      dmNote: '',
+      inventoryItemNote: '',
+      sorting: Math.max(...store().inventories[inventoryUuid].items.map((i) => i.sorting), 0) + 1,
       presetCreator: response.creator,
       amount
     })
@@ -198,11 +247,17 @@ export class DatabaseHandler {
   }
 
   public async removeItem(inventoryUuid: string, itemUuid: string) {
-    await this.delete<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'remove'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid })
+    await this.delete<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'remove'],
+      { inventory_uuid: inventoryUuid, item_preset_uuid: itemUuid }
+    )
   }
 
   public async getAllPresets() {
-    const presets = await this.get<{item_presets: ItemPreset[]}>([DatabaseHandler.ITEM_PRESET_END_POINT, "all"]);
+    const presets = await this.get<{ item_presets: ItemPreset[] }>([
+      DatabaseHandler.ITEM_PRESET_END_POINT,
+      'all'
+    ])
     if (!presets) return []
     return presets.item_presets
   }
@@ -210,7 +265,7 @@ export class DatabaseHandler {
   private setInventoryInStore(inventory: DBInventory) {
     store().inventories[inventory.uuid] = {
       ...inventory,
-      items: inventory.items.map(item => ({
+      items: inventory.items.map((item) => ({
         ...item
       })),
       money: breakDownMoney(inventory.money)
@@ -218,19 +273,28 @@ export class DatabaseHandler {
   }
 
   public async editItemNote(inventoryUuid: string, itemUuid: string, note: string) {
-    const result = await this.patch<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid, 'inventory_item_note': note })
+    const result = await this.patch<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'],
+      { inventory_uuid: inventoryUuid, item_preset_uuid: itemUuid, inventory_item_note: note }
+    )
     return result !== undefined
   }
 
   public async editDmNote(inventoryUuid: string, itemUuid: string, note: string) {
-    const result = await this.patch<unknown>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNote'], { 'inventory_uuid': inventoryUuid, 'item_preset_uuid': itemUuid, 'note': note })
+    const result = await this.patch<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNote'],
+      { inventory_uuid: inventoryUuid, item_preset_uuid: itemUuid, note: note }
+    )
     return result !== undefined
   }
 
   public async patchMoney(inventoryUuid: string, money: Money) {
     const newMoney = compactMoney(money)
 
-    await this.patch([DatabaseHandler.INVENTORY_END_POINT, 'money'], { 'inventory_uuid': inventoryUuid, 'amount': newMoney.toString() })
+    await this.patch([DatabaseHandler.INVENTORY_END_POINT, 'money'], {
+      inventory_uuid: inventoryUuid,
+      amount: newMoney.toString()
+    })
   }
 
   public async addShare(inventoryUuid: string, share: Share) {
@@ -246,7 +310,9 @@ export class DatabaseHandler {
   }
 
   public async deleteInventory(inventoryUuid: string) {
-    await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'delete'], { 'inventory_uuid': inventoryUuid })
+    await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'delete'], {
+      inventory_uuid: inventoryUuid
+    })
   }
 
   private buildShareParams(share: Share) {
@@ -260,9 +326,12 @@ export class DatabaseHandler {
     return params
   }
 
-  private async get<T>(url: URLParts, queryParams?: QueryParameter): Promise<T|undefined> {
+  private async get<T>(url: URLParts, queryParams?: QueryParameter): Promise<T | undefined> {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params, withCredentials:true }).then((response) => response).catch((error) => error.response)
+    const response = await axios
+      .get<T>(DatabaseHandler.BASE_URL + url.join('/'), { params, withCredentials: true })
+      .then((response) => response)
+      .catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data as T
     } else {
@@ -276,10 +345,17 @@ export class DatabaseHandler {
 
   private async post<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.post<T>(DatabaseHandler.BASE_URL + url.join('/'), {}, {
-      params,
-      withCredentials: true
-    }).then((response) => response).catch((error) => error.response)
+    const response = await axios
+      .post<T>(
+        DatabaseHandler.BASE_URL + url.join('/'),
+        {},
+        {
+          params,
+          withCredentials: true
+        }
+      )
+      .then((response) => response)
+      .catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {
@@ -293,10 +369,17 @@ export class DatabaseHandler {
 
   private async put<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.put<T>(DatabaseHandler.BASE_URL + url.join('/'), {}, {
-      params,
-      withCredentials: true
-    }).then((response) => response).catch((error) => error.response)
+    const response = await axios
+      .put<T>(
+        DatabaseHandler.BASE_URL + url.join('/'),
+        {},
+        {
+          params,
+          withCredentials: true
+        }
+      )
+      .then((response) => response)
+      .catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data as T
     } else {
@@ -310,10 +393,17 @@ export class DatabaseHandler {
 
   private async patch<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.patch<T>(DatabaseHandler.BASE_URL + url.join('/'), {}, {
-      params,
-      withCredentials: true
-    }).then((response) => response).catch((error) => error.response)
+    const response = await axios
+      .patch<T>(
+        DatabaseHandler.BASE_URL + url.join('/'),
+        {},
+        {
+          params,
+          withCredentials: true
+        }
+      )
+      .then((response) => response)
+      .catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {
@@ -327,10 +417,13 @@ export class DatabaseHandler {
 
   private async delete<T>(url: URLParts, queryParams?: QueryParameter) {
     const params = new URLSearchParams(queryParams)
-    const response = await axios.delete<T>(DatabaseHandler.BASE_URL + url.join('/'), {
-      params,
-      withCredentials: true
-    }).then((response) => response).catch((error) => error.response)
+    const response = await axios
+      .delete<T>(DatabaseHandler.BASE_URL + url.join('/'), {
+        params,
+        withCredentials: true
+      })
+      .then((response) => response)
+      .catch((error) => error.response)
     if (this.wasSuccess(response)) {
       return response.data
     } else {
@@ -353,4 +446,7 @@ type QueryParameter = Record<string, string>
 
 type LastUpdateResponse = Record<string, number>
 
-interface Share { reader_uuid?: string, writer_uuid?: string }
+interface Share {
+  reader_uuid?: string
+  writer_uuid?: string
+}

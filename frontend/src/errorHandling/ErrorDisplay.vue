@@ -1,17 +1,25 @@
 <template>
-  <div class="p-2 space-y-2 text-white">
-    <div v-for="error in errorList" :key="error.message" class="rounded bg-red-800" @click="error.timeToLive = 0">
+  <div class="space-y-2 p-2 text-white">
+    <div
+      v-for="error in errorList"
+      :key="error.message"
+      class="rounded bg-red-800"
+      @click="error.timeToLive = 0"
+    >
       <p class="p-1"><FontAwesomeIcon :icon="faCircleXmark" /> {{ error.message }}</p>
-      <div class="h-1 bg-red-400 rounded-bl" :style="{width: getBarFillPercentage(error.timeToLive)}"></div>
+      <div
+        class="h-1 rounded-bl bg-red-400"
+        :style="{ width: getBarFillPercentage(error.timeToLive) }"
+      ></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { ErrorHandler } from './ErrorHandler';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faCircleXmark } from '@fortawesome/free-regular-svg-icons';
+import { ref } from 'vue'
+import { ErrorHandler } from './ErrorHandler'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCircleXmark } from '@fortawesome/free-regular-svg-icons'
 
 ErrorHandler.getInstance().addListener(addError)
 
@@ -34,10 +42,10 @@ function addError(e: Error) {
 
 function buildInterval() {
   return setInterval(() => {
-    errorList.value.forEach(e => {
+    errorList.value.forEach((e) => {
       e.timeToLive -= tickTime
-    }, tickTime);
-    errorList.value = errorList.value.filter(e => e.timeToLive > 0)
+    }, tickTime)
+    errorList.value = errorList.value.filter((e) => e.timeToLive > 0)
     if (errorList.value.length === 0) {
       clearInterval(intervalID.value)
     }
@@ -45,7 +53,7 @@ function buildInterval() {
 }
 
 function getBarFillPercentage(timeToLive: number) {
-  return `${100 - (maxTime - timeToLive) / maxTime * 100}%`
+  return `${100 - ((maxTime - timeToLive) / maxTime) * 100}%`
 }
 
 interface ErrorDisplayElement {

@@ -2,22 +2,38 @@
   <PopUp class="!m-0" @close="emit('close')">
     <div class="grid grid-cols-1 gap-2">
       <label for="amount">Amount:</label>
-      <NumericInput id="amount" v-model="amountValue" :default-value="1" class="rounded border border-amber-300 bg-fuchsia-900 outline-none px-1 w-full" />
+      <NumericInput
+        id="amount"
+        v-model="amountValue"
+        :default-value="1"
+        class="w-full rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+      />
       <label for="name">Name:</label>
-      <input id="name" ref="nameInput" v-model="nameValue" autocomplete="off" class="rounded border border-amber-300 bg-fuchsia-900 outline-none px-1 w-full">
-      <button class="rounded border border-amber-300 bg-fuchsia-900 outline-none p-1 w-full" @click="addNewItem">Add item</button>
+      <input
+        id="name"
+        ref="nameInput"
+        v-model="nameValue"
+        autocomplete="off"
+        class="w-full rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+      />
+      <button
+        class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none"
+        @click="addNewItem"
+      >
+        Add item
+      </button>
       <div class="text-red-500">{{ errorText }}</div>
     </div>
   </PopUp>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import PopUp from './PopUp.vue';
-import autocomplete, { type AutocompleteItem } from 'autocompleter';
-import { store } from '@/store';
-import { DatabaseHandler } from '@/store/DatabaseHandler';
-import NumericInput from './NumericInput.vue';
+import { computed, onMounted, ref } from 'vue'
+import PopUp from './PopUp.vue'
+import autocomplete, { type AutocompleteItem } from 'autocompleter'
+import { store } from '@/store'
+import { DatabaseHandler } from '@/store/DatabaseHandler'
+import NumericInput from './NumericInput.vue'
 
 const props = defineProps({
   inventoryUuid: {
@@ -34,29 +50,34 @@ const amountValue = ref(1)
 const errorText = ref('')
 
 const completionItems = computed(() => {
-  const itemsInInventory = store().inventories[props.inventoryUuid].items.map(item => item.presetReference)
-  return store().itemPresets.map(item => {
-    let group = item.itemType ?? 'Other'
-    if (group === '') {
-      group = 'Other'
-    }
-    return {
-      label: item.name,
-      group: group,
-      uuid: item.uuid
-    }
-  }).filter(i => !itemsInInventory.includes(i.uuid)).sort((a,b) => {
-    if (a.group == b.group) {
-      return a.label.localeCompare(b.label)
-    }
-    if (a.group == 'Other') {
-      return 1
-    }
-    if (b.group == 'Other') {
-      return -1
-    }
-    return a.group.localeCompare(b.group)
-  })
+  const itemsInInventory = store().inventories[props.inventoryUuid].items.map(
+    (item) => item.presetReference
+  )
+  return store()
+    .itemPresets.map((item) => {
+      let group = item.itemType ?? 'Other'
+      if (group === '') {
+        group = 'Other'
+      }
+      return {
+        label: item.name,
+        group: group,
+        uuid: item.uuid
+      }
+    })
+    .filter((i) => !itemsInInventory.includes(i.uuid))
+    .sort((a, b) => {
+      if (a.group == b.group) {
+        return a.label.localeCompare(b.label)
+      }
+      if (a.group == 'Other') {
+        return 1
+      }
+      if (b.group == 'Other') {
+        return -1
+      }
+      return a.group.localeCompare(b.group)
+    })
 })
 
 async function addNewItem() {
@@ -64,7 +85,11 @@ async function addNewItem() {
     errorText.value = 'Name cannot be empty'
     return
   }
-  const success = await DatabaseHandler.getInstance().addNewItem(props.inventoryUuid, nameValue.value, amountValue.value)
+  const success = await DatabaseHandler.getInstance().addNewItem(
+    props.inventoryUuid,
+    nameValue.value,
+    amountValue.value
+  )
   if (success) {
     errorText.value = ''
     nameValue.value = ''
@@ -78,7 +103,11 @@ async function addNewItem() {
 async function addItemByPreset(item: MyCompletionItem) {
   nameValue.value = item.label
 
-  const success = await DatabaseHandler.getInstance().addItemByPreset(props.inventoryUuid, item.uuid, amountValue.value)
+  const success = await DatabaseHandler.getInstance().addItemByPreset(
+    props.inventoryUuid,
+    item.uuid,
+    amountValue.value
+  )
   if (success) {
     errorText.value = ''
     nameValue.value = ''
@@ -94,7 +123,11 @@ onMounted(() => {
     autocomplete<MyCompletionItem>({
       input: nameInput.value,
       fetch: (text, update) => {
-        update(completionItems.value.filter(item => item.label.toLowerCase().includes(text.toLowerCase())))
+        update(
+          completionItems.value.filter((item) =>
+            item.label.toLowerCase().includes(text.toLowerCase())
+          )
+        )
       },
       minLength: -1,
       showOnFocus: true,
@@ -106,7 +139,14 @@ onMounted(() => {
         const div = document.createElement('div')
         const start = item.label.toLowerCase().indexOf(currentValue.toLowerCase())
         div.innerHTML = `${item.label.slice(0, start)}<span class="text-amber-300">${item.label.slice(start, start + currentValue.length)}</span>${item.label.slice(start + currentValue.length)}`
-        div.classList.add('bg-fuchsia-900', 'px-1', 'cursor-pointer', 'pl-3', 'text-white', 'autocomplete-item')
+        div.classList.add(
+          'bg-fuchsia-900',
+          'px-1',
+          'cursor-pointer',
+          'pl-3',
+          'text-white',
+          'autocomplete-item'
+        )
         return div
       },
       renderGroup: (name: string): HTMLDivElement => {

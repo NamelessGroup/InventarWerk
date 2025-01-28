@@ -1,25 +1,34 @@
 <template>
-  <div class="space-y-2 rounded border-2 border-amber-300 bg-fuchsia-950 p-2 overflow-hidden">
-    <div class="flex gap-2 items-center">
-      <div class="bold text-xl bg-transparent outline-none border-none pr-5" >{{ inventory.name }}</div>
-      <div>({{ inventory.items.map(i => i.weight).reduce((a,b) => a+b, 0) }} lbs.)</div>
+  <div class="space-y-2 overflow-hidden rounded border-2 border-amber-300 bg-fuchsia-950 p-2">
+    <div class="flex items-center gap-2">
+      <div class="bold border-none bg-transparent pr-5 text-xl outline-none">
+        {{ inventory.name }}
+      </div>
+      <div>({{ inventory.items.map((i) => i.weight).reduce((a, b) => a + b, 0) }} lbs.)</div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7">
+      <button
+        v-if="inventory.owner === store().uuid"
+        class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
+      >
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
-      <button v-if="inventory.owner === store().uuid" class="rounded border border-amber-300 bg-fuchsia-900 w-7 h-7" @click="deleteInventory">
+      <button
+        v-if="inventory.owner === store().uuid"
+        class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
+        @click="deleteInventory"
+      >
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
       </button>
     </div>
     <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
-      <NumericInput 
+      <NumericInput
         v-for="[k, i] of moneyOptions"
         :key="k"
         v-model="moneyFieldValues[k]"
-        class="row-start-1 h-10 rounded border border-amber-300 bg-fuchsia-900 outline-none px-1"
+        class="row-start-1 h-10 rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
         :class="`col-start-${i}`"
-        @update="v => updateMoney(v, k)"
-      />      
+        @update="(v) => updateMoney(v, k)"
+      />
       <span
         v-for="[k, i, l] of moneyOptions"
         :key="k + 'l'"
@@ -30,26 +39,45 @@
     </div>
 
     <div class="space-y-2">
-      <ItemRowDisplay v-for="item in inventory.items" :key="item.presetReference" :item="item" :inventory-uuid="inventory.uuid" />
+      <ItemRowDisplay
+        v-for="item in inventory.items"
+        :key="item.presetReference"
+        :item="item"
+        :inventory-uuid="inventory.uuid"
+      />
     </div>
 
-    <button v-if="inventory.writer.includes(store().uuid)" class="h-10 w-full rounded bg-fuchsia-900 text-center" @click="showAddItemPopup = true">+ Add item</button>
+    <button
+      v-if="inventory.writer.includes(store().uuid)"
+      class="h-10 w-full rounded bg-fuchsia-900 text-center"
+      @click="showAddItemPopup = true"
+    >
+      + Add item
+    </button>
   </div>
-  <ShareInventoryPopUp v-if="showSharePopup" :inventory="inventory" @close="showSharePopup = false" />
-  <AddItemPopUp v-if="showAddItemPopup" :inventory-uuid="inventory.uuid" @close="showAddItemPopup = false" />
+  <ShareInventoryPopUp
+    v-if="showSharePopup"
+    :inventory="inventory"
+    @close="showSharePopup = false"
+  />
+  <AddItemPopUp
+    v-if="showAddItemPopup"
+    :inventory-uuid="inventory.uuid"
+    @close="showAddItemPopup = false"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, watch, type PropType } from 'vue'
 import type { Inventory } from '../model/Inventory'
 import ItemRowDisplay from './ItemRowDisplay.vue'
-import type { MoneyFields } from '@/utils/moneyMath';
-import { store } from '@/store';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import AddItemPopUp from './AddItemPopUp.vue';
-import ShareInventoryPopUp from './ShareInventoryPopUp.vue';
-import NumericInput from './NumericInput.vue';
+import type { MoneyFields } from '@/utils/moneyMath'
+import { store } from '@/store'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import AddItemPopUp from './AddItemPopUp.vue'
+import ShareInventoryPopUp from './ShareInventoryPopUp.vue'
+import NumericInput from './NumericInput.vue'
 
 const props = defineProps({
   inventory: {
@@ -98,14 +126,17 @@ function updateMoney(content: number, field: MoneyFields) {
   store().updateMoney(props.inventory.uuid, content, field)
 }
 
-watch(() => props.inventory.money, (newMoney) => {
-  moneyFieldValues.value = {
-    platinum: newMoney.platinum,
-    gold: newMoney.gold,
-    silver: newMoney.silver,
-    copper: newMoney.copper
+watch(
+  () => props.inventory.money,
+  (newMoney) => {
+    moneyFieldValues.value = {
+      platinum: newMoney.platinum,
+      gold: newMoney.gold,
+      silver: newMoney.silver,
+      copper: newMoney.copper
+    }
   }
-})
+)
 
 const moneyOptions: [MoneyFields, number, string][] = [
   ['platinum', 1, 'PP'],

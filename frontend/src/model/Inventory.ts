@@ -1,5 +1,5 @@
-import type { Money } from "@/utils/moneyMath"
-import type { Item } from "./Item"
+import type { Money } from '@/utils/moneyMath'
+import type { Item } from './Item'
 
 interface RawInventory<T> {
   uuid: string
@@ -12,10 +12,7 @@ interface RawInventory<T> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface Inventory extends RawInventory<Money> {
-}
-
+export interface Inventory extends RawInventory<Money> {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DBInventory extends RawInventory<number> {
-}
+export interface DBInventory extends RawInventory<number> {}

@@ -12,10 +12,10 @@
             <FontAwesomeIcon :icon="faUpload" />
           </button>
           <button
-              class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
-              @click="showManagePresets = true"
-            >
-              <FontAwesomeIcon :icon="faList" />
+            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            @click="showManagePresets = true"
+          >
+            <FontAwesomeIcon :icon="faList" />
           </button>
           <button
             class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
@@ -56,7 +56,10 @@
     </div>
     <ErrorDisplay class="absolute bottom-0 z-50 w-screen" />
     <SettingsPopUp v-if="showSettings" @close="showSettings = false"></SettingsPopUp>
-    <ManagePresetsPopUp v-if="showManagePresets" @close="showManagePresets = false"></ManagePresetsPopUp>
+    <ManagePresetsPopUp
+      v-if="showManagePresets"
+      @close="showManagePresets = false"
+    ></ManagePresetsPopUp>
 
     <button
       v-if="isLoggedIn"
@@ -92,7 +95,13 @@
 <script setup lang="ts">
 import InventoryContainer from './components/InventoryContainer.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faGears, faList, faPlus, faRightFromBracket, faUpload } from '@fortawesome/free-solid-svg-icons'
+import {
+  faGears,
+  faList,
+  faPlus,
+  faRightFromBracket,
+  faUpload
+} from '@fortawesome/free-solid-svg-icons'
 import { store } from './store'
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
 import { ref } from 'vue'

@@ -8,7 +8,7 @@
     @click="expanded = !expanded"
   >
     <div class="grid grid-cols-[auto_1fr_auto]">
-      <NumericInput 
+      <NumericInput
         v-model="amountValue"
         class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950 px-1 text-right outline-none"
         @click="
@@ -16,7 +16,7 @@
             e.stopPropagation()
           }
         "
-        @update="v => editAmount(v)"
+        @update="(v) => editAmount(v)"
       />
       <span class="row-start-1 flex items-center px-2">{{ item.name }}</span>
       <button
@@ -32,20 +32,42 @@
       </button>
     </div>
     <div v-show="expanded">
-      <div class="relative min-h-12 flex flex-col ">
+      <div class="relative flex min-h-12 flex-col">
         <p class="text-xs">Price: {{ priceString }}</p>
-        <p class="text-xs mb-1">Weight: {{ item.weight }} lbs.</p>
-        <p class="text-xs markdown mb-1" v-html="description"></p>
-        <textarea v-model="itemNote" class="text-xs text-fuchsia-300 border-amber-300 border outline-none rounded bg-fuchsia-900" placeholder="Notes"  @click="e => e.stopPropagation()" @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"></textarea>
-        <textarea v-if="store().userIsDm" v-model="dmNote" class="text-xs text-amber-300 border-amber-300 border outline-none rounded bg-fuchsia-900 mt-1" placeholder="DM Note" @click="e => e.stopPropagation()" @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"></textarea>
+        <p class="mb-1 text-xs">Weight: {{ item.weight }} lbs.</p>
+        <p class="markdown mb-1 text-xs" v-html="description"></p>
+        <textarea
+          v-model="itemNote"
+          class="rounded border border-amber-300 bg-fuchsia-900 text-xs text-fuchsia-300 outline-none"
+          placeholder="Notes"
+          @click="(e) => e.stopPropagation()"
+          @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"
+        ></textarea>
+        <textarea
+          v-if="store().userIsDm"
+          v-model="dmNote"
+          class="mt-1 rounded border border-amber-300 bg-fuchsia-900 text-xs text-amber-300 outline-none"
+          placeholder="DM Note"
+          @click="(e) => e.stopPropagation()"
+          @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
+        ></textarea>
 
-        <button v-if="store().uuid == item.presetCreator" class=" absolute top-2 right-0 h-6 text-xs w-6 rounded border border-amber-300 bg-fuchsia-950" @click="e => openEdit(e)">
+        <button
+          v-if="store().uuid == item.presetCreator"
+          class="absolute right-0 top-2 h-6 w-6 rounded border border-amber-300 bg-fuchsia-950 text-xs"
+          @click="(e) => openEdit(e)"
+        >
           <FontAwesomeIcon :icon="faPen" />
         </button>
       </div>
     </div>
   </div>
-  <EditItemPopUp v-if="showItemEdit" :item="item" :inventory-uuid="inventoryUuid" @close="showItemEdit = false" />
+  <EditItemPopUp
+    v-if="showItemEdit"
+    :item="item"
+    :inventory-uuid="inventoryUuid"
+    @close="showItemEdit = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -89,7 +111,7 @@ const priceString = computed(() => {
   }
   const money = breakDownMoney(props.item.price)
   const result = [] as string[]
-  for (const k of (['platinum', 'gold', 'silver', 'copper'] as MoneyFields[])) {
+  for (const k of ['platinum', 'gold', 'silver', 'copper'] as MoneyFields[]) {
     if (money[k] != 0) {
       result.push(`${money[k]}${moneySynonym[k]}`)
     }
@@ -97,7 +119,6 @@ const priceString = computed(() => {
 
   return result.join(' ')
 })
-
 
 function deleteItem() {
   store().removeItem(props.inventoryUuid, props.item.presetReference)
@@ -107,22 +128,30 @@ function editAmount(value: number) {
   store().changeItemAmount(props.inventoryUuid, props.item.presetReference, value)
 }
 
-
 const showItemEdit = ref(false)
 function openEdit(e: Event) {
   e.stopPropagation()
   showItemEdit.value = true
 }
 
-watch(() => props.item.amount, (newValue) => {
-  amountValue.value = newValue
-})  
-watch(() => props.item.inventoryItemNote, (newValue) => {
-  itemNote.value = newValue
-})
-watch(() => props.item.dmNote, (newValue) => {
-  dmNote.value = newValue
-})
+watch(
+  () => props.item.amount,
+  (newValue) => {
+    amountValue.value = newValue
+  }
+)
+watch(
+  () => props.item.inventoryItemNote,
+  (newValue) => {
+    itemNote.value = newValue
+  }
+)
+watch(
+  () => props.item.dmNote,
+  (newValue) => {
+    dmNote.value = newValue
+  }
+)
 </script>
 
 <style scoped lang="postcss">

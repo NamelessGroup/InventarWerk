@@ -1,4 +1,4 @@
-import { DatabaseHandler } from "./DatabaseHandler"
+import { DatabaseHandler } from './DatabaseHandler'
 
 export interface SettingsState {
   breakDownGold: boolean
@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS: SettingsState = {
 }
 
 export class Settings {
-  private static INSTACE: Settings|null = null
+  private static INSTACE: Settings | null = null
   private settings: SettingsState = DEFAULT_SETTINGS
 
   private constructor() {
@@ -55,7 +55,7 @@ export class Settings {
       this.settings = {
         ...this.settings,
         ...parsedState
-      } 
+      }
     }
   }
 }

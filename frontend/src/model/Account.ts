@@ -4,7 +4,6 @@ export interface RawAccount<T> {
   dm: T
 }
 
-
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Account extends RawAccount<boolean> {}
 

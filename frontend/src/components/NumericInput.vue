@@ -1,12 +1,23 @@
 <template>
   <input
-    v-model="value" type="text" inputmode="numeric" @input="onInput" @blur="onBlur" 
-    @keydown="e => { if (e.key === 'Enter') { onBlur() } }" />
+    v-model="value"
+    type="text"
+    inputmode="numeric"
+    @input="onInput"
+    @blur="onBlur"
+    @keydown="
+      (e) => {
+        if (e.key === 'Enter') {
+          onBlur()
+        }
+      }
+    "
+  />
 </template>
 
 <script setup lang="ts">
-import { ErrorHandler } from '@/errorHandling/ErrorHandler';
-import { ref, watch } from 'vue';
+import { ErrorHandler } from '@/errorHandling/ErrorHandler'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -50,7 +61,10 @@ function evaluate(content: string) {
   return val
 }
 
-watch(() => props.modelValue, (newValue) => {
-  value.value = newValue.toString()
-})
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    value.value = newValue.toString()
+  }
+)
 </script>

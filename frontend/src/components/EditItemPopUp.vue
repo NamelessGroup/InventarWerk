@@ -1,45 +1,46 @@
 <template>
   <PopUp @close="emit('close')">
     <div class="space-y-5 p-2">
-      <div class="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-2">
-      <label for="edit-item-name">Name:</label>
-      <input id="edit-item-name" v-model="nameRef" type="text" />
+      <div class="grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr]">
+        <label for="edit-item-name">Name:</label>
+        <input id="edit-item-name" v-model="nameRef" type="text" />
 
-      <label for="edit-item-type">Item type:</label>
-      <input id="edit-item-type" v-model="typeRef" type="text" />
+        <label for="edit-item-type">Item type:</label>
+        <input id="edit-item-type" v-model="typeRef" type="text" />
 
-      <label for="edit-item-price">Price:</label>
-      <NumericInput id="edit-item-price" v-model="priceRef" />
+        <label for="edit-item-price">Price:</label>
+        <NumericInput id="edit-item-price" v-model="priceRef" />
 
-      <label for="edit-item-weight">Weight:</label>
-      <NumericInput id="edit-item-weight" v-model="weightRef" />
+        <label for="edit-item-weight">Weight:</label>
+        <NumericInput id="edit-item-weight" v-model="weightRef" />
 
-      <label for="edit-item-description">Description:</label>
-      <textarea id="edit-item-description" v-model="descriptionRef" class="min-h-60"></textarea>
+        <label for="edit-item-description">Description:</label>
+        <textarea id="edit-item-description" v-model="descriptionRef" class="min-h-60"></textarea>
+      </div>
+      <button class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1" @click="saveItem">
+        Save
+      </button>
+      <div class="text-red-500">{{ errorText }}</div>
     </div>
-    <button class="rounded border border-amber-300 bg-fuchsia-900 p-1 w-full" @click="saveItem">Save</button>
-    <div class="text-red-500">{{ errorText }}</div>
-    </div>
-    
   </PopUp>
 </template>
 
 <script setup lang="ts">
-import { ref, type PropType } from 'vue';
+import { ref, type PropType } from 'vue'
 import PopUp from './PopUp.vue'
-import type { Item } from '@/model/Item';
-import { store } from '@/store';
-import NumericInput from './NumericInput.vue';
+import type { Item } from '@/model/Item'
+import { store } from '@/store'
+import NumericInput from './NumericInput.vue'
 
 const props = defineProps({
   inventoryUuid: {
     type: String,
-    required: true,
+    required: true
   },
   item: {
     type: Object as PropType<Item>,
-    required: true,
-  },
+    required: true
+  }
 })
 
 const nameRef = ref(props.item.name)
@@ -58,7 +59,7 @@ async function saveItem() {
     itemType: typeRef.value,
     price: priceRef.value,
     weight: weightRef.value,
-    description: descriptionRef.value,
+    description: descriptionRef.value
   })
   if (result) {
     errorText.value = ''
@@ -69,7 +70,8 @@ async function saveItem() {
 </script>
 
 <style scoped lang="postcss">
-input, textarea {
-  @apply rounded border border-amber-300 bg-fuchsia-900 outline-none p-1;
+input,
+textarea {
+  @apply rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none;
 }
 </style>

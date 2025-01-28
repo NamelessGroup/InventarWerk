@@ -1,6 +1,5 @@
 export class ErrorHandler {
-
-  private static INSTANCE: ErrorHandler|undefined
+  private static INSTANCE: ErrorHandler | undefined
   private listener: Record<string, ListenerFunction>
 
   private constructor() {

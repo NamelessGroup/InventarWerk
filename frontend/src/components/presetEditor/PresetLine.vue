@@ -2,24 +2,28 @@
   <div class="bg-fuchsia-900 px-1">
     <div class="flex items-center">
       <h3 class="flex-1" @click="showDetails = !showDetails">{{ preset.name }}</h3>
-      <FontAwesomeIcon v-if="preset.creator == store().uuid" :icon="faTrashCan" class="text-red-300 cursor-pointer" />
+      <FontAwesomeIcon
+        v-if="preset.creator == store().uuid"
+        :icon="faTrashCan"
+        class="cursor-pointer text-red-300"
+      />
     </div>
     <div v-if="showDetails">
       <p class="text-xs">Price: {{ priceString }}</p>
-      <p class="text-xs mb-1">Weight: {{ preset.weight }} lbs.</p>
-      <p class="text-xs markdown mb-1" v-html="description"></p>
+      <p class="mb-1 text-xs">Weight: {{ preset.weight }} lbs.</p>
+      <p class="markdown mb-1 text-xs" v-html="description"></p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ItemPreset } from '@/model/ItemPreset';
-import { store } from '@/store';
-import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath';
-import { faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { marked } from 'marked';
-import { computed, ref, type PropType } from 'vue';
+import type { ItemPreset } from '@/model/ItemPreset'
+import { store } from '@/store'
+import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { marked } from 'marked'
+import { computed, ref, type PropType } from 'vue'
 
 const props = defineProps({
   preset: {
@@ -46,7 +50,7 @@ const priceString = computed(() => {
   }
   const money = breakDownMoney(props.preset.price)
   const result = [] as string[]
-  for (const k of (['platinum', 'gold', 'silver', 'copper'] as MoneyFields[])) {
+  for (const k of ['platinum', 'gold', 'silver', 'copper'] as MoneyFields[]) {
     if (money[k] != 0) {
       result.push(`${money[k]}${moneySynonym[k]}`)
     }
