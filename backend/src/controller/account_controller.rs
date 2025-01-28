@@ -6,7 +6,7 @@ use r2d2::PooledConnection;
 use rocket::http::Status;
 
 use crate::dbmod::DbPool;
-use crate::model::User;
+use crate::model::{UpdateUser, User};
 use crate::schema::{inventory_reader, inventory_writer};
 use crate::schema::user::dsl::*;
 use crate::schema::inventory_reader::dsl::*;
@@ -61,12 +61,22 @@ impl AccountController {
         format_result_to_cstat(query_result, Status::InternalServerError, "Failed to load Table")
     }
 
-    fn get_account(&self, id: String) -> Result<User, CStat> {
+    pub fn get_account(&self, id: String) -> Result<User, CStat> {
         if !self.has_user(id.clone())? {
             return Err(new_cstat_from_ref(Status::BadRequest, "User does not exists"))
         }
         let queried_user = user.find(id).get_result::<User>(&mut self.get_conn());
         format_result_to_cstat(queried_user, Status::InternalServerError, "Failed to load user")
+    }
+
+    pub fn update_account(&self, searched_user_uuid: String, new_name: Option<String>, new_avatar: Option<String>) -> Result<bool, CStat> {
+        let query = diesel::update(user.find(searched_user_uuid.clone()))
+            .set(UpdateUser{
+            name: new_name,
+            avatar: new_avatar
+        }).execute(&mut self.get_conn());
+        format_result_to_cstat(query, Status::InternalServerError, "Failed to update money")?;
+        Ok(true)
     }
 
     pub fn user_is_dm(&self, id: String) -> Result<bool, CStat> {

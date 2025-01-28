@@ -275,7 +275,7 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Failed to delete Entry")?;
         Ok(true)
     }
-    pub fn edit_inventory(&self, searched_inventory_uuid: String, new_money: Option<i32>, new_name: Option<String>) -> Result<bool, CStat>{
+    pub fn edit_inventory(&self, searched_inventory_uuid: String, new_money: Option<i32>, new_name: Option<String>) -> Result<bool, CStat> {
         let query = diesel::update(inventory.find(searched_inventory_uuid.clone()))
             .set(UpdateInventory{
             money: new_money,

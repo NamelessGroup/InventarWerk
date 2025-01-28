@@ -72,6 +72,13 @@ pub struct InventoryItem {
 }
 
 #[derive(AsChangeset)]
+#[diesel(table_name = user)]
+pub struct UpdateUser {
+    pub name: Option<String>,
+    pub avatar: Option<String>,
+}
+
+#[derive(AsChangeset)]
 #[diesel(table_name = inventory_item)]
 pub struct UpdateInventoryItem {
     pub dm_note: Option<String>,

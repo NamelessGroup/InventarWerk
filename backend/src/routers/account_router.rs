@@ -152,6 +152,11 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
     if !has_user {
         let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone(),
             user_response.avatar.clone().unwrap_or("".to_string()));
+    } else {
+        let user = acc_con.get_account(user_response.id.clone())?;
+        if user.name != user_response.username || user.avatar != user_response.avatar.clone().unwrap_or_default() {
+            acc_con.update_account(user_response.id.clone(), Some(user_response.username), user_response.avatar)?;
+        }
     }
     // Speichern eines Cookies als Beispiel
     let new_cookie = Cookie::build(("user_id", user_response.id.clone())).http_only(false);
