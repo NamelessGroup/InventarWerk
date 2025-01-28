@@ -1,11 +1,20 @@
 import { DatabaseHandler } from "./DatabaseHandler"
 
+export interface SettingsState {
+  breakDownGold: boolean
+  timeBetweenFetches: number
+}
+
+const DEFAULT_SETTINGS: SettingsState = {
+  breakDownGold: true,
+  timeBetweenFetches: 5
+}
+
+type SettingsKey = keyof SettingsState
+
 export class Settings {
   private static INSTACE: Settings|null = null
-  private settings: SettingsState = {
-    breakDownGold: true,
-    timeBetweenFetches: 5
-  }
+  private settings: SettingsState = DEFAULT_SETTINGS
 
   private constructor() {
     this.load()
@@ -32,7 +41,7 @@ export class Settings {
   }
 
   public set timeBetweenFetches(timeBetweenFetches: number) {
-    this.settings.timeBetweenFetches = timeBetweenFetches
+    this.settings.timeBetweenFetches = timeBetweenFetches ?? 5
     this.save()
     DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
   }
@@ -45,11 +54,13 @@ export class Settings {
     const settings = localStorage.getItem('settings')
     if (settings) {
       this.settings = JSON.parse(settings)
+      const keys = Object.keys(DEFAULT_SETTINGS) as SettingsKey[]
+      for (const key of keys) {
+        if (this.settings[key] === undefined) {
+          // @ts-ignore
+          this.settings[key] = DEFAULT_SETTINGS[key]
+        }
+      }
     }
   }
-}
-
-export interface SettingsState {
-  breakDownGold: boolean
-  timeBetweenFetches: number
 }
