@@ -4,7 +4,6 @@ import { breakDownMoney, compactMoney, type Money } from '@/utils/moneyMath'
 import axios, { type AxiosResponse } from 'axios'
 import { store } from '.'
 import type { ItemPreset } from '@/model/ItemPreset'
-import type { Item } from '@/model/Item'
 import type { DBAccount } from '@/model/Account'
 import { Settings } from './Settings'
 
@@ -69,7 +68,7 @@ export class DatabaseHandler {
       }
     }
 
-    store().inventoryUuids = keys
+    store().inventoryUuids = keys.sort()
 
     this.lastFetch = time
   }
@@ -78,6 +77,7 @@ export class DatabaseHandler {
     if (this.fetchProcess !== undefined) {
       clearInterval(this.fetchProcess)
     }
+    if (interval == undefined) return
     this.fetchProcess = setInterval(() => {
       this.fetchUpdates()
     }, interval * 1000)
@@ -90,7 +90,7 @@ export class DatabaseHandler {
     store().userIsDm = await this.isDM()
     const inventories = await this.getAllInventoriesFromDB()
     inventories.forEach(inventory => this.setInventoryInStore(inventory))
-    store().inventoryUuids = inventories.map(inventory => inventory.uuid)
+    store().inventoryUuids = inventories.map(inventory => inventory.uuid).sort()
   } 
 
   public async isDM(user?: string) {
@@ -178,11 +178,20 @@ export class DatabaseHandler {
   }
 
   public async addNewItem(inventoryUuid: string, name: string, amount: number) {
-    const response = await this.put<Item>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'], { 'inventory_uuid': inventoryUuid, 'name': name, 'amount': amount.toString() })
+    const response = await this.put<ItemPreset>([DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'], { 'inventory_uuid': inventoryUuid, 'name': name, 'amount': amount.toString() })
     if (!response) return false
 
     store().inventories[inventoryUuid].items.push({
-      ...response,
+      name: response.name,
+      presetReference: response.uuid,
+      description: response.description,
+      price: response.price,
+      weight: response.weight,
+      itemType: response.itemType,
+      dmNote: "",
+      inventoryItemNote: "",
+      sorting: Math.max(...store().inventories[inventoryUuid].items.map(i => i.sorting), 0) + 1,
+      presetCreator: response.creator,
       amount
     })
     return true
