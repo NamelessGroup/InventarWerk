@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { ErrorHandler } from '@/errorHandling/ErrorHandler'
-import { ref, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -47,7 +47,7 @@ function onBlur() {
   const result = evaluate(value.value)
   value.value = result.toString()
   emit('update:modelValue', result)
-  emit('update', result)
+  nextTick(() =>emit('update', result))
 }
 
 function evaluate(content: string) {
