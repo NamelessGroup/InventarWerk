@@ -12,9 +12,22 @@ interface ItemJSON {
   entries: Entry[]
   value?: number
   type?: string
+  ac?: number
+  ammoType?: string
+  dmg1?:string
+  dmg2?:string
+  dmgType?: string
+  mastery?: string[]
+  property?: string[]
+  range?: string
+  reload?: string
+  stealth?: boolean
+  strength?: number
+  weaponCategory?: string
 }
 interface ItemListJSON {
-  item: ItemJSON[]
+  baseitem?: ItemJSON[],
+  item?: ItemJSON[]
 }
 type Entry = string | ComplexEntry
 interface ComplexEntry {
@@ -31,62 +44,102 @@ const typeTranslator: Record<string, string> = {
   undefined: 'Other',
   '$A|DMG': 'Treasure (art object)',
   '$A|XDMG': 'Treasure (art object)',
-  $C: 'Treasure (coinage)',
+  '$C': 'Treasure (coinage)',
   '$G|DMG': 'Treasure (gemstone)',
   '$G|XDMG': 'Treasure (gemstone)',
-  A: 'Ammunition',
+  'A': 'Ammunition',
+  'AF|DMG': 'Ammunition (futuristic)',
+  'AF|XDMG': 'Ammunition (futuristic)',
   'AIR|DMG': 'Vehicle (air)',
   'AIR|XPHB': 'Vehicle (air)',
-  AT: "Artisan's tools",
+  'AT': "Artisan's tools",
   'AT|XPHB': "Artisan's tools",
+  'A|XPHB': 'Ammunition',
   'EXP|DMG': 'Explosive',
   'EXP|XDMG': 'Explosive',
-  FD: 'Food and drink',
+  'FD': 'Food and drink',
   'FD|XPHB': 'Food and drink',
-  G: 'Adventuring gear',
-  GS: 'Gaming set',
+  'G': 'Adventuring gear',
+  'GS': 'Gaming set',
   'GS|XPHB': 'Gaming set',
   'G|XPHB': 'Adventuring gear',
-  HA: 'Heavy armor',
+  'HA': 'Heavy armor',
   'HA|XPHB': 'Heavy armor',
   'IDG|TDCSR': 'Illegal drug',
-  INS: 'Instrument',
-  LA: 'Light armor',
+  'INS': 'Instrument',
+  'INS|XPHB': 'Instrument',
+  'LA': 'Light armor',
   'LA|XPHB': 'Light armor',
-  M: 'Martial weapon',
-  MA: 'Medium armor',
+  'M': 'Martial weapon',
+  'MA': 'Medium armor',
   'MA|XPHB': 'Medium armor',
-  MNT: 'Mount',
+  'MNT': 'Mount',
   'MNT|XPHB': 'Mount',
   'M|XPHB': 'Martial weapon',
-  OTH: 'Other',
-  P: 'Potion',
+  'OTH': 'Other',
+  'P': 'Potion',
   'P|XPHB': 'Potion',
-  R: 'Ranged weapon',
+  'R': 'Ranged weapon',
   'RD|DMG': 'Rod',
   'RD|XDMG': 'Rod',
   'RG|DMG': 'Ring',
   'RG|XDMG': 'Ring',
-  S: 'Shield',
-  SCF: 'Spellcasting focus',
+  'R|XPHB': 'Ranged weapon',
+  'S': 'Shield',
+  'SCF': 'Spellcasting focus',
   'SCF|XPHB': 'Spellcasting focus',
   'SC|DMG': 'Scroll',
   'SC|XPHB': 'Scroll',
-  SHP: 'Vehicle (water)',
+  'SHP': 'Vehicle (water)',
   'SHP|XPHB': 'Vehicle (water)',
   'SPC|AAG': 'Vehicle (space)',
   'S|XPHB': 'Shield',
-  T: 'Tools',
-  TAH: 'Tack and harness',
+  'T': 'Tools',
+  'TAH': 'Tack and harness',
   'TAH|XPHB': 'Tack and harness',
   'TB|XDMG': 'Trade bar',
-  TG: 'Trade good',
+  'TG': 'Trade good',
   'TG|XDMG': 'Trade good',
   'T|XPHB': 'Tools',
-  VEH: 'Vehicle (land)',
+  'VEH': 'Vehicle (land)',
   'VEH|XPHB': 'Vehicle (land)',
   'WD|DMG': 'Wand',
   'WD|XDMG': 'Wand'
+}
+
+const dmgTypeTranslator: Record<string,string> = {
+  "N": "Necrotic", //"Antimatter Rifle"
+  "P": "Piercing", //"Yklwa",
+  "S": "Slashing", //"Whip",
+  "B": "Bludgeoning", //"Wooden Staff",
+  "R": "Radiant"//"Laser Rifle"
+}
+
+const propTranslator: Record<string, string> = {
+  "AF|DMG": "unknown", // shotgun
+  "2H": "two handed",
+  "AF|XDMG": "uknwown",
+  "RLD|XDMG": "reload",
+  "2H|XPHB": "two handed",
+  "BF|DMG": "unknown", //Automatic rifle
+  "BF|XDMG": "unknown",
+  "V": "versatile",
+  "V|XPHB": "versatile",
+  "A": "ammuntition",
+  "LD": "loading",
+  "A|XPHB": "ammuntition",
+  "LD|XPHB": "loading",
+  "L": "light",
+  "L|XPHB": "light",
+  "F": "finesse",
+  "T": "thrown",
+  "F|XPHB": "finesse",
+  "T|XPHB": "thrown",
+  "S": "special",
+  "H": "heavy",
+  "R": "reach",
+  "H|XPHB": "heavy",
+  "R|XPHB": "reach"
 }
 
 type LineType = 'entries' | 'inset' | 'list' | 'section' | 'table' | 'quote'
@@ -184,7 +237,7 @@ function tableParser(entry: ComplexEntry) {
   return lines.join('\n')
 }
 
-export async function parseItem(itemList: ItemListJSON) {
+export async function parseItems(itemList: ItemListJSON) {
   const parsedItemList: Array<ItemPreset> = []
 
   const regex1 = /\{@[^\s|}]+ ([^|}]+)}/g
@@ -193,14 +246,16 @@ export async function parseItem(itemList: ItemListJSON) {
 
   const regex3 = /\{@[^\s|}]+ [^|}]+\|[^|}]+\|([^|}]+)}/g
 
-  for (const x of itemList.item) {
+  let joinedItems = [...itemList.baseitem??[], ...itemList.item??[]]
+
+  for (const x of joinedItems) {
     const parsedItem: ItemPreset = {
-      name: '',
-      uuid: '',
-      description: '',
+      name: "",
+      uuid: "",
+      description: "",
       price: 0,
       creator: 'public-import',
-      itemType: '',
+      itemType: "",
       weight: 0
     }
     parsedItem.name = x.name
@@ -210,8 +265,9 @@ export async function parseItem(itemList: ItemListJSON) {
     parsedItem.itemType =
       typeTranslator[x.type ?? 'undefined'] ??
       (() => {
-        console.log(`Missing Type: ${x.type}`)
-      })
+        console.log(`Missing Type: ${x.type} on item ${x.name}`)
+        return "o"
+      })()
     const lines: Array<string> = []
     for (const line of x.entries ?? '') {
       if (typeof line === 'string') {
@@ -221,7 +277,53 @@ export async function parseItem(itemList: ItemListJSON) {
         lines.push(descriptionTranslator[line.type](complexEntry))
       }
     }
-    parsedItem.description = lines.join('\n\n')
+    if (x.reqAttune) {
+      if (x.reqAttune === true)
+        parsedItem.description = `*Requires Attunement*\n\n`
+      else
+        parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n`
+    }
+    if (x.ac) {
+      parsedItem.description += `Armor Class: ${x.ac}\n\n`
+    }
+    if (x.ammoType) {
+      parsedItem.description += `Ammotype: ${x.ammoType}\n\n`
+    }
+
+    if (x.dmg1) {
+      parsedItem.description += `Damage: ${x.dmg1}`
+      if (x.dmg2) {
+        parsedItem.description += `/${x.dmg2}`
+      }
+      if (x.dmgType) {
+        parsedItem.description += ` ${dmgTypeTranslator[x.dmgType]} Damage\n`
+      }
+      parsedItem.description += `\n`
+    }
+    if (x.property) {
+      parsedItem.description += `Properties: \n`
+      for (const p of x.property) {
+        parsedItem.description += ` - ${propTranslator[p]}\n`
+      }
+      parsedItem.description += "\n"
+    }
+    if (x.mastery) {
+      parsedItem.description += `Masteries: \n`
+      for (const m of x.mastery) {
+        parsedItem.description += `- ${m}\n`
+      }
+      parsedItem.description += "\n"
+    }
+    if (x.range) {
+      parsedItem.description += `Range: ${x.range}\n\n`
+    }
+    if (x.reload) {
+      parsedItem.description += `Reload: ${x.reload}\n\n`
+    }
+    parsedItem.description += lines.join('\n\n')
+    if (x.source) {
+      parsedItem.description += `\n\n*From ${x.source + (x.page ? ' p.' + x.page : '')}*`
+    }
     parsedItem.description = parsedItem.description.replace(regex1, (match, group1) => {
       return group1
     })
@@ -231,17 +333,15 @@ export async function parseItem(itemList: ItemListJSON) {
     parsedItem.description = parsedItem.description.replace(regex3, (match, group1) => {
       return group1
     })
-    if (x.reqAttune) {
-      if (x.reqAttune === true)
-        parsedItem.description = `*Requires Attunement*\n\n` + parsedItem.description
-      else
-        parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n` + parsedItem.description
-    }
-
-    if (x.source)
-      parsedItem.description += `\n\n*From ${x.source + (x.page ? ' p.' + x.page : '')}*`
+    
     parsedItemList.push(parsedItem)
   }
+
+  // not used anymore, but should be kept to debug changes in the future
+  for (const item of parsedItemList) {
+      await pushPresetToServer(item)
+  }
+  return
 
   const LOWER_BOUND_SIZE = 100 * 1000
   const UPPER_BOUND_SIZE = 200 * 1000
@@ -263,11 +363,6 @@ export async function parseItem(itemList: ItemListJSON) {
     pushPresetListToServer(currentTransferList)
   }
 
-  // not used anymore, but should be kept to debug changes in the future
-  //for (const item of parsedItemList) {
-  //    await pushPresetToServer(item)
-  //    await (new Promise( resolve => setTimeout(resolve, 200) ));
-  //}
 }
 
 function getJsonSizeInBytes(data: any): number {
@@ -299,8 +394,11 @@ async function pushPresetListToServer(presetList: PresetList) {
 
 // not used anymore, but should be kept to debug changes in the future
 async function pushPresetToServer(itemPreset: ItemPreset) {
+  let plist: PresetList = {
+    presets: [itemPreset]
+  }
   const response = await axios
-    .put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(itemPreset), {
+    .put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(plist), {
       withCredentials: true
     })
     .then((response) => response)

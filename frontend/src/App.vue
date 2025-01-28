@@ -107,7 +107,7 @@ import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
 import { ref } from 'vue'
 import { DatabaseHandler } from './store/DatabaseHandler'
 import PopUp from './components/PopUp.vue'
-import { parseItem } from './utils/itemParser'
+import { parseItems } from './utils/itemParser'
 import SettingsPopUp from './components/SettingsPopUp.vue'
 import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
 
@@ -206,7 +206,7 @@ function handleItemFile(file: File) {
   async function onItemFileRead() {
     const textContent = fileReader.result as string
     const jsonContent = JSON.parse(textContent)
-    await parseItem(jsonContent)
+    await parseItems(jsonContent)
   }
 }
 </script>
