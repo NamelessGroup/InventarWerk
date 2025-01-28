@@ -4,7 +4,7 @@ use diesel::{ExpressionMethods, JoinOnDsl, QueryDsl, RunQueryDsl};
 use r2d2::PooledConnection;
 use rocket::http::Status;
 
-use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventoryMoney};
+use crate::model::{InventoryItem, InventoryReader, InventoryWriter, ItemPreset, UpdateInventoryItem, UpdateInventory};
 use crate::report_change_on_inventory;
 use crate::{dbmod::DbPool, model::Inventory};
 use crate::schema::{inventory, inventory_item, inventory_reader, inventory_writer, item_preset, user};
@@ -275,10 +275,11 @@ impl InventoryController {
         format_result_to_cstat(query, Status::InternalServerError, "Failed to delete Entry")?;
         Ok(true)
     }
-    pub fn edit_money_in_inventory(&self, searched_inventory_uuid: String, new_money:i32) -> Result<bool, CStat>{
+    pub fn edit_inventory(&self, searched_inventory_uuid: String, new_money: Option<i32>, new_name: Option<String>) -> Result<bool, CStat>{
         let query = diesel::update(inventory.find(searched_inventory_uuid.clone()))
-            .set(UpdateInventoryMoney{
-            money: new_money
+            .set(UpdateInventory{
+            money: new_money,
+            name: new_name
         }).execute(&mut self.get_conn());
         report_change_on_inventory!(searched_inventory_uuid.clone());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to update money")?;

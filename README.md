@@ -170,9 +170,9 @@ Response:201
 Delete
 Deletes the given item preset from the given iventory
 Response: 204
-#### /inventory/money?inventory_uuid="",amount=""
+#### /inventory/edit?inventory_uuid="",amount="",name=""
 Patch
-Edits the Amount of Money in an Inventory
+Edits the Name or Amount of Money in an Inventory, both is optional
 Response: 204
 #### /inventory/addShare?inventory_uuid="",reader_uuid="",writer_uuid=""
 Patch

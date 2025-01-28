@@ -134,18 +134,19 @@ pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::A
 }
 
 #[derive(Debug, FromForm)]
-pub struct InventoryModifyMoneyParams {
+pub struct InventoryEditParams {
     inventory_uuid:String,
-    amount: i32
+    amount: Option<i32>,
+    name: Option<String>
 }
 
-#[patch("/inventory/money?<params..>")]
-pub async fn modify_money(params: InventoryModifyMoneyParams,  user: super::AuthenticatedUser,
+#[patch("/inventory/edit?<params..>")]
+pub async fn modify_money(params: InventoryEditParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>, acc_con: &State<AccountController>) -> Result<Status, CStat> {
     if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
     }
-    inv_con.edit_money_in_inventory(params.inventory_uuid, params.amount)?;
+    inv_con.edit_inventory(params.inventory_uuid, params.amount, params.name)?;
     Ok(Status::NoContent)
 }
 

@@ -297,7 +297,7 @@ export class DatabaseHandler {
   public async patchMoney(inventoryUuid: string, money: Money) {
     const newMoney = compactMoney(money)
 
-    await this.patch([DatabaseHandler.INVENTORY_END_POINT, 'money'], {
+    await this.patch([DatabaseHandler.INVENTORY_END_POINT, 'edit'], {
       inventory_uuid: inventoryUuid,
       amount: newMoney.toString()
     })
