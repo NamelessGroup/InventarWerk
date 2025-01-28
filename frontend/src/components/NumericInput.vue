@@ -2,7 +2,7 @@
   <input
     v-model="value"
     type="text"
-    inputmode="numeric"
+    :readonly="readonly"
     @input="onInput"
     @blur="onBlur"
     @keydown="
@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { ErrorHandler } from '@/errorHandling/ErrorHandler'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -27,6 +27,11 @@ const props = defineProps({
   defaultValue: {
     type: Number,
     default: 0
+  },
+  readonly: {
+    type: Boolean,
+    required: false,
+    default: false
   }
 })
 
