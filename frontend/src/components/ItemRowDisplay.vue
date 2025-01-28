@@ -10,6 +10,7 @@
     <div class="grid grid-cols-[auto_1fr_auto]">
       <NumericInput
         v-model="amountValue"
+        :readonly="!canEdit"
         class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950 px-1 text-right outline-none"
         @click="
           (e: Event) => {
@@ -20,6 +21,7 @@
       />
       <span class="row-start-1 flex items-center px-2">{{ item.name }}</span>
       <button
+        v-if="canEdit"
         class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950"
         @click="
           (e) => {
@@ -89,6 +91,10 @@ const props = defineProps({
   inventoryUuid: {
     type: String,
     required: true
+  },
+  canEdit: {
+    type: Boolean,
+    default: false
   }
 })
 

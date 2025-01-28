@@ -52,9 +52,7 @@ export class DatabaseHandler {
     // Time is stored here, so data that gets input between the request going out from the server and reaching the client is not lost
     const time = new Date().getTime()
 
-    const inventoriesWithUpdates = await this.get<LastUpdateResponse>(['lastChanges'], {
-      timestamp: this.lastFetch.toString()
-    })
+    const inventoriesWithUpdates = await this.get<LastUpdateResponse>(['lastChanges'])
 
     if (!inventoriesWithUpdates) return
 
@@ -67,7 +65,7 @@ export class DatabaseHandler {
     }
 
     for (const uuid of keys) {
-      if (this.lastFetch < inventoriesWithUpdates[uuid]) {
+      if (this.lastFetch <= inventoriesWithUpdates[uuid]) {
         await this.fetchInventory(uuid)
       }
     }

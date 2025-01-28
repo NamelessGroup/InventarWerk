@@ -25,6 +25,7 @@
         v-for="[k, i] of moneyOptions"
         :key="k"
         v-model="moneyFieldValues[k]"
+        :readonly="!canEdit"
         class="row-start-1 h-10 rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
         :class="`col-start-${i}`"
         @update="(v) => updateMoney(v, k)"
@@ -41,6 +42,7 @@
     <div class="space-y-2">
       <ItemRowDisplay
         v-for="item in inventory.items"
+        :can-edit="canEdit"
         :key="item.presetReference"
         :item="item"
         :inventory-uuid="inventory.uuid"
@@ -68,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, type PropType } from 'vue'
+import { computed, ref, watch, type PropType } from 'vue'
 import type { Inventory } from '../model/Inventory'
 import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath'
@@ -90,6 +92,7 @@ const inventoryName = ref(props.inventory.name)
 const nameInput = ref<HTMLInputElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
+const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function editName() {

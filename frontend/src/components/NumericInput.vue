@@ -2,7 +2,7 @@
   <input
     v-model="value"
     type="text"
-    inputmode="numeric"
+    :readonly="readonly"
     @input="onInput"
     @blur="onBlur"
     @keydown="
@@ -27,6 +27,11 @@ const props = defineProps({
   defaultValue: {
     type: Number,
     default: 0
+  },
+  readonly: {
+    type: Boolean,
+    required: false,
+    default: false
   }
 })
 
