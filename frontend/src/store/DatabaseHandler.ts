@@ -164,6 +164,14 @@ export class DatabaseHandler {
     return result !== undefined
   }
 
+  public async deletePreset(presetUuid: string) {
+    const result = await this.delete<unknown>([DatabaseHandler.ITEM_PRESET_END_POINT, 'delete'], {
+      item_preset_uuid: presetUuid
+    })
+
+    return result !== undefined
+  }
+
   public async getPreset(itemUuid: string) {
     return await this.get<ItemPreset>([DatabaseHandler.ITEM_PRESET_END_POINT], {
       item_preset_uuid: itemUuid

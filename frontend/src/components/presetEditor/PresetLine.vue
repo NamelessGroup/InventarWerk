@@ -6,6 +6,7 @@
         v-if="preset.creator == store().uuid"
         :icon="faTrashCan"
         class="cursor-pointer text-red-300"
+        @click="(e) => {e.stopPropagation(); deletePreset()}"
       />
     </div>
     <div v-if="showDetails">
@@ -19,6 +20,7 @@
 <script setup lang="ts">
 import type { ItemPreset } from '@/model/ItemPreset'
 import { store } from '@/store'
+import { DatabaseHandler } from '@/store/DatabaseHandler'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -58,4 +60,12 @@ const priceString = computed(() => {
 
   return result.join(' ')
 })
+
+async function deletePreset() {
+  const result = await DatabaseHandler.getInstance().deletePreset(props.preset.uuid)
+  if (!result) {
+    return
+  }
+  store().itemPresets = store().itemPresets.filter((p) => p.uuid != props.preset.uuid)
+}
 </script>

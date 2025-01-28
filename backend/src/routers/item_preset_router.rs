@@ -75,7 +75,7 @@ pub async fn modify_item_preset(params: ItemModifyParams,  user: super::Authenti
     Ok(Status::NoContent)
 }
 
-#[patch("/itemPreset/delete?<params..>")]
+#[delete("/itemPreset/delete?<params..>")]
 pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::AuthenticatedUser,
         ipc_con: &State<ItemPresetController>, inv_con: &State<InventoryController>) -> Result<Status, CStat> {
     let invs = inv_con.get_all_inventories_ids_with_read_access(user.user_id)?;
