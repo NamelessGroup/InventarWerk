@@ -1,6 +1,12 @@
 <template>
   <PopUp class="!m-0" @close="emit('close')">
     <div class="grid grid-cols-1 gap-2">
+      <button
+        class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none"
+        @click="addNewItem"
+      >
+        Add item
+      </button>
       <label for="amount">Amount:</label>
       <NumericInput
         id="amount"
@@ -16,12 +22,6 @@
         autocomplete="off"
         class="w-full rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
       />
-      <button
-        class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none"
-        @click="addNewItem"
-      >
-        Add item
-      </button>
       <div class="text-red-500">{{ errorText }}</div>
     </div>
   </PopUp>
