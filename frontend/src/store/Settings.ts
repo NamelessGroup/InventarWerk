@@ -10,8 +10,6 @@ const DEFAULT_SETTINGS: SettingsState = {
   timeBetweenFetches: 5
 }
 
-type SettingsKey = keyof SettingsState
-
 export class Settings {
   private static INSTACE: Settings|null = null
   private settings: SettingsState = DEFAULT_SETTINGS
@@ -53,14 +51,11 @@ export class Settings {
   private load() {
     const settings = localStorage.getItem('settings')
     if (settings) {
-      this.settings = JSON.parse(settings)
-      const keys = Object.keys(DEFAULT_SETTINGS) as SettingsKey[]
-      for (const key of keys) {
-        if (this.settings[key] === undefined) {
-          // @ts-ignore
-          this.settings[key] = DEFAULT_SETTINGS[key]
-        }
-      }
+      const parsedState: Partial<Settings> = JSON.parse(settings)
+      this.settings = {
+        ...this.settings,
+        ...parsedState
+      } 
     }
   }
 }
