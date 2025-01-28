@@ -33,7 +33,7 @@
       <ItemRowDisplay v-for="item in inventory.items" :key="item.presetReference" :item="item" :inventory-uuid="inventory.uuid" />
     </div>
 
-    <button class="h-10 w-full rounded bg-fuchsia-900 text-center" @click="showAddItemPopup = true">+ Add item</button>
+    <button v-if="inventory.writer.includes(store().uuid)" class="h-10 w-full rounded bg-fuchsia-900 text-center" @click="showAddItemPopup = true">+ Add item</button>
   </div>
   <ShareInventoryPopUp v-if="showSharePopup" :inventory="inventory" @close="showSharePopup = false" />
   <AddItemPopUp v-if="showAddItemPopup" :inventory-uuid="inventory.uuid" @close="showAddItemPopup = false" />
