@@ -114,9 +114,11 @@ import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue
 const showCreation = ref(false)
 const nameFieldContent = ref('')
 const errorContent = ref('')
-const acceptedCookies = ref(document.cookie.includes('acceptedCookies=true'))
+const acceptedCookies = ref(false)
 const showSettings = ref(false)
 const showManagePresets = ref(false)
+
+getAcceptedCookies()
 
 async function submitAddInventory() {
   if (nameFieldContent.value == '') {
@@ -133,10 +135,7 @@ async function submitAddInventory() {
   }
 }
 
-const isLoggedIn = ref(true)
-if (acceptedCookies.value) {
-  checkLogIn()
-}
+const isLoggedIn = ref(false)
 
 function checkLogIn() {
   DatabaseHandler.getInstance()
@@ -153,12 +152,23 @@ function checkLogIn() {
 
 function acceptCookies() {
   const oldCookies = document.cookie
-  if (oldCookies.includes('acceptedCookies=true')) {
+  acceptedCookies.value = true
+  if (!oldCookies.includes('acceptedCookies=true')) {
+    document.cookie = 'acceptedCookies=true'
+  }
+  checkLogIn()
+}
+
+function getAcceptedCookies() {
+  const c1 = document.cookie.includes('acceptedCookies=true')
+  if (c1) {
+    acceptCookies()
     return
   }
-  document.cookie = 'acceptedCookies=true'
-  acceptedCookies.value = true
-  checkLogIn()
+  const c2 = window.location.search.includes('acceptCookies=true')
+  if (c2) {
+    acceptCookies()
+  }
 }
 
 function logOut() {
