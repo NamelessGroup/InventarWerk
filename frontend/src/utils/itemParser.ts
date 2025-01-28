@@ -101,7 +101,7 @@ const descriptionTranslator: Record<LineType, Function> = {
 }
 
 function quoteParser(entry: ComplexEntry) {
-  let lines: Array<string> = []
+  const lines: Array<string> = []
   for (const line of entry.entries ?? '') {
     if (typeof line === 'string') {
       lines.push(line)
@@ -116,7 +116,7 @@ function quoteParser(entry: ComplexEntry) {
 }
 
 function entryParser(entry: ComplexEntry, section?: boolean) {
-  let lines: Array<string> = []
+  const lines: Array<string> = []
   //Should at least have one string line
   for (const line of entry.entries ?? '') {
     if (typeof line === 'string') {
@@ -136,7 +136,7 @@ function entryParser(entry: ComplexEntry, section?: boolean) {
 }
 
 function insetParser(entry: ComplexEntry) {
-  let lines: Array<string> = ['---', `**${entry.name ?? ''}**`]
+  const lines: Array<string> = ['---', `**${entry.name ?? ''}**`]
   for (const line of entry.entries ?? '') {
     if (typeof line === 'string') {
       lines.push(line)
@@ -151,7 +151,7 @@ function insetParser(entry: ComplexEntry) {
 }
 
 function listParser(entry: ComplexEntry) {
-  let lines: Array<string> = []
+  const lines: Array<string> = []
   for (const line of entry.items ?? '') {
     lines.push(`- ${line}`)
   }
@@ -159,7 +159,7 @@ function listParser(entry: ComplexEntry) {
 }
 
 function sectionParser(entry: ComplexEntry) {
-  let lines: Array<string> = []
+  const lines: Array<string> = []
   for (const line of entry.entries ?? '') {
     if (typeof line === 'string') {
       lines.push(line)
@@ -173,7 +173,7 @@ function sectionParser(entry: ComplexEntry) {
 }
 
 function tableParser(entry: ComplexEntry) {
-  let lines: Array<string> = [
+  const lines: Array<string> = [
     ` *${entry.caption ?? ''}*`,
     `|${entry.colLabels?.join('|')}|`,
     `|${entry.colLabels?.map((x) => '---').join('|')}|`
@@ -212,7 +212,7 @@ export async function parseItem(itemList: ItemListJSON) {
       (() => {
         console.log(`Missing Type: ${x.type}`)
       })
-    let lines: Array<String> = []
+    const lines: Array<string> = []
     for (const line of x.entries ?? '') {
       if (typeof line === 'string') {
         lines.push(line)
@@ -246,7 +246,7 @@ export async function parseItem(itemList: ItemListJSON) {
   const LOWER_BOUND_SIZE = 100 * 1000
   const UPPER_BOUND_SIZE = 200 * 1000
   while (parsedItemList.length != 0) {
-    let currentTransferList: PresetList = {
+    const currentTransferList: PresetList = {
       presets: []
     }
     while (
