@@ -1,6 +1,7 @@
 <template>
   <div class="space-y-2 overflow-hidden rounded border-2 border-amber-300 bg-fuchsia-950 p-2">
     <div class="flex items-center gap-2">
+      <DiscordImage :user="creator" class="h-6" />
       <div class="bold border-none bg-transparent pr-5 text-xl outline-none">
         {{ inventory.name }}
       </div>
@@ -42,8 +43,8 @@
     <div class="space-y-2">
       <ItemRowDisplay
         v-for="item in inventory.items"
-        :can-edit="canEdit"
         :key="item.presetReference"
+        :can-edit="canEdit"
         :item="item"
         :inventory-uuid="inventory.uuid"
       />
@@ -57,11 +58,18 @@
       + Add item
     </button>
   </div>
-  <ShareInventoryPopUp
-    v-if="showSharePopup"
+  
+  <EditSharePopUp
+    v-if="showSharePopup && store().uuid === inventory.owner"
     :inventory="inventory"
     @close="showSharePopup = false"
   />
+  <ViewSharePopUp
+    v-if="showSharePopup && store().uuid !== inventory.owner"
+    :inventory="inventory"
+    @close="showSharePopup = false"
+  />
+
   <AddItemPopUp
     v-if="showAddItemPopup"
     :inventory-uuid="inventory.uuid"
@@ -78,8 +86,10 @@ import { store } from '@/store'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import AddItemPopUp from './AddItemPopUp.vue'
-import ShareInventoryPopUp from './ShareInventoryPopUp.vue'
+import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
+import DiscordImage from './DiscordImage.vue'
+import ViewSharePopUp from './share/ViewSharePopUp.vue'
 
 const props = defineProps({
   inventory: {
@@ -93,6 +103,8 @@ const nameInput = ref<HTMLInputElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
+const creator = computed(() => store().accounts.filter(account => account.uuid === props.inventory.owner)[0] ?? { name: 'Unknown', avatar: null, dm: false, uuid: '' }
+)
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function editName() {

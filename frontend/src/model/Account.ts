@@ -1,6 +1,7 @@
 export interface RawAccount<T> {
   uuid: string
   name: string
+  avatar: string|null
   dm: T
 }
 
