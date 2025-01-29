@@ -1,5 +1,5 @@
 <template>
-  <PopUp @close="emit('close')">
+  <PopUp popup-class="md:min-h-[540px]" @close="emit('close')">
     <div class="space-y-5 p-2">
       <div class="grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr]">
         <label for="edit-item-name">Name:</label>
