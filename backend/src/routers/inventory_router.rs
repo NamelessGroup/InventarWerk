@@ -187,12 +187,13 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
 #[patch("/inventory/removeShare?<params..>")]
 pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_con: &State<InventoryController>) -> Result<Status, CStat> {
-    if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
-    }
-
     let reader = params.reader_uuid;
     let writer = params.writer_uuid;
+    let some_own_user = Some(user.user_id.clone());
+    if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? &&
+     reader.clone() != some_own_user && writer.clone() != some_own_user {
+        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
+    }
 
     if let Some(reader) = reader {
         inv_con.remove_reader_from_inventory(params.inventory_uuid.clone(), reader)?;
