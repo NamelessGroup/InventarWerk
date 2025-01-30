@@ -286,6 +286,14 @@ export class DatabaseHandler {
     return result !== undefined
   }
 
+  public async editInventoryName(inventoryUuid: string, name: string) {
+    const result = await this.patch<unknown>([DatabaseHandler.INVENTORY_END_POINT, 'edit'], {
+      inventory_uuid: inventoryUuid,
+      name: name
+    })
+    return result !== undefined
+  }
+
   public async editDmNote(inventoryUuid: string, itemUuid: string, note: string) {
     const result = await this.patch<unknown>(
       [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNote'],
