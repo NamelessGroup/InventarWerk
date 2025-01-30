@@ -14,7 +14,7 @@
           :key="account.uuid"
           :value="account.accessType"
           :account="account"
-          @update="val => updateShare(val, account.uuid)"
+          @update="(val) => updateShare(val, account.uuid)"
         />
       </div>
     </div>
@@ -42,7 +42,10 @@ const accounts = computed(() =>
     .accounts.map((account) => {
       const hasRead = props.inventory.reader.includes(account.uuid)
       const hasWrite = props.inventory.writer.includes(account.uuid)
-      return { ...account, accessType: hasWrite ? 'write' : (hasRead ? 'read' : 'none') } as Account & { accessType: Access }
+      return {
+        ...account,
+        accessType: hasWrite ? 'write' : hasRead ? 'read' : 'none'
+      } as Account & { accessType: Access }
     })
     .filter((account) => account.uuid != props.inventory.owner && !account.dm)
 )

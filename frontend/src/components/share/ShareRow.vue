@@ -1,8 +1,12 @@
 <template>
-  <div class="w-full cursor-pointer flex gap-2 items-center" >
+  <div class="flex w-full cursor-pointer items-center gap-2">
     <DiscordImage :user="account" class="h-8" />
     <span>{{ account.name }}</span>
-    <select v-model="val" class="flex-1 border border-amber-300 bg-fuchsia-900 px-1 rounded outline-none" @change="emit('update', val)">
+    <select
+      v-model="val"
+      class="flex-1 rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+      @change="emit('update', val)"
+    >
       <option value="none">No access</option>
       <option value="read">Read access</option>
       <option value="write">Write access</option>
@@ -12,8 +16,8 @@
 
 <script setup lang="ts">
 import { ref, watch, type PropType } from 'vue'
-import DiscordImage from '../DiscordImage.vue';
-import type { Account } from '@/model/Account';
+import DiscordImage from '../DiscordImage.vue'
+import type { Account } from '@/model/Account'
 
 const props = defineProps({
   account: {
@@ -32,7 +36,10 @@ type Access = 'read' | 'write' | 'none'
 
 const val = ref(props.value)
 
-watch(() => props.value, (value) => {
-  val.value = value
-})
+watch(
+  () => props.value,
+  (value) => {
+    val.value = value
+  }
+)
 </script>

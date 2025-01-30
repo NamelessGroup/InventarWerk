@@ -5,7 +5,7 @@
       <input
         ref="nameInput"
         v-model="inventoryName"
-        class="bold border-none bg-transparent pr-5 text-xl outline-none min-w-8 ml-2"
+        class="bold ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-none"
         :style="{ width: `${inventoryName.length + 2}ch` }"
         :readonly="inventory.owner !== store().uuid"
         @blur="updateName()"
@@ -17,19 +17,23 @@
           }
         "
       />
-      <button v-if="inventory.owner === store().uuid" class="mr-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900" @click="editName()">
+      <button
+        v-if="inventory.owner === store().uuid"
+        class="mr-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
+        @click="editName()"
+      >
         <FontAwesomeIcon :icon="faPen" />
       </button>
-      <div class="mr-2">({{ inventory.items.map((i) => i.weight).reduce((a, b) => a + b, 0) }} lbs.)</div>
+      <div class="mr-2">
+        ({{ inventory.items.map((i) => i.weight).reduce((a, b) => a + b, 0) }} lbs.)
+      </div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button
-        class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
-      >
+      <button class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900">
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <button
         v-if="inventory.owner === store().uuid"
-        class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900 ml-2"
+        class="ml-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
         @click="deleteInventory"
       >
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />

@@ -47,7 +47,7 @@ function onBlur() {
   const result = evaluate(value.value)
   value.value = result.toString()
   emit('update:modelValue', result)
-  nextTick(() =>emit('update', result))
+  nextTick(() => emit('update', result))
 }
 
 function evaluate(content: string) {

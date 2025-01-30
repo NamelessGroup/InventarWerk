@@ -7,7 +7,12 @@
         v-if="preset.creator == store().uuid"
         :icon="faTrashCan"
         class="cursor-pointer text-red-300"
-        @click="(e) => {e.stopPropagation(); deletePreset()}"
+        @click="
+          (e) => {
+            e.stopPropagation()
+            deletePreset()
+          }
+        "
       />
     </div>
     <div v-if="showDetails">

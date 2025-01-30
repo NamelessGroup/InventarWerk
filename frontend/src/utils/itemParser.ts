@@ -14,8 +14,8 @@ interface ItemJSON {
   type?: string
   ac?: number
   ammoType?: string
-  dmg1?:string
-  dmg2?:string
+  dmg1?: string
+  dmg2?: string
   dmgType?: string
   mastery?: string[]
   property?: string[]
@@ -26,7 +26,7 @@ interface ItemJSON {
   weaponCategory?: string
 }
 interface ItemListJSON {
-  baseitem?: ItemJSON[],
+  baseitem?: ItemJSON[]
   item?: ItemJSON[]
 }
 type Entry = string | ComplexEntry
@@ -44,114 +44,115 @@ const typeTranslator: Record<string, string> = {
   undefined: 'Other',
   '$A|DMG': 'Treasure (art object)',
   '$A|XDMG': 'Treasure (art object)',
-  '$C': 'Treasure (coinage)',
+  $C: 'Treasure (coinage)',
   '$G|DMG': 'Treasure (gemstone)',
   '$G|XDMG': 'Treasure (gemstone)',
-  'A': 'Ammunition',
+  A: 'Ammunition',
   'AF|DMG': 'Ammunition (futuristic)',
   'AF|XDMG': 'Ammunition (futuristic)',
   'AIR|DMG': 'Vehicle (air)',
   'AIR|XPHB': 'Vehicle (air)',
-  'AT': "Artisan's tools",
+  AT: "Artisan's tools",
   'AT|XPHB': "Artisan's tools",
   'A|XPHB': 'Ammunition',
   'EXP|DMG': 'Explosive',
   'EXP|XDMG': 'Explosive',
-  'FD': 'Food and drink',
+  FD: 'Food and drink',
   'FD|XPHB': 'Food and drink',
-  'G': 'Adventuring gear',
-  'GS': 'Gaming set',
+  G: 'Adventuring gear',
+  GS: 'Gaming set',
   'GS|XPHB': 'Gaming set',
   'G|XPHB': 'Adventuring gear',
-  'HA': 'Heavy armor',
+  HA: 'Heavy armor',
   'HA|XPHB': 'Heavy armor',
   'IDG|TDCSR': 'Illegal drug',
-  'INS': 'Instrument',
+  INS: 'Instrument',
   'INS|XPHB': 'Instrument',
-  'LA': 'Light armor',
+  LA: 'Light armor',
   'LA|XPHB': 'Light armor',
-  'M': 'Martial weapon',
-  'MA': 'Medium armor',
+  M: 'Martial weapon',
+  MA: 'Medium armor',
   'MA|XPHB': 'Medium armor',
-  'MNT': 'Mount',
+  MNT: 'Mount',
   'MNT|XPHB': 'Mount',
   'M|XPHB': 'Martial weapon',
-  'OTH': 'Other',
-  'P': 'Potion',
+  OTH: 'Other',
+  P: 'Potion',
   'P|XPHB': 'Potion',
-  'R': 'Ranged weapon',
+  R: 'Ranged weapon',
   'RD|DMG': 'Rod',
   'RD|XDMG': 'Rod',
   'RG|DMG': 'Ring',
   'RG|XDMG': 'Ring',
   'R|XPHB': 'Ranged weapon',
-  'S': 'Shield',
-  'SCF': 'Spellcasting focus',
+  S: 'Shield',
+  SCF: 'Spellcasting focus',
   'SCF|XPHB': 'Spellcasting focus',
   'SC|DMG': 'Scroll',
   'SC|XPHB': 'Scroll',
-  'SHP': 'Vehicle (water)',
+  SHP: 'Vehicle (water)',
   'SHP|XPHB': 'Vehicle (water)',
   'SPC|AAG': 'Vehicle (space)',
   'S|XPHB': 'Shield',
-  'T': 'Tools',
-  'TAH': 'Tack and harness',
+  T: 'Tools',
+  TAH: 'Tack and harness',
   'TAH|XPHB': 'Tack and harness',
   'TB|XDMG': 'Trade bar',
-  'TG': 'Trade good',
+  TG: 'Trade good',
   'TG|XDMG': 'Trade good',
   'T|XPHB': 'Tools',
-  'VEH': 'Vehicle (land)',
+  VEH: 'Vehicle (land)',
   'VEH|XPHB': 'Vehicle (land)',
   'WD|DMG': 'Wand',
   'WD|XDMG': 'Wand'
 }
 
-const dmgTypeTranslator: Record<string,string> = {
-  "N": "Necrotic", //"Antimatter Rifle"
-  "P": "Piercing", //"Yklwa",
-  "S": "Slashing", //"Whip",
-  "B": "Bludgeoning", //"Wooden Staff",
-  "R": "Radiant"//"Laser Rifle"
+const dmgTypeTranslator: Record<string, string> = {
+  N: 'Necrotic', //"Antimatter Rifle"
+  P: 'Piercing', //"Yklwa",
+  S: 'Slashing', //"Whip",
+  B: 'Bludgeoning', //"Wooden Staff",
+  R: 'Radiant' //"Laser Rifle"
 }
 
 const propTranslator: Record<string, string> = {
-  "AF|DMG": "AF", // shotgun
-  "2H": "Two handed",
-  "AF|XDMG": "AF",
-  "RLD|XDMG": "Reload",
-  "2H|XPHB": "Two handed",
-  "BF|DMG": "BF", //Automatic rifle
-  "BF|XDMG": "BF",
-  "V": "Versatile",
-  "V|XPHB": "Versatile",
-  "A": "Ammuntition",
-  "LD": "Loading",
-  "A|XPHB": "Ammuntition",
-  "LD|XPHB": "Loading",
-  "L": "Light",
-  "L|XPHB": "Light",
-  "F": "Finesse",
-  "T": "Thrown",
-  "F|XPHB": "Finesse",
-  "T|XPHB": "Thrown",
-  "S": "Special",
-  "H": "Heavy",
-  "R": "Reach",
-  "H|XPHB": "Heavy",
-  "R|XPHB": "Reach"
+  'AF|DMG': 'AF', // shotgun
+  '2H': 'Two handed',
+  'AF|XDMG': 'AF',
+  'RLD|XDMG': 'Reload',
+  '2H|XPHB': 'Two handed',
+  'BF|DMG': 'BF', //Automatic rifle
+  'BF|XDMG': 'BF',
+  V: 'Versatile',
+  'V|XPHB': 'Versatile',
+  A: 'Ammuntition',
+  LD: 'Loading',
+  'A|XPHB': 'Ammuntition',
+  'LD|XPHB': 'Loading',
+  L: 'Light',
+  'L|XPHB': 'Light',
+  F: 'Finesse',
+  T: 'Thrown',
+  'F|XPHB': 'Finesse',
+  'T|XPHB': 'Thrown',
+  S: 'Special',
+  H: 'Heavy',
+  R: 'Reach',
+  'H|XPHB': 'Heavy',
+  'R|XPHB': 'Reach'
 }
 
 type LineType = 'entries' | 'inset' | 'list' | 'section' | 'table' | 'quote'
 
-const descriptionTranslator: Record<LineType, (entry: ComplexEntry, section?: boolean) => string> = {
-  entries: entryParser, //"Ythryn Mythallar",
-  inset: insetParser, //"Will of the Talon (Dormant)",
-  list: listParser, //"Ythryn Mythallar",
-  section: sectionParser, //"Keystone of Creation",
-  table: tableParser, //"Xen'drik Trinket"
-  quote: quoteParser //Iggwilv's Cauldron
-}
+const descriptionTranslator: Record<LineType, (entry: ComplexEntry, section?: boolean) => string> =
+  {
+    entries: entryParser, //"Ythryn Mythallar",
+    inset: insetParser, //"Will of the Talon (Dormant)",
+    list: listParser, //"Ythryn Mythallar",
+    section: sectionParser, //"Keystone of Creation",
+    table: tableParser, //"Xen'drik Trinket"
+    quote: quoteParser //Iggwilv's Cauldron
+  }
 
 function quoteParser(entry: ComplexEntry) {
   const lines: Array<string> = []
@@ -245,16 +246,16 @@ export async function parseItems(itemList: ItemListJSON) {
 
   const regex3 = /\{@[^\s|}]+ [^|}]+\|[^|}]+\|([^|}]+)}/g
 
-  const joinedItems = [...itemList.baseitem??[], ...itemList.item??[]]
+  const joinedItems = [...(itemList.baseitem ?? []), ...(itemList.item ?? [])]
 
   for (const x of joinedItems) {
     const parsedItem: ItemPreset = {
-      name: "",
-      uuid: "",
-      description: "",
+      name: '',
+      uuid: '',
+      description: '',
       price: 0,
       creator: 'public-import',
-      itemType: "",
+      itemType: '',
       weight: 0
     }
     parsedItem.name = x.name
@@ -265,7 +266,7 @@ export async function parseItems(itemList: ItemListJSON) {
       typeTranslator[x.type ?? 'undefined'] ??
       (() => {
         console.info(`Missing Type: ${x.type} on item ${x.name}`)
-        return "o"
+        return 'o'
       })()
     const lines: Array<string> = []
     for (const line of x.entries ?? '') {
@@ -277,10 +278,8 @@ export async function parseItems(itemList: ItemListJSON) {
       }
     }
     if (x.reqAttune) {
-      if (x.reqAttune === true)
-        parsedItem.description = `*Requires Attunement*\n\n`
-      else
-        parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n`
+      if (x.reqAttune === true) parsedItem.description = `*Requires Attunement*\n\n`
+      else parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n`
     }
     if (x.ac) {
       parsedItem.description += `Armor Class: ${x.ac}\n\n`
@@ -304,14 +303,14 @@ export async function parseItems(itemList: ItemListJSON) {
       for (const p of x.property) {
         parsedItem.description += ` - ${propTranslator[p]}\n`
       }
-      parsedItem.description += "\n"
+      parsedItem.description += '\n'
     }
     if (x.mastery) {
       parsedItem.description += `Masteries: \n`
       for (const m of x.mastery) {
         parsedItem.description += `- ${m}\n`
       }
-      parsedItem.description += "\n"
+      parsedItem.description += '\n'
     }
     if (x.range) {
       parsedItem.description += `Range: ${x.range}\n\n`
@@ -332,7 +331,7 @@ export async function parseItems(itemList: ItemListJSON) {
     parsedItem.description = parsedItem.description.replace(regex3, (match, group1) => {
       return group1
     })
-    
+
     parsedItemList.push(parsedItem)
   }
 
@@ -361,7 +360,6 @@ export async function parseItems(itemList: ItemListJSON) {
     }
     pushPresetListToServer(currentTransferList)
   }
-
 }
 
 function getJsonSizeInBytes(data: unknown): number {

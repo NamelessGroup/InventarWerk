@@ -26,11 +26,11 @@ body {
 }
 
 .markdown ul {
-  @apply list-disc list-inside;
+  @apply list-inside list-disc;
 }
 
 .markdown ol {
-  @apply list-decimal list-inside;
+  @apply list-inside list-decimal;
 }
 
 .markdown li > ol,
