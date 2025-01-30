@@ -163,7 +163,9 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
     if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
         return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
     }
-    let reader = if (params.reader_uuid == None && params.writer_uuid != None) {params.writer_uuid.clone()} else {params.reader_uuid};
+    let reader = if params.reader_uuid == None && params.writer_uuid != None &&
+        !acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), params.writer_uuid.clone().unwrap())?
+        {params.writer_uuid.clone()} else {params.reader_uuid};
     let writer = params.writer_uuid;
     if reader == None && writer == None {
         let users = (acc_con.get_all_users()?).into_iter().map(|x| x.uuid.clone());
