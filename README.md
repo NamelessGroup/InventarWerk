@@ -45,42 +45,58 @@ The Dockerfile supports build args i.e. "--build-arg FEATURES="--features dev-de
 - Item presets speichern
 - Jedes Item hat: Name, Wert, text
 
-## Structure
+## Frontend model
 ```mermaid
 classDiagram
-    class Inventar {
+    class Inventory {
         uuid: string
         name: string
         owner: string
-        money: number
         reader: string[]
         writer: string[]
+        items: Item[]
     }
 
     class ItemPreset {
-        uuid: string
         name: string
-        price: number
+        uuid: string
         description: string
+        price: number
         creator: string
         itemType: string
+        weight: number
     }
 
     class Item {
         name: string
-        presetReference: string
         amount: number
         dmNote: string
         description: string
         price: number
         presetCreator: string
-        itemType: string
         weight: number
         sorting: number
-        inventoryItemNote: String
+        itemType: string
+        presetReference: string
+        inventoryItemNote: string
     }
 
-    Inventar --> Item
+    Inventory -->"*" Item: items
+    Inventory -->"1" Money: money
+
+    class Account {
+        uuid: string
+        name: string
+        avatar: string|null
+        dm: bool
+    }
+
+    class Money {
+        platinum: number
+        gold: number
+        silver: number
+        copper: number
+    }
 ```
 
 ## Schnittstellen
