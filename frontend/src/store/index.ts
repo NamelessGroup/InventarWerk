@@ -64,6 +64,10 @@ export const store = defineStore('store', {
       this.inventoryUuids = this.inventoryUuids.filter((uuid) => uuid !== inventoryUuid)
       DatabaseHandler.getInstance().deleteInventory(inventoryUuid)
     },
+    editInventoryName(inventoryUuid: string, newName: string) {
+      this.inventories[inventoryUuid].name = newName
+      DatabaseHandler.getInstance().editInventoryName(inventoryUuid, newName)
+    },
     removeItem(inventoryUuid: string, itemUuid: string) {
       this.inventories[inventoryUuid].items = this.inventories[inventoryUuid].items.filter(
         (item) => item.presetReference !== itemUuid

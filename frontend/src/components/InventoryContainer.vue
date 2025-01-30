@@ -1,20 +1,35 @@
 <template>
   <div class="space-y-2 overflow-hidden rounded border-2 border-amber-300 bg-fuchsia-950 p-2">
-    <div class="flex items-center gap-2">
-      <div class="bold border-none bg-transparent pr-5 text-xl outline-none">
-        {{ inventory.name }}
-      </div>
-      <div>({{ inventory.items.map((i) => i.weight).reduce((a, b) => a + b, 0) }} lbs.)</div>
+    <div class="flex items-center">
+      <DiscordImage :user="creator" class="h-6" />
+      <input
+        ref="nameInput"
+        v-model="inventoryName"
+        class="bold border-none bg-transparent pr-5 text-xl outline-none min-w-8 ml-2"
+        :style="{ width: `${inventoryName.length + 2}ch` }"
+        :readonly="inventory.owner !== store().uuid"
+        @blur="updateName()"
+        @keydown="
+          (e) => {
+            if (e.key === 'Enter') {
+              updateName()
+            }
+          }
+        "
+      />
+      <button v-if="inventory.owner === store().uuid" class="mr-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900" @click="editName()">
+        <FontAwesomeIcon :icon="faPen" />
+      </button>
+      <div class="mr-2">({{ inventory.items.map((i) => i.weight).reduce((a, b) => a + b, 0) }} lbs.)</div>
       <div class="flex-1"><!-- Spacer --></div>
       <button
-        v-if="inventory.owner === store().uuid"
         class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
       >
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <button
         v-if="inventory.owner === store().uuid"
-        class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
+        class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900 ml-2"
         @click="deleteInventory"
       >
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
@@ -42,8 +57,8 @@
     <div class="space-y-2">
       <ItemRowDisplay
         v-for="item in inventory.items"
-        :can-edit="canEdit"
         :key="item.presetReference"
+        :can-edit="canEdit"
         :item="item"
         :inventory-uuid="inventory.uuid"
       />
@@ -57,11 +72,18 @@
       + Add item
     </button>
   </div>
-  <ShareInventoryPopUp
-    v-if="showSharePopup"
+
+  <EditSharePopUp
+    v-if="showSharePopup && store().uuid === inventory.owner"
     :inventory="inventory"
     @close="showSharePopup = false"
   />
+  <ViewSharePopUp
+    v-if="showSharePopup && store().uuid !== inventory.owner"
+    :inventory="inventory"
+    @close="showSharePopup = false"
+  />
+
   <AddItemPopUp
     v-if="showAddItemPopup"
     :inventory-uuid="inventory.uuid"
@@ -76,10 +98,12 @@ import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath'
 import { store } from '@/store'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import AddItemPopUp from './AddItemPopUp.vue'
-import ShareInventoryPopUp from './ShareInventoryPopUp.vue'
+import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
+import DiscordImage from './DiscordImage.vue'
+import ViewSharePopUp from './share/ViewSharePopUp.vue'
 
 const props = defineProps({
   inventory: {
@@ -93,15 +117,22 @@ const nameInput = ref<HTMLInputElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
+const creator = computed(
+  () =>
+    store().accounts.filter((account) => account.uuid === props.inventory.owner)[0] ?? {
+      name: 'Unknown',
+      avatar: null,
+      dm: false,
+      uuid: ''
+    }
+)
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function editName() {
   if (nameInput.value) {
     nameInput.value.focus()
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function updateName() {
   if (inventoryName.value.length == 0) {
     return
@@ -109,6 +140,7 @@ function updateName() {
   if (inventoryName.value == props.inventory.name) {
     return
   }
+  store().editInventoryName(props.inventory.uuid, inventoryName.value)
 }
 
 function deleteInventory() {
@@ -138,6 +170,13 @@ watch(
       silver: newMoney.silver,
       copper: newMoney.copper
     }
+  }
+)
+
+watch(
+  () => props.inventory.name,
+  (newName) => {
+    inventoryName.value = newName
   }
 )
 
