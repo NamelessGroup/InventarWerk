@@ -116,13 +116,14 @@ const dmgTypeTranslator: Record<string,string> = {
 }
 
 const propTranslator: Record<string, string> = {
-  "AF|DMG": "AF", // shotgun
+  "AF|DMG": "Ammunition", // shotgun
   "2H": "Two handed",
-  "AF|XDMG": "AF",
+  "AF|XDMG": "Ammunition",
+  "RLD": "Reload",
   "RLD|XDMG": "Reload",
   "2H|XPHB": "Two handed",
-  "BF|DMG": "BF", //Automatic rifle
-  "BF|XDMG": "BF",
+  "BF|DMG": "Burst fire", //Automatic rifle
+  "BF|XDMG": "Burst fire",
   "V": "Versatile",
   "V|XPHB": "Versatile",
   "A": "Ammuntition",
@@ -266,7 +267,7 @@ export async function parseItems(itemList: ItemListJSON) {
       typeTranslator[x.type ?? 'undefined'] ??
       (() => {
         console.log(`Missing Type: ${x.type} on item ${x.name}`)
-        return "o"
+        return "Other"
       })()
     const lines: Array<string> = []
     for (const line of x.entries ?? '') {
@@ -303,7 +304,10 @@ export async function parseItems(itemList: ItemListJSON) {
     if (x.property) {
       parsedItem.description += `Properties: \n`
       for (const p of x.property) {
-        parsedItem.description += ` - ${propTranslator[p]}\n`
+        parsedItem.description += ` - ${propTranslator[p]??(() => {
+          console.log(`Missing prop: ${p} on item ${x.name}`)
+          return "Other"
+        })()}\n`
       }
       parsedItem.description += "\n"
     }
