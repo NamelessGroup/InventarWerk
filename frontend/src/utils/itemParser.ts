@@ -303,7 +303,7 @@ export async function parseItems(itemList: ItemListJSON) {
       parsedItem.description += `Properties: \n`
       for (const p of x.property) {
         parsedItem.description += ` - ${propTranslator[p]??(() => {
-          console.log(`Missing prop: ${p} on item ${x.name}`)
+          console.info(`Missing prop: ${p} on item ${x.name}`)
           return "Other"
         })()}\n`
       }

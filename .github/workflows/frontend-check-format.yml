@@ -21,4 +21,4 @@ jobs:
         working-directory: frontend
         run: |
           npm install
-          npm runf format:check
+          npm run format:check
