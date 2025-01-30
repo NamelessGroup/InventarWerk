@@ -2,7 +2,7 @@ import { ErrorHandler } from '@/errorHandling/ErrorHandler'
 import type { ItemPreset } from '@/model/ItemPreset'
 import { DatabaseHandler } from '@/store/DatabaseHandler'
 import axios from 'axios'
-import { isInterfaceDeclaration } from 'typescript'
+
 interface ItemJSON {
   name: string
   source?: string
@@ -144,7 +144,7 @@ const propTranslator: Record<string, string> = {
 
 type LineType = 'entries' | 'inset' | 'list' | 'section' | 'table' | 'quote'
 
-const descriptionTranslator: Record<LineType, Function> = {
+const descriptionTranslator: Record<LineType, (entry: ComplexEntry, section?: boolean) => string> = {
   entries: entryParser, //"Ythryn Mythallar",
   inset: insetParser, //"Will of the Talon (Dormant)",
   list: listParser, //"Ythryn Mythallar",
@@ -195,7 +195,6 @@ function insetParser(entry: ComplexEntry) {
       lines.push(line)
     } else {
       const complexEntry: ComplexEntry = line
-      console.log('line.type:', line.type)
       lines.push(descriptionTranslator[line.type](complexEntry))
     }
   }
@@ -229,7 +228,7 @@ function tableParser(entry: ComplexEntry) {
   const lines: Array<string> = [
     ` *${entry.caption ?? ''}*`,
     `|${entry.colLabels?.join('|')}|`,
-    `|${entry.colLabels?.map((x) => '---').join('|')}|`
+    `|${entry.colLabels?.map(() => '---').join('|')}|`
   ]
   for (const row of entry.rows ?? []) {
     lines.push(`|${row.join('|')}|`)
@@ -246,7 +245,7 @@ export async function parseItems(itemList: ItemListJSON) {
 
   const regex3 = /\{@[^\s|}]+ [^|}]+\|[^|}]+\|([^|}]+)}/g
 
-  let joinedItems = [...itemList.baseitem??[], ...itemList.item??[]]
+  const joinedItems = [...itemList.baseitem??[], ...itemList.item??[]]
 
   for (const x of joinedItems) {
     const parsedItem: ItemPreset = {
@@ -265,7 +264,7 @@ export async function parseItems(itemList: ItemListJSON) {
     parsedItem.itemType =
       typeTranslator[x.type ?? 'undefined'] ??
       (() => {
-        console.log(`Missing Type: ${x.type} on item ${x.name}`)
+        console.info(`Missing Type: ${x.type} on item ${x.name}`)
         return "o"
       })()
     const lines: Array<string> = []
@@ -365,7 +364,7 @@ export async function parseItems(itemList: ItemListJSON) {
 
 }
 
-function getJsonSizeInBytes(data: any): number {
+function getJsonSizeInBytes(data: unknown): number {
   const jsonString = JSON.stringify(data)
   return new TextEncoder().encode(jsonString).length
 }
@@ -393,8 +392,9 @@ async function pushPresetListToServer(presetList: PresetList) {
 }
 
 // not used anymore, but should be kept to debug changes in the future
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function pushPresetToServer(itemPreset: ItemPreset) {
-  let plist: PresetList = {
+  const plist: PresetList = {
     presets: [itemPreset]
   }
   const response = await axios

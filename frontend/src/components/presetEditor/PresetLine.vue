@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
   <div class="bg-fuchsia-900 px-1">
     <div class="flex items-center">

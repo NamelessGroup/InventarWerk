@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
   <div
     class="grid rounded border bg-fuchsia-900 p-1"
