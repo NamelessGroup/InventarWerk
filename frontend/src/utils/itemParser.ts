@@ -116,31 +116,31 @@ const dmgTypeTranslator: Record<string, string> = {
 }
 
 const propTranslator: Record<string, string> = {
-  "AF|DMG": "Ammunition", // shotgun
-  "2H": "Two handed",
-  "AF|XDMG": "Ammunition",
-  "RLD": "Reload",
-  "RLD|XDMG": "Reload",
-  "2H|XPHB": "Two handed",
-  "BF|DMG": "Burst fire", //Automatic rifle
-  "BF|XDMG": "Burst fire",
-  "V": "Versatile",
-  "V|XPHB": "Versatile",
-  "A": "Ammuntition",
-  "LD": "Loading",
-  "A|XPHB": "Ammuntition",
-  "LD|XPHB": "Loading",
-  "L": "Light",
-  "L|XPHB": "Light",
-  "F": "Finesse",
-  "T": "Thrown",
-  "F|XPHB": "Finesse",
-  "T|XPHB": "Thrown",
-  "S": "Special",
-  "H": "Heavy",
-  "R": "Reach",
-  "H|XPHB": "Heavy",
-  "R|XPHB": "Reach"
+  'AF|DMG': 'Ammunition', // shotgun
+  '2H': 'Two handed',
+  'AF|XDMG': 'Ammunition',
+  RLD: 'Reload',
+  'RLD|XDMG': 'Reload',
+  '2H|XPHB': 'Two handed',
+  'BF|DMG': 'Burst fire', //Automatic rifle
+  'BF|XDMG': 'Burst fire',
+  V: 'Versatile',
+  'V|XPHB': 'Versatile',
+  A: 'Ammuntition',
+  LD: 'Loading',
+  'A|XPHB': 'Ammuntition',
+  'LD|XPHB': 'Loading',
+  L: 'Light',
+  'L|XPHB': 'Light',
+  F: 'Finesse',
+  T: 'Thrown',
+  'F|XPHB': 'Finesse',
+  'T|XPHB': 'Thrown',
+  S: 'Special',
+  H: 'Heavy',
+  R: 'Reach',
+  'H|XPHB': 'Heavy',
+  'R|XPHB': 'Reach'
 }
 
 type LineType = 'entries' | 'inset' | 'list' | 'section' | 'table' | 'quote'
@@ -267,7 +267,7 @@ export async function parseItems(itemList: ItemListJSON) {
       typeTranslator[x.type ?? 'undefined'] ??
       (() => {
         console.info(`Missing Type: ${x.type} on item ${x.name}`)
-        return "Other"
+        return 'Other'
       })()
     const lines: Array<string> = []
     for (const line of x.entries ?? '') {
@@ -302,10 +302,13 @@ export async function parseItems(itemList: ItemListJSON) {
     if (x.property) {
       parsedItem.description += `Properties: \n`
       for (const p of x.property) {
-        parsedItem.description += ` - ${propTranslator[p]??(() => {
-          console.info(`Missing prop: ${p} on item ${x.name}`)
-          return "Other"
-        })()}\n`
+        parsedItem.description += ` - ${
+          propTranslator[p] ??
+          (() => {
+            console.info(`Missing prop: ${p} on item ${x.name}`)
+            return 'Other'
+          })()
+        }\n`
       }
       parsedItem.description += '\n'
     }
