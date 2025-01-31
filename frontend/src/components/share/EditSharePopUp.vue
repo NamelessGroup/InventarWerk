@@ -64,10 +64,15 @@ async function updateShare(val: Access, uuid: string) {
     if (user.accessType == 'read') {
       store().removeReadShare(props.inventory.uuid, uuid)
     } else if (user.accessType == 'write') {
-      store().removeWriteShare(props.inventory.uuid, uuid)
+      await store().removeWriteShare(props.inventory.uuid, uuid)
+      store().removeReadShare(props.inventory.uuid, uuid)
     }
   } else if (val === 'read') {
-    store().addReadShare(props.inventory.uuid, uuid)
+    if (user.accessType === 'write') {
+      await store().removeWriteShare(props.inventory.uuid, uuid)
+    } else {
+      store().addReadShare(props.inventory.uuid, uuid)
+    }
   } else if (val === 'write') {
     store().addWriteShare(props.inventory.uuid, uuid)
   }
