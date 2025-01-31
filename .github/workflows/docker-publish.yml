@@ -48,8 +48,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ github.event_name == 'push' && format('{0}:nightly', env.REGISTRY, env.IMAGE_NAME) || '' }}
-            ${{ github.event_name == 'release' && format('{0}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
+            ${{ github.event_name == 'push' && format('{0}/{1}:nightly', env.REGISTRY, env.IMAGE_NAME) || '' }}
+            ${{ github.event_name == 'release' && format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
       
       - name: Generate artifact attestation
