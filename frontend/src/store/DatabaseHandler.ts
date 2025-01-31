@@ -236,6 +236,7 @@ export class DatabaseHandler {
     )
     if (!response) return false
 
+    store().itemPresets.push(response)
     store().inventories[inventoryUuid].items.push({
       name: response.name,
       presetReference: response.uuid,
