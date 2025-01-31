@@ -25,7 +25,7 @@
         <FontAwesomeIcon :icon="faPen" />
       </button>
       <div class="mr-2">
-        ({{ inventory.items.map((i) => i.weight).reduce((a, b) => a + b, 0) }} lbs.)
+        ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
       <div class="flex-1"><!-- Spacer --></div>
       <button class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900">
