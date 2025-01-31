@@ -6,6 +6,7 @@ diesel::table! {
         owner_uuid -> Text,
         money -> Integer,
         name -> Text,
+        creation -> Nullable<Timestamp>,
     }
 }
 
@@ -17,6 +18,7 @@ diesel::table! {
         amount -> Integer,
         sorting -> Integer,
         inventory_item_note -> Text,
+        creation -> Nullable<Timestamp>,
     }
 }
 
@@ -24,6 +26,7 @@ diesel::table! {
     inventory_reader (user_uuid, inventory_uuid) {
         user_uuid -> Text,
         inventory_uuid -> Text,
+        creation -> Nullable<Timestamp>,
     }
 }
 
@@ -31,6 +34,7 @@ diesel::table! {
     inventory_writer (user_uuid, inventory_uuid) {
         user_uuid -> Text,
         inventory_uuid -> Text,
+        creation -> Nullable<Timestamp>,
     }
 }
 
@@ -43,6 +47,7 @@ diesel::table! {
         description -> Text,
         creator -> Text,
         item_type -> Text,
+        creation -> Nullable<Timestamp>,
     }
 }
 
@@ -52,6 +57,7 @@ diesel::table! {
         name -> Text,
         avatar -> Text,
         dm -> Integer,
+        creation -> Nullable<Timestamp>,
     }
 }
 
