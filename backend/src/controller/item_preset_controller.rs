@@ -59,7 +59,7 @@ impl ItemPresetController {
         let query = inventory_item
             .filter(inventory_item::inventory_uuid.eq(searched_item_preset_uuid))
             .inner_join(item_preset)
-            .select((uuid, name, price, weight, description, creator, item_type))
+            .select((uuid, name, price, weight, description, creator, item_type, item_preset::creation))
             .load::<ItemPreset>(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to load tables inventory_item and item_preset")
     }
@@ -88,7 +88,8 @@ impl ItemPresetController {
             weight: preset_weight,
             description: item_description,
             creator: creator_uuid,
-            item_type: i_type
+            item_type: i_type,
+            creation: None
         };
         let query = diesel::insert_into(item_preset::table).values(&new_item_preset)
             .execute(&mut self.get_conn());

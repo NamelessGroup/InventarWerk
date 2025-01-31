@@ -47,7 +47,7 @@ impl InventoryController {
         let query = inventory
             .inner_join(inventory_reader.on(inventory_reader::inventory_uuid.eq(inventory::dsl::uuid)))
             .filter(inventory_reader::user_uuid.eq(searcher_uuid))
-            .select((inventory::dsl::uuid, owner_uuid, money, inventory::dsl::name))
+            .select((inventory::uuid, owner_uuid, money, inventory::name, inventory::creation))
             .load::<Inventory>(&mut self.get_conn());
         format_result_to_cstat(query, Status::InternalServerError, "Failed to load any Inventory")
     }
@@ -142,7 +142,8 @@ impl InventoryController {
     pub fn add_reader_to_inventory(&self, searched_inventory_uuid: String, reader_uuid: String) -> Result<bool, CStat> {
         let inv_read = InventoryReader {
             user_uuid: reader_uuid,
-            inventory_uuid: searched_inventory_uuid.clone()
+            inventory_uuid: searched_inventory_uuid.clone(),
+            creation: None
         };
         let query =  diesel::insert_into(inventory_reader::table)
             .values(inv_read).execute(&mut self.get_conn());
@@ -154,7 +155,8 @@ impl InventoryController {
     pub fn add_writer_to_inventory(&self, searched_inventory_uuid: String, writer_uuid: String) -> Result<bool, CStat> {
         let inv_write = InventoryWriter {
             user_uuid: writer_uuid,
-            inventory_uuid: searched_inventory_uuid.clone()
+            inventory_uuid: searched_inventory_uuid.clone(),
+            creation: None
         };
         let query = diesel::insert_into(inventory_writer::table)
             .values(inv_write).execute(&mut self.get_conn());
@@ -173,7 +175,8 @@ impl InventoryController {
             uuid: super::generate_uuid_v4(),
             owner_uuid: creator_uuid.clone(),
             money: 0,
-            name: inventory_name
+            name: inventory_name,
+            creation: None
         };
         let query = diesel::insert_into(inventory::table).values(&new_inv)
             .execute(&mut self.get_conn());
@@ -211,7 +214,8 @@ impl InventoryController {
             dm_note: "".to_string(),
             amount: item_amount,
             inventory_item_note: "".to_string(),
-            sorting: max_sorting
+            sorting: max_sorting,
+            creation: None
         };
         let query = diesel::insert_into(inventory_item::table).values(&preset_inventory_pair)
             .execute(&mut self.get_conn());
@@ -229,7 +233,8 @@ impl InventoryController {
             weight: 0.0,
             description: "".to_string(),
             creator: creator_uuid,
-            item_type: "".to_string()
+            item_type: "".to_string(),
+            creation: None
         };
         let query = diesel::insert_into(item_preset::table).values(&new_item_preset)
             .execute(&mut self.get_conn());

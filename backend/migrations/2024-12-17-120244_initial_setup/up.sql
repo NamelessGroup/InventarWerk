@@ -3,7 +3,7 @@ CREATE TABLE user (
     uuid TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     avatar TEXT NOT NULL,
-    dm INTEGER NOT NULL,
+    dm INTEGER NOT NULL NOT NULL,
     creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -14,7 +14,7 @@ CREATE TABLE item_preset (
     weight REAL NOT NULL,
     description TEXT NOT NULL,
     creator TEXT NOT NULL,
-    item_type TEXT NOT NULL,
+    item_type TEXT NOT NULL NOT NULL,
     creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -30,7 +30,7 @@ CREATE TABLE inventory (
 CREATE TABLE inventory_reader (
     user_uuid TEXT NOT NULL,
     inventory_uuid TEXT NOT NULL,
-    creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_uuid) REFERENCES user(uuid) ON DELETE CASCADE,
     FOREIGN KEY(inventory_uuid) REFERENCES inventory(uuid) ON DELETE CASCADE,
     PRIMARY KEY(user_uuid, inventory_uuid)

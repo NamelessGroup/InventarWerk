@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use serde::{Serialize, Deserialize};
-
+use chrono::NaiveDateTime;
 use crate::schema::{inventory, inventory_reader, inventory_writer, item_preset, user, inventory_item};
 
 #[derive(Queryable, Identifiable, Insertable, Serialize, Deserialize)]
@@ -11,6 +11,7 @@ pub struct User {
     pub name: String,
     pub avatar: String,
     pub dm: i32,
+    pub creation: Option<NaiveDateTime>
 }
 
 #[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
@@ -22,6 +23,7 @@ pub struct Inventory {
     pub owner_uuid: String,
     pub money: i32,
     pub name: String,
+    pub creation: Option<NaiveDateTime>
 }
 
 #[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
@@ -32,6 +34,7 @@ pub struct Inventory {
 pub struct InventoryReader {
     pub user_uuid: String,
     pub inventory_uuid: String,
+    pub creation: Option<NaiveDateTime>
 }
 
 #[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
@@ -42,6 +45,7 @@ pub struct InventoryReader {
 pub struct InventoryWriter {
     pub user_uuid: String,
     pub inventory_uuid: String,
+    pub creation: Option<NaiveDateTime>
 }
 
 #[derive(Queryable, Identifiable, Insertable, Serialize, Deserialize)]
@@ -55,6 +59,7 @@ pub struct ItemPreset {
     pub description: String,
     pub creator: String,
     pub item_type: String,
+    pub creation: Option<NaiveDateTime>
 }
 
 #[derive(Queryable, Identifiable, Associations, Insertable, Serialize, Deserialize)]
@@ -69,13 +74,14 @@ pub struct InventoryItem {
     pub amount: i32,
     pub sorting: i32,
     pub inventory_item_note: String,
+    pub creation: Option<NaiveDateTime>
 }
 
 #[derive(AsChangeset)]
 #[diesel(table_name = user)]
 pub struct UpdateUser {
     pub name: Option<String>,
-    pub avatar: Option<String>,
+    pub avatar: Option<String>
 }
 
 #[derive(AsChangeset)]
@@ -84,7 +90,7 @@ pub struct UpdateInventoryItem {
     pub dm_note: Option<String>,
     pub amount: Option<i32>,
     pub sorting: Option<i32>,
-    pub inventory_item_note: Option<String>
+    pub inventory_item_note: Option<String>,
 }
 
 #[derive(AsChangeset)]

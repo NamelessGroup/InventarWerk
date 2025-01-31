@@ -47,7 +47,8 @@ impl AccountController {
             uuid: id,
             name: user_name,
             avatar: user_avatar,
-            dm: !db_has_users as i32
+            dm: !db_has_users as i32,
+            creation: None
         };
         let query_result = diesel::insert_into(user::table()).values(&new_user)
         .execute(&mut self.get_conn());

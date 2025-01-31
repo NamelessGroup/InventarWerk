@@ -26,7 +26,7 @@ diesel::table! {
     inventory_reader (user_uuid, inventory_uuid) {
         user_uuid -> Text,
         inventory_uuid -> Text,
-        creation -> Nullable<Timestamp>,
+        creation -> Timestamp,
     }
 }
 
