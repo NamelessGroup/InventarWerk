@@ -186,6 +186,7 @@ export class DatabaseHandler {
 
     this.setInventoryInStore(newInventory)
     store().inventoryUuids.push(newInventory.uuid)
+    store().inventoryUuids.sort()
     return true
   }
 
