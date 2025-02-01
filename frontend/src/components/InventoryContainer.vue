@@ -4,7 +4,7 @@
       <DiscordImage :user="creator" class="h-6" />
       <div
         ref="nameInput"
-        class="bold ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-none break-wrap"
+        class="bold break-wrap ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-none"
         :contenteditable="inventory.owner === store().uuid"
         @blur="updateName()"
         @keydown="
@@ -16,24 +16,26 @@
             }
           }
         "
-      >{{ inventory.name }}</div>
+      >
+        {{ inventory.name }}
+      </div>
       <button
         v-if="inventory.owner === store().uuid"
-        class="mr-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900 flex-shrink-0"
+        class="mr-2 h-7 w-7 flex-shrink-0 rounded border border-amber-300 bg-fuchsia-900"
         @click="editName()"
       >
         <FontAwesomeIcon :icon="faPen" />
       </button>
-      <div class="mr-2  flex-shrink-0">
+      <div class="mr-2 flex-shrink-0">
         ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900  flex-shrink-0">
+      <button class="h-7 w-7 flex-shrink-0 rounded border border-amber-300 bg-fuchsia-900">
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <button
         v-if="inventory.owner === store().uuid"
-        class="ml-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900  flex-shrink-0"
+        class="ml-2 h-7 w-7 flex-shrink-0 rounded border border-amber-300 bg-fuchsia-900"
         @click="deleteInventory"
       >
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />

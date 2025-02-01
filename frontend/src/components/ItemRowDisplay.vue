@@ -12,7 +12,7 @@
       <NumericInput
         v-model="amountValue"
         :readonly="!canEdit"
-        class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950 px-1 text-right outline-none my-auto"
+        class="row-start-1 my-auto h-8 w-10 rounded border-none bg-fuchsia-950 px-1 text-right outline-none"
         @click="
           (e: Event) => {
             e.stopPropagation()
@@ -20,10 +20,10 @@
         "
         @update="(v) => editAmount(v)"
       />
-      <div class="row-start-1 flex items-center px-2 break-wrap">{{ item.name }}</div>
+      <div class="break-wrap row-start-1 flex items-center px-2">{{ item.name }}</div>
       <button
         v-if="canEdit"
-        class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950 my-auto"
+        class="row-start-1 my-auto h-8 w-10 rounded border-none bg-fuchsia-950"
         @click="
           (e) => {
             e.stopPropagation()
