@@ -1,39 +1,39 @@
 <template>
   <div class="space-y-2 overflow-hidden rounded border-2 border-amber-300 bg-fuchsia-950 p-2">
-    <div class="flex items-center">
+    <div class="flex items-center overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
-      <input
+      <div
         ref="nameInput"
-        v-model="inventoryName"
-        class="bold ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-none"
-        :style="{ width: `${inventoryName.length + 2}ch` }"
-        :readonly="inventory.owner !== store().uuid"
+        class="bold ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-none break-wrap"
+        :contenteditable="inventory.owner === store().uuid"
         @blur="updateName()"
         @keydown="
           (e) => {
             if (e.key === 'Enter') {
+              e.preventDefault()
+              e.stopPropagation()
               updateName()
             }
           }
         "
-      />
+      >{{ inventory.name }}</div>
       <button
         v-if="inventory.owner === store().uuid"
-        class="mr-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
+        class="mr-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900 flex-shrink-0"
         @click="editName()"
       >
         <FontAwesomeIcon :icon="faPen" />
       </button>
-      <div class="mr-2">
+      <div class="mr-2  flex-shrink-0">
         ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900">
+      <button class="h-7 w-7 rounded border border-amber-300 bg-fuchsia-900  flex-shrink-0">
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <button
         v-if="inventory.owner === store().uuid"
-        class="ml-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900"
+        class="ml-2 h-7 w-7 rounded border border-amber-300 bg-fuchsia-900  flex-shrink-0"
         @click="deleteInventory"
       >
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
@@ -116,8 +116,7 @@ const props = defineProps({
   }
 })
 
-const inventoryName = ref(props.inventory.name)
-const nameInput = ref<HTMLInputElement | null>(null)
+const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
@@ -138,13 +137,14 @@ function editName() {
 }
 
 function updateName() {
-  if (inventoryName.value.length == 0) {
+  const newName = nameInput.value?.innerText ?? ''
+  if (newName.length == 0) {
     return
   }
-  if (inventoryName.value == props.inventory.name) {
+  if (newName == props.inventory.name) {
     return
   }
-  store().editInventoryName(props.inventory.uuid, inventoryName.value)
+  store().editInventoryName(props.inventory.uuid, newName)
 }
 
 function deleteInventory() {
@@ -174,13 +174,6 @@ watch(
       silver: newMoney.silver,
       copper: newMoney.copper
     }
-  }
-)
-
-watch(
-  () => props.inventory.name,
-  (newName) => {
-    inventoryName.value = newName
   }
 )
 

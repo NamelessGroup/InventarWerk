@@ -20,7 +20,7 @@
         "
         @update="(v) => editAmount(v)"
       />
-      <div class="row-start-1 flex items-center px-2 break-all">{{ item.name }}</div>
+      <div class="row-start-1 flex items-center px-2 break-wrap">{{ item.name }}</div>
       <button
         v-if="canEdit"
         class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950 my-auto"
