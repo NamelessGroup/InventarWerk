@@ -43,13 +43,18 @@ Nginx runs in another container, that routes the traffic over the nginxbridge to
 The Dockerfile supports build args i.e. "--build-arg FEATURES="--features dev-deploy""
 
 
-## Anforderungen
-- Verschiede Inventare
-  - Teil-Stufen: privat (geteilt nur mit dir), geteilt (m r/w), public
-- Inventar verwaltet Items
-- Jedes Inventar hat Geld
-- Mathe in Betragsmengen-Feldern
-- DM Notes
-- Account System (Discord)
-- Item presets speichern
-- Jedes Item hat: Name, Wert, text
+<details>
+<summary><h2>Initial Requirements</h2></summary>
+<ul>
+<li>Different inventories
+<ul><li>Sub-levels: private (shared only with you), shared (with read/write access), public</li></ul>
+</li>
+<li>Inventory manages items</li>
+<li>Each inventory has money</li>
+<li>Math in amount fields</li>
+<li>DM notes</li>
+<li>Account system (Discord)</li>
+<li>Save item presets</li>
+<li>Each item has: name, value, text</li>
+</ul>
+</details>

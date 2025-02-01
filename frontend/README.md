@@ -1,8 +1,11 @@
 # Frontend
 
 🖥️ Webview for the InventarWerk. Used to manage the inventory of the InventarWerk.
+
 🔒 Only allows users to perform the actions they have permission to do.
-📱 Developed mobile first, to allow users to use it in a small form factor on the table
+
+📱 Developed mobile first, to allow users to use it in a small form factor on the table.
+
 🔄 Syncs with the backend to get the latest data and to update the data.
 
 ## Project Setup
