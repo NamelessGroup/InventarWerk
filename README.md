@@ -1,4 +1,11 @@
 # InventarWerk
+
+<p align="center"> 
+	<img alt="Logo" src="Logo.png" height="200px">
+</p>
+
+A tool to manage your inventory in a tabletop roleplaying game. It allows you to create different inventories, share them with your friends and manage the items in them. It also allows you to keep track of the money in the inventory and write notes for the dungeon master.
+
 ## Deployment
 I recommand deploying the Inventarwerk with docker simply build the Docker image i.e with the following command:
 ```bash
@@ -34,6 +41,8 @@ networks:
 Nginx runs in another container, that routes the traffic over the nginxbridge to the container.
 ## Dockerfile
 The Dockerfile supports build args i.e. "--build-arg FEATURES="--features dev-deploy""
+
+
 ## Anforderungen
 - Verschiede Inventare
   - Teil-Stufen: privat (geteilt nur mit dir), geteilt (m r/w), public
@@ -44,58 +53,3 @@ The Dockerfile supports build args i.e. "--build-arg FEATURES="--features dev-de
 - Account System (Discord)
 - Item presets speichern
 - Jedes Item hat: Name, Wert, text
-
-## Frontend model
-```mermaid
-classDiagram
-    class Inventory {
-        uuid: string
-        name: string
-        owner: string
-        reader: string[]
-        writer: string[]
-        items: Item[]
-    }
-
-    class ItemPreset {
-        name: string
-        uuid: string
-        description: string
-        price: number
-        creator: string
-        itemType: string
-        weight: number
-    }
-
-    class Item {
-        name: string
-        amount: number
-        dmNote: string
-        description: string
-        price: number
-        presetCreator: string
-        weight: number
-        sorting: number
-        itemType: string
-        presetReference: string
-        inventoryItemNote: string
-    }
-
-    Inventory -->"*" Item: items
-    Inventory -->"1" Money: money
-
-    class Account {
-        uuid: string
-        name: string
-        avatar: string|null
-        dm: bool
-    }
-
-    class Money {
-        platinum: number
-        gold: number
-        silver: number
-        copper: number
-    }
-```
-
