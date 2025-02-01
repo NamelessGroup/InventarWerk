@@ -8,7 +8,7 @@
     }"
     @click="expanded = !expanded"
   >
-    <div class="grid grid-cols-[auto_1fr_auto]">
+    <div class="grid grid-cols-[auto_1fr_auto] overflow-hidden">
       <NumericInput
         v-model="amountValue"
         :readonly="!canEdit"
@@ -20,7 +20,7 @@
         "
         @update="(v) => editAmount(v)"
       />
-      <span class="row-start-1 flex items-center px-2">{{ item.name }}</span>
+      <div class="row-start-1 flex items-center px-2 break-all">{{ item.name }}</div>
       <button
         v-if="canEdit"
         class="row-start-1 h-8 w-10 rounded border-none bg-fuchsia-950"
