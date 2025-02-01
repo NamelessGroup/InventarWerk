@@ -38,60 +38,24 @@ set ROCKET_ADDRESS and ROCKET_PORT if you dont want to use the default config of
 finally run `cargo run`
 
 ## API
-Any Endpoint other than `/account/login` or `/account/oauth/callback` requires authentication through `/account/login`
+Any Endpoint other than `/account/login`, `/account/isLoggedIn` or `/account/oauth/callback` requires authentication through `/account/login`
+
 ### Inventory
 #### /inventory/all
 Get
 Returns all inventories from the logged in user
 Response:
-```json
-{
-    "inventories": [
-        {
-            "uuid": "some uuid",
-            "name": "some name",
-            "owner": "some owner uuid",
-            "money": 69,
-            "items": [
-                // ...
-            ],
-            "reader": ["some uuid", "some uuid", "..."],
-            "writer": ["some uuid", "..."]
-
-        }//, ...
-    ]
-}
-```
+An inventory list, see `src/frontend_model.rs::InventoryReturn` and `src/routers/inventory_router.rs::GetAllInventoriesReturn` for format
 #### /inventory?inventory_uuid=""
 Get
 Returns the inventory with the given uuid
 Response:
-```json
-{
-    "uuid": "the requested uuid",
-    "name": "some name",
-    "owner": "some owner uuid",
-    "money": 42,
-    "reader": ["some uuid", "some uuid", "..."],
-    "writer": ["some uuid", "..."]
-
-}
-```
+An inventory, see `src/frontend_model.rs::InventoryReturn` for format
 #### /inventory?name=""
 Put
 Creates a new inventory
 Response:
-```json
-{
-    "uuid": "a new uuid",
-    "name": "name from the request",
-    "owner": "the uuid of the logged in user",
-    "money": 0,
-    "reader": ["the uuid of the logged in user"],
-    "writer": ["the uuid of the logged in user"]
-
-}
-```
+An inventory, see `src/frontend_model.rs::InventoryReturn` for format
 #### /inventory/item/addPreset?inventory_uuid="",preset_uuid="",amount=""
 Put
 Adds an new item to the inventory (dont increase amount fom 0->1 or 3->4)
@@ -101,16 +65,7 @@ Response:
 Put
 Creates an itempreset with the given name and adds it to the inventory, returns the item class from frontend
 Response:
-```json
-{
-    "name": "the given name",
-    "presetReference": "the uuid of the item preset",
-    "amount": 0, // the given amount
-    "dmNote": "",
-    "description": ""
-
-}
-```
+An itempreset, see `src/frontend_model.rs::FrontendItemPreset` for format
 #### /inventory/item/edit?inventory_uuid="",item_preset_uuid="",amount="",sorting="",inventory_item_note=""
 Patch
 changes the amount of an itemPreset in an inventory
@@ -147,18 +102,9 @@ Response: 204
 #### /itemPreset?item_preset_uuid=""
 Get
 returns the item preset with the given uuid
-Response: 
-```json
-{
-    "uuid": "owner uuid",
-    "name": "item preset name",
-    "price": 0,
-    "description": "a description",
-    "creator": "creator uuid",
-    "itemType": "item type"
-}
-```
-#### /itemPreset/modify?item_preset_uuid="",name="",price="",description="",item_type=""
+Response:
+An itempreset, see `src/frontend_model.rs::FrontendItemPreset` for format
+#### /itemPreset/modify?item_preset_uuid="",name="",price="",description="",weight="",item_type=""
 Patch
 requires the user to be the creator of the preset
 all optional expect item_preset_uuid
@@ -171,31 +117,13 @@ Response: 204
 Get
 Returns all itemPreset
 Response:
-```json
-{
-    "item_presets": [{
-        "name":"name",
-        "itemType":"type"
-    }//,...
-    ]
-}
-```
+An itempreset list, see `src/routers/item_preset_router.rs::GetItemPresetReturn` and `src/frontend_model.rs::FrontendItemPreset` for format
 ### Account
 #### /account/get
 Get
 returns all accounts
 Response:
-```json
-{
-    "accounts": [
-        {
-            "name":"name",
-            "uuid":"uuid",
-            "dm": 0|1
-        }//,...
-    ]
-}
-```
+An account list, see `src/routers/account_routers.rs::AccountResponse` and `src/model::User`
 #### /account/isDm?account_uuid=""
 Get
 Returns if the account is dm
@@ -221,6 +149,7 @@ Response:
 #### /account/isLoggedIn
 Get
 Does not requires Authentication
+returns if the user is logged in
 Response:
 ```json
 {
@@ -233,8 +162,11 @@ Deletes the authtoken from the users page
 ### last Changes
 #### /lastChanges?timestamp=""
 Get
-time stamp of last fetch in millis
-Response: {uuid: string, type: 'create'|'patch'|'delete'}[]
+Returns the last change for all inventories the user has access to
+Response: 
+```json
+    "inventory_id": "last change",
+```
 ### Special Endpoints
 #### /itemPreset/addExtern
 Put
@@ -259,6 +191,7 @@ erDiagram
         text owner_uuid FK
         integer money
         text name
+        timestamp creation
     }
 
     inventory_reader 1+--1+ inventory: "reads/read by"
@@ -267,6 +200,7 @@ erDiagram
     inventory_reader {
         text user_uuid PK
         text inventory_uuid PK
+        timestamp creation
     }
     
     inventory_writer 1+--1+ inventory: "writes/written by"
@@ -275,6 +209,7 @@ erDiagram
     inventory_writer {
         text user_uuid PK
         text inventory_uuid PK
+        timestamp creation
     }
 
 
@@ -285,11 +220,13 @@ erDiagram
         text description
         text creator
         text item_type
+        timestamp creation
     }
     user {
         text uuid PK
         text name
         boolean dm
+        timestamp creation
     }
     inventory_item 1+--1+ inventory: ""
     inventory_item 1+--1+ item_preset: ""
@@ -301,5 +238,6 @@ erDiagram
         integer weight
         integer sorting
         text inventory_item_note
+        timestamp creation
     }
 ```

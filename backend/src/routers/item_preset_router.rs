@@ -19,16 +19,6 @@ pub struct ItemPresetUUIDParams {
     item_preset_uuid: String
 }
 
-#[derive(FromForm)]
-pub struct ItemModifyParams {
-    item_preset_uuid: String,
-    name: Option<String>,
-    price:Option<i32>,
-    weight: Option<f32>,
-    description: Option<String>,
-    item_type: Option<String>
-}
-
 
 fn convert_item_preset_to_frontend(preset: ItemPreset) -> FrontendItemPreset {
     FrontendItemPreset {
@@ -62,6 +52,16 @@ pub async fn get_item_preset(params: ItemPresetUUIDParams,  user: super::Authent
         return Err(new_cstat_from_ref(Status::Forbidden, "No access"));
     }
     Ok(Json(convert_item_preset_to_frontend(preset)))
+}
+
+#[derive(FromForm)]
+pub struct ItemModifyParams {
+    item_preset_uuid: String,
+    name: Option<String>,
+    price:Option<i32>,
+    weight: Option<f32>,
+    description: Option<String>,
+    item_type: Option<String>
 }
 
 #[patch("/itemPreset/modify?<params..>")]
