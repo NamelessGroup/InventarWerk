@@ -11,7 +11,7 @@ RUN cargo install diesel_cli --no-default-features --features sqlite
 
 # Rust-Abhängigkeiten cachen
 COPY backend/Cargo.toml ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -r src
+#RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -r src
 
 # Anwendung bauen
 COPY ./backend/ ./
