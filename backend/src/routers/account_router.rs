@@ -9,6 +9,7 @@ use reqwest::Client;
 use rocket::response::status::Custom;
 
 use crate::controller::account_controller::AccountController;
+use crate::controller::lock_controller::LockController;
 use crate::controller::CStat;
 use crate::model::User;
 
@@ -192,4 +193,23 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Status {
     } else {
         Status::BadRequest
     }
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize)]
+pub struct IsLockedResponse {
+    isLocked: bool
+}
+
+#[get("/account/isLocked")]
+pub async fn isLocked( loc_con: &State<LockController>) -> Json<IsLockedResponse> {
+    Json(IsLockedResponse {
+        isLocked: loc_con.is_locked()
+    })
+}
+
+#[patch("/account/toggleLock")]
+pub async fn toggleLock(loc_con: &State<LockController>) -> Status {
+    loc_con.toggle_lock();
+    Status::NoContent
 }
