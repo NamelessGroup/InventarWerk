@@ -68,6 +68,7 @@
     >
       <FontAwesomeIcon :icon="faPlus" />
     </button>
+    <div class="hidden md:block absolute bottom-1 left-1 text-fuchsia-300 text-opacity-30 text-xs">{{ version }}</div>
 
     <div
       v-if="!acceptedCookies"
@@ -89,6 +90,7 @@
         </button>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -110,6 +112,7 @@ import PopUp from './components/PopUp.vue'
 import { parseItems } from './utils/itemParser'
 import SettingsPopUp from './components/SettingsPopUp.vue'
 import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
+import { version } from './utils/version'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
