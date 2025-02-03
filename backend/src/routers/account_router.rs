@@ -202,14 +202,14 @@ pub struct IsLockedResponse {
 }
 
 #[get("/account/isLocked")]
-pub async fn isLocked( loc_con: &State<LockController>) -> Json<IsLockedResponse> {
+pub async fn is_locked( loc_con: &State<LockController>) -> Json<IsLockedResponse> {
     Json(IsLockedResponse {
         isLocked: loc_con.is_locked()
     })
 }
 
 #[patch("/account/toggleLock")]
-pub async fn toggleLock(loc_con: &State<LockController>) -> Status {
+pub async fn toggle_lock(loc_con: &State<LockController>) -> Status {
     loc_con.toggle_lock();
     Status::NoContent
 }
