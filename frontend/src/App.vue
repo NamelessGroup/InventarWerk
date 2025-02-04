@@ -68,7 +68,11 @@
     >
       <FontAwesomeIcon :icon="faPlus" />
     </button>
-    <div class="hidden md:block absolute bottom-1 left-1 text-fuchsia-300 text-opacity-30 text-xs">{{ version }}</div>
+    <a
+      :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
+      class="absolute bottom-1 left-1 hidden text-xs text-fuchsia-300 text-opacity-30 underline md:block"
+      >{{ version }}</a
+    >
 
     <div
       v-if="!acceptedCookies"
@@ -90,7 +94,6 @@
         </button>
       </div>
     </div>
-
   </div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
   <PopUp @close="emit('close')">
-    <div class="min-h-full flex flex-col">
+    <div class="flex min-h-full flex-col">
       <h1 class="text-xl">Settings</h1>
       <div class="grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr]">
         <div class="space-x-2 md:col-span-2">
@@ -17,7 +17,14 @@
         />
       </div>
       <div class="flex-1"><!-- Placeholder --></div>
-      <div class="text-fuchsia-300 text-xs ml-auto">Hosted commit: {{ version }}</div>
+      <div class="ml-auto text-xs text-fuchsia-300">
+        Hosted commit:
+        <a
+          class="underline"
+          :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
+          >{{ version }}</a
+        >
+      </div>
     </div>
   </PopUp>
 </template>

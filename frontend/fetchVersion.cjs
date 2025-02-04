@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { writeFileSync } = require('fs')
 
 const version = require('child_process').execSync('git rev-parse HEAD').toString().trim()
