@@ -1,0 +1,47 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "13:37"
+      timezone: "Europe/Berlin"
+    reviewers:
+      - "@Kr0nox"
+      - "@ProgramPhoenix"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "Dependency (actions)"
+
+  # npm (JavaScript/TypeScript)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "13:37"
+      timezone: "Europe/Berlin"
+    reviewers:
+      - "@Kr0nox"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "Dependency (frontend)"
+
+  # Cargo (Rust)
+  - package-ecosystem: "cargo"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "13:37"
+      timezone: "Europe/Berlin"
+    reviewers:
+      - "@ProgramPhoenix"
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "Dependency (backend)"
