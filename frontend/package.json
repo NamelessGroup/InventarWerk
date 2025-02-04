@@ -6,14 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
-    "build:prod": "run-p type-check && vite build --mode prod",
+    "build:prod": "run-s fetch-version-hash type-check build-only:prod",
     "preview": "vite preview",
     "build-only": "vite build",
+    "build-only:prod": "vite build --mode prod",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix --max-warnings 0",
     "lint:check": "eslint . --max-warnings 0",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",
+    "fetch-version-hash": "node fetchVersion.cjs",
     "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
