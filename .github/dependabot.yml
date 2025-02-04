@@ -20,7 +20,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "daily"
+      interval: "weekly"
       day: "wednesday"
       time: "13:37"
       timezone: "Europe/Berlin"
