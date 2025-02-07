@@ -3,7 +3,7 @@ CREATE TABLE user (
     uuid TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     avatar TEXT NOT NULL,
-    dm INTEGER NOT NULL NOT NULL,
+    dm INTEGER NOT NULL,
     creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -14,7 +14,7 @@ CREATE TABLE item_preset (
     weight REAL NOT NULL,
     description TEXT NOT NULL,
     creator TEXT NOT NULL,
-    item_type TEXT NOT NULL NOT NULL,
+    item_type TEXT NOT NULL,
     creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
