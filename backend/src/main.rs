@@ -35,11 +35,6 @@ async fn main() {
         .execute(&mut conn)
         .expect("Failed to set journal mode");
 
-        // Aktiviere Foreign Key Constraints
-    diesel::sql_query("PRAGMA foreign_keys = ON;")
-        .execute(&mut conn)
-        .expect("Failed to enable foreign key constraints");
-
     let inv_cont = InventoryController::new(dbconn.clone());
     let acc_con = AccountController::new(dbconn.clone());
     let ip_con = ItemPresetController::new(dbconn.clone());
