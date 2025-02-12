@@ -41,7 +41,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.2.11",
     "npm-run-all2": "^7.0.1",
-    "pinia": "^2.3.0",
+    "pinia": "^3.0.0",
     "postcss": "^8.4.49",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
