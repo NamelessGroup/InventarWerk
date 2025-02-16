@@ -8,7 +8,6 @@ mod schema;
 mod frontend_model;
 mod last_changes_map_macro;
 
-
 use controller::account_controller::AccountController;
 use controller::item_preset_controller::ItemPresetController;
 use diesel::RunQueryDsl;
