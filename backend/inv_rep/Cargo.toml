@@ -4,3 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chrono = { version="0.4.39", features=["serde"]}
+sqlx = { version = "0.8.3", features = ["postgres", "runtime-tokio-native-tls"] }
+uuid = { version="1.13.1", features=["v4"] }
