@@ -1,6 +1,7 @@
-use sqlx::{FromRow, PgPool};
+use sqlx::PgPool;
 use uuid::Uuid;
 use crate::model::User;
+use anyhow::Result;
 
 struct UserRepository {
     pool: PgPool,
@@ -14,7 +15,7 @@ impl UserRepository {
     pub async fn create_user(&self, name: &str, avatar: &str, dm: i32) -> Result<User> {
         let uuid = Uuid::new_v4().to_string();
         let user = sqlx::query_as!(User,
-            "INSERT INTO user (uuid, name, avatar, dm) VALUES ($1, $2, $3, $4) RETURNING *",
+            "INSERT INTO \"user\" (uuid, name, avatar, dm) VALUES ($1, $2, $3, $4) RETURNING *",
             uuid, name, avatar, dm
         )
         .fetch_one(&self.pool)
@@ -24,7 +25,7 @@ impl UserRepository {
     }
 
     pub async fn get_user(&self, uuid: &str) -> Result<Option<User>> {
-        let user = sqlx::query_as!(User, "SELECT * FROM user WHERE uuid = $1", uuid)
+        let user = sqlx::query_as!(User, "SELECT * FROM \"user\" WHERE uuid = $1", uuid)
             .fetch_optional(&self.pool)
             .await?;
         
@@ -32,7 +33,7 @@ impl UserRepository {
     }
 
     pub async fn delete_user(&self, uuid: &str) -> Result<u64> {
-        let result = sqlx::query!("DELETE FROM user WHERE uuid = $1", uuid)
+        let result = sqlx::query!("DELETE FROM \"user\" WHERE uuid = $1", uuid)
             .execute(&self.pool)
             .await?;
         
@@ -41,7 +42,7 @@ impl UserRepository {
 
     pub async fn update_user(&self, uuid: &str, name: &str, avatar: &str, dm: i32) -> Result<Option<User>> {
         let user = sqlx::query_as!(User,
-            "UPDATE user SET name = $1, avatar = $2, dm = $3 WHERE uuid = $4 RETURNING *",
+            "UPDATE \"user\" SET name = $1, avatar = $2, dm = $3 WHERE uuid = $4 RETURNING *",
             name, avatar, dm, uuid
         )
         .fetch_optional(&self.pool)

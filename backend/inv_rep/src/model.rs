@@ -1,11 +1,11 @@
-use chrono::NaiveDateTime;
+use time::PrimitiveDateTime;
 
 pub struct User {
     pub uuid: String,
     pub name: String,
     pub avatar: String,
     pub dm: i32,
-    pub creation: Option<NaiveDateTime>
+    pub creation: Option<PrimitiveDateTime>
 }
 
 pub struct FullInventory {
@@ -15,7 +15,7 @@ pub struct FullInventory {
     pub name: String,
     pub reader: Vec<String>,
     pub writer: Vec<String>,
-    pub creation: Option<NaiveDateTime>
+    pub creation: Option<PrimitiveDateTime>
 }
 
 pub struct RawInventory {
@@ -23,19 +23,19 @@ pub struct RawInventory {
     pub owner_uuid: String,
     pub money: i32,
     pub name: String,
-    pub creation: Option<NaiveDateTime>
+    pub creation: Option<PrimitiveDateTime>
 }
 
 pub struct InventoryReader {
     pub user_uuid: String,
     pub inventory_uuid: String,
-    pub creation: Option<NaiveDateTime>
+    pub creation: Option<PrimitiveDateTime>
 }
 
 pub struct InventoryWriter {
     pub user_uuid: String,
     pub inventory_uuid: String,
-    pub creation: Option<NaiveDateTime>
+    pub creation: Option<PrimitiveDateTime>
 }
 
 pub struct ItemPreset {
@@ -46,7 +46,7 @@ pub struct ItemPreset {
     pub description: String,
     pub creator: String,
     pub item_type: String,
-    pub creation: Option<NaiveDateTime>
+    pub creation: Option<PrimitiveDateTime>
 }
 
 pub struct InventoryItem {
@@ -56,5 +56,5 @@ pub struct InventoryItem {
     pub amount: i32,
     pub sorting: i32,
     pub inventory_item_note: String,
-    pub creation: Option<NaiveDateTime>
+    pub creation: Option<PrimitiveDateTime>
 }
