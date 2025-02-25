@@ -9,7 +9,7 @@
       </p>
       <p v-else>Read access: You can view items and money from this inventory, but not edit it.</p>
       <button
-        class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none"
+        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 outline-hidden"
         @click="leaveInventory()"
       >
         Leave inventory

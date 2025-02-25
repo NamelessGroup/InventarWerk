@@ -9,7 +9,7 @@
     "
   >
     <div
-      class="z-40 h-full w-full overflow-visible rounded border border-amber-300 bg-slate-900 p-5 blur-0 md:h-[60vh] md:w-[80vw]"
+      class="z-40 h-full w-full overflow-visible rounded-sm border border-amber-300 bg-slate-900 p-5 blur-0 md:h-[60vh] md:w-[80vw]"
       :class="popupClass"
       @click="($event) => $event.stopPropagation()"
     >

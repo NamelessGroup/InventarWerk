@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
   <div
-    class="grid rounded border bg-fuchsia-900 p-1"
+    class="grid rounded-sm border bg-fuchsia-900 p-1"
     :class="{
       'border-amber-300': expanded,
       'border-fuchsia-900': !expanded
@@ -12,7 +12,7 @@
       <NumericInput
         v-model="amountValue"
         :readonly="!canEdit"
-        class="row-start-1 my-auto h-8 w-10 rounded border-none bg-fuchsia-950 px-1 text-right outline-none"
+        class="row-start-1 my-auto h-8 w-10 rounded-sm border-none bg-fuchsia-950 px-1 text-right outline-hidden"
         @click="
           (e: Event) => {
             e.stopPropagation()
@@ -23,7 +23,7 @@
       <div class="break-wrap row-start-1 flex items-center px-2">{{ item.name }}</div>
       <button
         v-if="canEdit"
-        class="row-start-1 my-auto h-8 w-10 rounded border-none bg-fuchsia-950"
+        class="row-start-1 my-auto h-8 w-10 rounded-sm border-none bg-fuchsia-950"
         @click="
           (e) => {
             e.stopPropagation()
@@ -41,7 +41,7 @@
         <p class="markdown mb-1 text-xs" v-html="description"></p>
         <textarea
           v-model="itemNote"
-          class="rounded border border-amber-300 bg-fuchsia-900 text-xs text-fuchsia-300 outline-none"
+          class="rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-fuchsia-300 outline-hidden"
           placeholder="Notes"
           @click="(e) => e.stopPropagation()"
           @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"
@@ -49,7 +49,7 @@
         <textarea
           v-if="store().userIsDm"
           v-model="dmNote"
-          class="mt-1 rounded border border-amber-300 bg-fuchsia-900 text-xs text-amber-300 outline-none"
+          class="mt-1 rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-amber-300 outline-hidden"
           placeholder="DM Note"
           @click="(e) => e.stopPropagation()"
           @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
@@ -57,7 +57,7 @@
 
         <button
           v-if="store().uuid == item.presetCreator"
-          class="absolute right-0 top-2 h-6 w-6 rounded border border-amber-300 bg-fuchsia-950 text-xs"
+          class="absolute right-0 top-2 h-6 w-6 rounded-sm border border-amber-300 bg-fuchsia-950 text-xs"
           @click="(e) => openEdit(e)"
         >
           <FontAwesomeIcon :icon="faPen" />

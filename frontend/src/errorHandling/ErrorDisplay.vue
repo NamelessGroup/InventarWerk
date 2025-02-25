@@ -3,7 +3,7 @@
     <div
       v-for="error in errorList"
       :key="error.message"
-      class="rounded bg-red-800"
+      class="rounded-sm bg-red-800"
       @click="error.timeToLive = 0"
     >
       <p class="p-1"><FontAwesomeIcon :icon="faCircleXmark" /> {{ error.message }}</p>
