@@ -1,10 +1,10 @@
 <template>
-  <div class="space-y-2 overflow-hidden rounded border-2 border-amber-300 bg-fuchsia-950 p-2">
+  <div class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2">
     <div class="flex items-center overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
       <div
         ref="nameInput"
-        class="bold break-wrap ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-none"
+        class="bold break-wrap ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-hidden"
         :contenteditable="inventory.owner === store().uuid"
         @blur="updateName()"
         @keydown="
@@ -21,21 +21,21 @@
       </div>
       <button
         v-if="inventory.owner === store().uuid"
-        class="mr-2 h-7 w-7 flex-shrink-0 rounded border border-amber-300 bg-fuchsia-900"
+        class="mr-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
         @click="editName()"
       >
         <FontAwesomeIcon :icon="faPen" />
       </button>
-      <div class="mr-2 flex-shrink-0">
+      <div class="mr-2 shrink-0">
         ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button class="h-7 w-7 flex-shrink-0 rounded border border-amber-300 bg-fuchsia-900">
+      <button class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900">
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <button
         v-if="inventory.owner === store().uuid"
-        class="ml-2 h-7 w-7 flex-shrink-0 rounded border border-amber-300 bg-fuchsia-900"
+        class="ml-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
         @click="deleteInventory"
       >
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
@@ -47,7 +47,7 @@
         :key="k"
         v-model="moneyFieldValues[k]"
         :readonly="!canEdit"
-        class="row-start-1 h-10 rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+        class="row-start-1 h-10 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
         :class="`col-start-${i}`"
         @update="(v) => updateMoney(v, k)"
       />
@@ -72,7 +72,7 @@
 
     <button
       v-if="inventory.writer.includes(store().uuid)"
-      class="h-10 w-full rounded bg-fuchsia-900 text-center"
+      class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
       @click="showAddItemPopup = true"
     >
       + Add item
