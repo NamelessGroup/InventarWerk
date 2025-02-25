@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 p-2 text-white">
+  <div class="space-y-2 p-2 text-white" :class="errorList.length > 0 ? 'block' : 'hidden'">
     <div
       v-for="error in errorList"
       :key="error.message"
