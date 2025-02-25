@@ -23,7 +23,10 @@
           >
             <FontAwesomeIcon :icon="faGears" />
           </button>
-          <button class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900" @click="logOut">
+          <button
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+            @click="logOut"
+          >
             <FontAwesomeIcon :icon="faRightFromBracket" />
           </button>
         </div>
@@ -63,20 +66,20 @@
 
     <button
       v-if="isLoggedIn"
-      class="fixed bottom-2 right-2 z-10 h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+      class="fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
       @click="showCreation = true"
     >
       <FontAwesomeIcon :icon="faPlus" />
     </button>
     <a
       :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
-      class="absolute bottom-1 left-1 hidden text-xs text-fuchsia-300 text-opacity-30 underline md:block"
+      class="text-opacity-30 absolute bottom-1 left-1 hidden text-xs text-fuchsia-300 underline md:block"
       >{{ version }}</a
     >
 
     <div
       v-if="!acceptedCookies"
-      class="absolute bottom-0 left-0 right-0 top-0 z-40 bg-slate-900 p-10"
+      class="absolute top-0 right-0 bottom-0 left-0 z-40 bg-slate-900 p-10"
     >
       <div class="flex flex-col items-center space-y-2">
         <p>This website uses cookies.<br />No you can not reject.</p>

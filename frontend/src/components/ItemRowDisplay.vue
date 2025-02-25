@@ -57,7 +57,7 @@
 
         <button
           v-if="store().uuid == item.presetCreator"
-          class="absolute right-0 top-2 h-6 w-6 rounded-sm border border-amber-300 bg-fuchsia-950 text-xs"
+          class="absolute top-2 right-0 h-6 w-6 rounded-sm border border-amber-300 bg-fuchsia-950 text-xs"
           @click="(e) => openEdit(e)"
         >
           <FontAwesomeIcon :icon="faPen" />
