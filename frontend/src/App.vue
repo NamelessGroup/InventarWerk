@@ -70,7 +70,7 @@
     </button>
     <a
       :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
-      class="absolute bottom-1 left-1 hidden text-xs text-fuchsia-300 text-opacity-30 underline md:block"
+      class="fixed bottom-1 left-1 hidden text-xs text-fuchsia-300 text-opacity-30 underline md:block"
       >{{ version }}</a
     >
 
