@@ -90,6 +90,7 @@ export class DatabaseHandler {
     store().itemPresets = await this.getAllPresets()
     store().accounts = await this.getAllAccounts()
     store().userIsDm = await this.isDM()
+    store().isServerLocked = await this.getServerLockStatus() ?? false
     const inventories = await this.getAllInventoriesFromDB()
     inventories.forEach((inventory) => this.setInventoryInStore(inventory))
     store().inventoryUuids = inventories.map((inventory) => inventory.uuid).sort()
@@ -329,6 +330,14 @@ export class DatabaseHandler {
     await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'delete'], {
       inventory_uuid: inventoryUuid
     })
+  }
+
+  public async getServerLockStatus() {
+    return (await this.get<{ isLocked: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isLocked']))?.isLocked
+  }
+
+  public changeServerLockStatus() {
+    return this.patch<unknown>([DatabaseHandler.ACCOUNT_END_POINT, 'toggleLock'])
   }
 
   private buildShareParams(share: Share) {

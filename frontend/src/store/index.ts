@@ -13,7 +13,8 @@ export const store = defineStore('store', {
       uuid: '',
       accounts: [],
       itemPresets: [],
-      userIsDm: false
+      userIsDm: false,
+      isServerLocked: false
     }) as State,
   getters: {
     getInvetory:
@@ -80,6 +81,11 @@ export const store = defineStore('store', {
       )!.amount = newAmount
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
     },
+    async toggleLock() {
+      if (await DatabaseHandler.getInstance().changeServerLockStatus() !== undefined) {
+        this.isServerLocked = !this.isServerLocked
+      }
+    },
     async editItem(
       inventoryUuid: string,
       itemUuid: string,
@@ -127,6 +133,7 @@ interface State {
   accounts: Account[]
   itemPresets: ItemPreset[]
   userIsDm: boolean
+  isServerLocked: boolean
 }
 
 /*
