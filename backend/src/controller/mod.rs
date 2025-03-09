@@ -32,7 +32,7 @@ pub fn format_result_to_cstat<T>(result: Result<T, diesel::result::Error>, stat:
 }
 
 pub fn generate_uuid_v4() -> String {
-    let mut rng = StdRng::from_entropy();
+    let mut rng = StdRng::from_os_rng();
 
     // Generiere 16 zufällige Bytes
     let mut bytes = [0u8; 16];

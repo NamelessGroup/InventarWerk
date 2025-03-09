@@ -1,6 +1,6 @@
 <template>
   <PopUp @close="emit('close')">
-    <div>
+    <div class="flex min-h-full flex-col">
       <h1 class="text-xl">Settings</h1>
       <div class="grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr]">
         <div class="space-x-2 md:col-span-2">
@@ -16,10 +16,19 @@
           class="rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
         />
       </div>
-
       <div v-if="store().userIsDm" class="space-x-2 md:col-span-2">
         <input id="serverLock" v-model="serverLock" type="checkbox" />
         <label for="serverLock">Prohibit new users from joining</label>
+      </div>
+
+      <div class="flex-1"><!-- Placeholder --></div>
+      <div class="ml-auto text-xs text-fuchsia-300">
+        Hosted commit:
+        <a
+          class="underline"
+          :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
+          >{{ version }}</a
+        >
       </div>
     </div>
   </PopUp>
@@ -30,6 +39,7 @@ import { computed } from 'vue'
 import PopUp from './PopUp.vue'
 import { Settings } from '@/store/Settings'
 import { store } from '@/store'
+import { version } from '@/utils/version'
 
 const emit = defineEmits(['close'])
 

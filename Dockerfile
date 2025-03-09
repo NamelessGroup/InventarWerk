@@ -25,6 +25,7 @@ WORKDIR /frontend
 COPY frontend/package.json /frontend/
 RUN npm install
 
+COPY .git/ /frontend/.git/
 COPY frontend/ /frontend/
 RUN npm run build:prod
 

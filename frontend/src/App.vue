@@ -68,6 +68,11 @@
     >
       <FontAwesomeIcon :icon="faPlus" />
     </button>
+    <a
+      :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
+      class="fixed bottom-1 left-1 hidden text-xs text-fuchsia-300 text-opacity-30 underline md:block"
+      >{{ version }}</a
+    >
 
     <div
       v-if="!acceptedCookies"
@@ -110,6 +115,7 @@ import PopUp from './components/PopUp.vue'
 import { parseItems } from './utils/itemParser'
 import SettingsPopUp from './components/SettingsPopUp.vue'
 import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
+import { version } from './utils/version'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
