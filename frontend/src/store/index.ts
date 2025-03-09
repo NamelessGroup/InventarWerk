@@ -82,7 +82,7 @@ export const store = defineStore('store', {
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
     },
     async toggleLock() {
-      if (await DatabaseHandler.getInstance().changeServerLockStatus() !== undefined) {
+      if ((await DatabaseHandler.getInstance().changeServerLockStatus()) !== undefined) {
         this.isServerLocked = !this.isServerLocked
       }
     },

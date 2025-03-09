@@ -90,7 +90,7 @@ export class DatabaseHandler {
     store().itemPresets = await this.getAllPresets()
     store().accounts = await this.getAllAccounts()
     store().userIsDm = await this.isDM()
-    store().isServerLocked = await this.getServerLockStatus() ?? false
+    store().isServerLocked = (await this.getServerLockStatus()) ?? false
     const inventories = await this.getAllInventoriesFromDB()
     inventories.forEach((inventory) => this.setInventoryInStore(inventory))
     store().inventoryUuids = inventories.map((inventory) => inventory.uuid).sort()
@@ -333,7 +333,8 @@ export class DatabaseHandler {
   }
 
   public async getServerLockStatus() {
-    return (await this.get<{ isLocked: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isLocked']))?.isLocked
+    return (await this.get<{ isLocked: boolean }>([DatabaseHandler.ACCOUNT_END_POINT, 'isLocked']))
+      ?.isLocked
   }
 
   public changeServerLockStatus() {

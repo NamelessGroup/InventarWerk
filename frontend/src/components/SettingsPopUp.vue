@@ -16,12 +16,11 @@
           class="rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
         />
       </div>
-      
-      <div v-if="store().userIsDm"  class="space-x-2 md:col-span-2">
+
+      <div v-if="store().userIsDm" class="space-x-2 md:col-span-2">
         <input id="serverLock" v-model="serverLock" type="checkbox" />
         <label for="serverLock">Prohibit new users from joining</label>
       </div>
-      
     </div>
   </PopUp>
 </template>
