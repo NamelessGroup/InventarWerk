@@ -11,6 +11,7 @@ mod last_changes_map_macro;
 
 use controller::account_controller::AccountController;
 use controller::item_preset_controller::ItemPresetController;
+use controller::lock_controller::LockController;
 use diesel::RunQueryDsl;
 use openssl::rand::rand_bytes;
 use rocket::fs::{FileServer, relative};
@@ -38,7 +39,7 @@ async fn main() {
     let inv_cont = InventoryController::new(dbconn.clone());
     let acc_con = AccountController::new(dbconn.clone());
     let ip_con = ItemPresetController::new(dbconn.clone());
-
+    let loc_con = LockController::new(acc_con.has_users().unwrap_or(false));
     let mut secret_key = [0u8;32];
     let _ = rand_bytes(&mut secret_key);
 
@@ -50,6 +51,7 @@ async fn main() {
         .manage(inv_cont)
         .manage(acc_con)
         .manage(ip_con)
+        .manage(loc_con)
         .mount("/", FileServer::from(relative!("static")))
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())
