@@ -1,5 +1,8 @@
+use serde::{Deserialize, Serialize};
 use time::PrimitiveDateTime;
 
+
+#[derive(Serialize, Deserialize)]
 pub struct User {
     pub uuid: String,
     pub name: String,
@@ -8,6 +11,7 @@ pub struct User {
     pub creation: Option<PrimitiveDateTime>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct FullInventory {
     pub uuid: String,
     pub owner_uuid: String,
@@ -18,6 +22,7 @@ pub struct FullInventory {
     pub creation: Option<PrimitiveDateTime>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct RawInventory {
     pub uuid: String,
     pub owner_uuid: String,
@@ -26,18 +31,21 @@ pub struct RawInventory {
     pub creation: Option<PrimitiveDateTime>
 }
 
-pub struct InventoryReader {
+
+#[derive(Serialize, Deserialize)]pub struct InventoryReader {
     pub user_uuid: String,
     pub inventory_uuid: String,
     pub creation: Option<PrimitiveDateTime>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct InventoryWriter {
     pub user_uuid: String,
     pub inventory_uuid: String,
     pub creation: Option<PrimitiveDateTime>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct ItemPreset {
     pub uuid: String,
     pub name: String,
@@ -49,6 +57,7 @@ pub struct ItemPreset {
     pub creation: Option<PrimitiveDateTime>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct InventoryItem {
     pub inventory_uuid: String,
     pub item_preset_uuid: String,

@@ -8,9 +8,10 @@ use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
 use rocket::response::status::Custom;
 
-use crate::controller::account_controller::AccountController;
-use crate::controller::CStat;
-use crate::model::User;
+use inv_rep::repos::user_repository::UserRepository;
+use inv_rep::model::User;
+
+use anyhow::Result;
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
@@ -62,9 +63,9 @@ pub struct AccountUUIDParams {
 }
 
 #[get("/account/get")]
-pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<AccountResponse>, CStat> {
-    let all_users =  acc_con.get_all_users()?;
+pub async fn get_accounts(_user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
+ -> Result<Json<AccountResponse>> {
+    let all_users =  usr_rep.get_all_users().await?;
     Ok(Json(
         AccountResponse {
             accounts: all_users
@@ -73,8 +74,8 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<Accou
 }
 
 #[get("/account/isDm?<params..>")]
-pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<DMResponse>, CStat> {
+pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
+ -> Result<Json<DMResponse>> {
     let user_is_dm =  acc_con.user_is_dm(params.account_uuid)?;
     Ok(Json(DMResponse {
         isDm: user_is_dm
@@ -94,7 +95,7 @@ pub async fn login() -> Redirect {
 }
 
 #[get("/account/oauth/callback?<params..>")]
-pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>)
+pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &State<UserRepository>)
  -> Result<Redirect, Custom<String>> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");

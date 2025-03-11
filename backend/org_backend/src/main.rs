@@ -1,42 +1,31 @@
 #[macro_use] extern crate rocket;
 
 mod routers;
-mod controller;
-mod dbmod;
-mod model;
-mod schema;
-mod frontend_model;
 mod last_changes_map_macro;
 
-use controller::account_controller::AccountController;
-use controller::item_preset_controller::ItemPresetController;
-use diesel::RunQueryDsl;
 use openssl::rand::rand_bytes;
 use rocket::fs::{FileServer, relative};
 use dotenvy::dotenv;
 use std::env;
-use controller::inventory_controller::InventoryController;
-use dbmod::DbPool;
-use dbmod::establish_connection;
 use rocket::config::Config;
+use inv_rep::DbPool;
+use inv_rep::repos::inventory_repository::InventoryRepository;
+use inv_rep::repos::item_preset_repository::ItemPresetRepository;
+use inv_rep::repos::user_repository::UserRepository;
+use inv_rep::create_pg_pool;
 
 #[rocket::main]
 async fn main() {
     dotenv().ok();
     
-    let dbconn:DbPool = establish_connection();
-
-    let mut conn = dbconn.get().expect("Failed to get connection from pool");
+    let dbconn:DbPool = create_pg_pool(env::var("DATABASE_URL")).expect("Couldn't connect to database");
 
 
-    
-    diesel::sql_query("PRAGMA journal_mode = WAL;")
-        .execute(&mut conn)
-        .expect("Failed to set journal mode");
 
-    let inv_cont = InventoryController::new(dbconn.clone());
-    let acc_con = AccountController::new(dbconn.clone());
-    let ip_con = ItemPresetController::new(dbconn.clone());
+
+    let inv_rep = InventoryRepository::new(dbconn.clone());
+    let acc_rep = UserRepository::new(dbconn.clone());
+    let ipr_rep = ItemPresetRepository::new(dbconn.clone());
 
     let mut secret_key = [0u8;32];
     let _ = rand_bytes(&mut secret_key);
@@ -46,9 +35,9 @@ async fn main() {
 
     let mut r = rocket::build();
     r = r.configure(config)
-        .manage(inv_cont)
-        .manage(acc_con)
-        .manage(ip_con)
+        .manage(inv_rep)
+        .manage(acc_rep)
+        .manage(ipr_rep)
         .mount("/", FileServer::from(relative!("static")))
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())

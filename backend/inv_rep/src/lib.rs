@@ -1,18 +1,14 @@
 pub mod model;
 pub mod repos;
+use anyhow::Result;
 
+use sqlx::PgPool;
+use tokio::runtime::Runtime;
 
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+pub type DbPool = PgPool;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub fn create_pg_pool(database_url: String) -> Result<PgPool> {
+    let runtime = Runtime::new()?;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    Ok(runtime.block_on(PgPool::connect(&database_url))?)
 }

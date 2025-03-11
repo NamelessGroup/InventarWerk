@@ -3,7 +3,7 @@ use uuid::Uuid;
 use crate::model::User;
 use anyhow::Result;
 
-struct UserRepository {
+pub struct UserRepository {
     pool: PgPool,
 }
 
@@ -30,6 +30,14 @@ impl UserRepository {
             .await?;
         
         Ok(user)
+    }
+
+    pub async fn get_all_users(&self) -> Result<Vec<User>> {
+        let users = sqlx::query_as!(User, "SELECT * FROM \"user\"")
+            .fetch_all(&self.pool)
+            .await?;
+        
+        Ok(users)
     }
 
     pub async fn delete_user(&self, uuid: &str) -> Result<u64> {
