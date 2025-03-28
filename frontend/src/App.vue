@@ -60,7 +60,7 @@
       </PopUp>
       <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
         <InventoryContainer
-          v-for="inventory of inventories"
+          v-for="inventory in inventories"
           :key="inventory.uuid"
           :inventory="inventory"
         />
