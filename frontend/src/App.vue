@@ -4,12 +4,18 @@
       <div class="flex h-12 w-full items-center space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
         <img src="./assets/logo.png" class="h-10" />
         <div class="flex-1"></div>
-        <div class="flex-1 hidden md:flex items-center justify-center max-w-96 px-1 py-1 rounded border border-amber-300 bg-fuchsia-900 gap-x-2">
+        <div
+          class="hidden max-w-96 flex-1 items-center justify-center gap-x-2 rounded border border-amber-300 bg-fuchsia-900 px-1 py-1 md:flex"
+        >
           <FontAwesomeIcon :icon="faSearch" />
-          <input v-model="searchString" class="outline-none flex-1 bg-transparent" placeholder="Search for inventories" >
+          <input
+            v-model="searchString"
+            class="flex-1 bg-transparent outline-none"
+            placeholder="Search for inventories"
+          />
         </div>
         <div class="flex-1"></div>
-        <div class="flex flex-1 md:flex-initial items-center justify-end space-x-5">
+        <div class="flex flex-1 items-center justify-end space-x-5 md:flex-initial">
           <button
             v-if="store().userIsDm"
             class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
