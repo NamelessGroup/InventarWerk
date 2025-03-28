@@ -22,7 +22,9 @@
       </div>
 
       <div class="flex-1"><!-- Placeholder --></div>
-      <div class="ml-auto text-xs text-fuchsia-300">
+      <div class="ml-auto flex items-center gap-x-1 text-xs text-fuchsia-300">
+        DM:
+        <DiscordImage class="h-6" :user="dmAccount" />
         Hosted commit:
         <a
           class="underline"
@@ -40,6 +42,7 @@ import PopUp from './PopUp.vue'
 import { Settings } from '@/store/Settings'
 import { store } from '@/store'
 import { version } from '@/utils/version'
+import DiscordImage from './DiscordImage.vue'
 
 const emit = defineEmits(['close'])
 
@@ -56,5 +59,17 @@ const fetchTime = computed({
 const serverLock = computed({
   get: () => store().isServerLocked,
   set: () => store().toggleLock()
+})
+
+const dmAccount = computed(() => {
+  const dm = store().accounts.filter((a) => a.dm)
+  return dm.length > 0
+    ? dm[0]
+    : {
+        uuid: '123',
+        name: 'DM',
+        avatar: null,
+        dm: true
+      }
 })
 </script>
