@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute top-0 right-0 bottom-0 left-0 z-30 flex items-center justify-center p-4 backdrop-blur-[1px]"
+    class="fixed bottom-0 left-0 right-0 top-0 z-30 flex items-center justify-center p-4 backdrop-blur-[1px]"
     @click="
       ($event) => {
         $event.stopPropagation()

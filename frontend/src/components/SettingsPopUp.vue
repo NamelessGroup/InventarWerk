@@ -16,6 +16,11 @@
           class="rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
         />
       </div>
+      <div v-if="store().userIsDm" class="space-x-2 md:col-span-2">
+        <input id="serverLock" v-model="serverLock" type="checkbox" />
+        <label for="serverLock">Prohibit new users from joining</label>
+      </div>
+
       <div class="flex-1"><!-- Placeholder --></div>
       <div class="ml-auto text-xs text-fuchsia-300">
         Hosted commit:
@@ -33,6 +38,7 @@
 import { computed } from 'vue'
 import PopUp from './PopUp.vue'
 import { Settings } from '@/store/Settings'
+import { store } from '@/store'
 import { version } from '@/utils/version'
 
 const emit = defineEmits(['close'])
@@ -45,5 +51,10 @@ const simplifyGold = computed({
 const fetchTime = computed({
   get: () => Settings.getInstance().timeBetweenFetches,
   set: (value: number) => (Settings.getInstance().timeBetweenFetches = value)
+})
+
+const serverLock = computed({
+  get: () => store().isServerLocked,
+  set: () => store().toggleLock()
 })
 </script>

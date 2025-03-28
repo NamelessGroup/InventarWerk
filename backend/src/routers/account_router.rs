@@ -9,7 +9,8 @@ use reqwest::Client;
 use rocket::response::status::Custom;
 
 use crate::controller::account_controller::AccountController;
-use crate::controller::CStat;
+use crate::controller::lock_controller::LockController;
+use crate::controller::{new_cstat_from_ref, CStat};
 use crate::model::User;
 
 #[allow(non_snake_case)]
@@ -94,7 +95,7 @@ pub async fn login() -> Redirect {
 }
 
 #[get("/account/oauth/callback?<params..>")]
-pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>)
+pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>, loc_con: &State<LockController>)
  -> Result<Redirect, Custom<String>> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");
@@ -150,6 +151,7 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
 
     let has_user = acc_con.has_user(user_response.id.clone()).unwrap_or_default();
     if !has_user {
+        if loc_con.is_locked() {return Err(new_cstat_from_ref(Status::Forbidden, "This Instance does not take new members."))}
         let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone(),
             user_response.avatar.clone().unwrap_or("".to_string()));
     } else {
@@ -192,4 +194,23 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Status {
     } else {
         Status::BadRequest
     }
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize)]
+pub struct IsLockedResponse {
+    isLocked: bool
+}
+
+#[get("/account/isLocked")]
+pub async fn is_locked( loc_con: &State<LockController>) -> Json<IsLockedResponse> {
+    Json(IsLockedResponse {
+        isLocked: loc_con.is_locked()
+    })
+}
+
+#[patch("/account/toggleLock")]
+pub async fn toggle_lock(loc_con: &State<LockController>) -> Status {
+    loc_con.toggle_lock();
+    Status::NoContent
 }
