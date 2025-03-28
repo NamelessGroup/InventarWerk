@@ -1,9 +1,9 @@
 <template>
-  <PopUp class="!m-0" @close="emit('close')">
+  <PopUp class="m-0!" @close="emit('close')">
     <div class="space-y-2">
       <h2 class="bold text-xl">Share Inventory</h2>
       <button
-        class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none"
+        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 outline-hidden"
         @click="makePublic"
       >
         Make public

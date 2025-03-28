@@ -13,7 +13,7 @@
           id="fetchTime"
           v-model="fetchTime"
           type="number"
-          class="rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+          class="rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
         />
       </div>
       <div v-if="store().userIsDm" class="space-x-2 md:col-span-2">

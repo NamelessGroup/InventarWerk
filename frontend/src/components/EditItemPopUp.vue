@@ -17,7 +17,10 @@
         <label for="edit-item-description">Description:</label>
         <textarea id="edit-item-description" v-model="descriptionRef" class="min-h-60"></textarea>
       </div>
-      <button class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1" @click="saveItem">
+      <button
+        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1"
+        @click="saveItem"
+      >
         Save
       </button>
       <div class="text-red-500">{{ errorText }}</div>
@@ -70,8 +73,10 @@ async function saveItem() {
 </script>
 
 <style scoped lang="postcss">
+@reference "../style.css";
+
 input,
 textarea {
-  @apply rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none;
+  @apply rounded-sm border border-amber-300 bg-fuchsia-900 p-1 outline-hidden;
 }
 </style>

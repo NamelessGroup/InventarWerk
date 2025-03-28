@@ -6,24 +6,27 @@
         <div class="flex flex-1 items-center justify-end space-x-5">
           <button
             v-if="store().userIsDm"
-            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
             @click="loadItemFile"
           >
             <FontAwesomeIcon :icon="faUpload" />
           </button>
           <button
-            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
             @click="showManagePresets = true"
           >
             <FontAwesomeIcon :icon="faList" />
           </button>
           <button
-            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
             @click="showSettings = true"
           >
             <FontAwesomeIcon :icon="faGears" />
           </button>
-          <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="logOut">
+          <button
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+            @click="logOut"
+          >
             <FontAwesomeIcon :icon="faRightFromBracket" />
           </button>
         </div>
@@ -35,10 +38,10 @@
             id="name"
             v-model="nameFieldContent"
             type="text"
-            class="row-start-1 rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+            class="row-start-1 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
           />
           <button
-            class="col-span-2 row-start-2 rounded border border-amber-300 bg-fuchsia-900 p-1"
+            class="col-span-2 row-start-2 rounded-sm border border-amber-300 bg-fuchsia-900 p-1"
             @click="submitAddInventory"
           >
             Submit
@@ -63,31 +66,31 @@
 
     <button
       v-if="isLoggedIn"
-      class="fixed bottom-2 right-2 z-10 h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+      class="fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
       @click="showCreation = true"
     >
       <FontAwesomeIcon :icon="faPlus" />
     </button>
     <a
       :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
-      class="fixed bottom-1 left-1 hidden text-xs text-fuchsia-300 text-opacity-30 underline md:block"
+      class="text-opacity-30 fixed bottom-1 left-1 hidden text-xs text-fuchsia-300 underline md:block"
       >{{ version }}</a
     >
 
     <div
       v-if="!acceptedCookies"
-      class="absolute bottom-0 left-0 right-0 top-0 z-40 bg-slate-900 p-10"
+      class="absolute top-0 right-0 bottom-0 left-0 z-40 bg-slate-900 p-10"
     >
       <div class="flex flex-col items-center space-y-2">
         <p>This website uses cookies.<br />No you can not reject.</p>
         <button
-          class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
+          class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
           @click="acceptCookies"
         >
           Accept Cookies
         </button>
         <button
-          class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
+          class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
           @click="acceptCookies"
         >
           Also Accept Cookies
