@@ -22,7 +22,7 @@
       </div>
 
       <div class="flex-1"><!-- Placeholder --></div>
-      <div class="ml-auto flex gap-x-1 text-xs items-center text-fuchsia-300">
+      <div class="ml-auto flex items-center gap-x-1 text-xs text-fuchsia-300">
         DM:
         <DiscordImage class="h-6" :user="dmAccount" />
         Hosted commit:
@@ -63,11 +63,13 @@ const serverLock = computed({
 
 const dmAccount = computed(() => {
   const dm = store().accounts.filter((a) => a.dm)
-  return dm.length > 0 ? dm[0] : {
-    uuid: '123',
-    name: 'DM',
-    avatar: null,
-    dm: true
-  }
+  return dm.length > 0
+    ? dm[0]
+    : {
+        uuid: '123',
+        name: 'DM',
+        avatar: null,
+        dm: true
+      }
 })
 </script>
