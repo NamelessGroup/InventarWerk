@@ -176,6 +176,6 @@ interface MyCompletionItem extends AutocompleteItem {
 }
 
 .autocomplete {
-  @apply bottom-0 rounded-b;
+  @apply rounded-b;
 }
 </style>
