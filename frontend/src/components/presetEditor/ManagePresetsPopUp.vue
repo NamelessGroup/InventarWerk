@@ -5,7 +5,7 @@
         v-model="searchFieldContent"
         type="text"
         placeholder="Search"
-        class="w-full rounded border border-amber-300 bg-fuchsia-950 p-1 outline-none"
+        class="w-full rounded-sm border border-amber-300 bg-fuchsia-950 p-1 outline-hidden"
       />
       <PresetGroup
         v-for="group in allGroups"
