@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-1 rounded bg-fuchsia-950 p-1">
+  <div class="space-y-1 rounded-sm bg-fuchsia-950 p-1">
     <h1 @click="collapsed = !collapsed">
       <FontAwesomeIcon :icon="collapsed ? faChevronRight : faChevronDown" class="h-4 w-4" />
       {{ group }}
