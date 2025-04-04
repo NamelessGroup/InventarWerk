@@ -6,7 +6,6 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
 use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
-use rocket::response::status::Custom;
 
 use inv_rep::repos::user_repository::UserRepository;
 use inv_rep::model::User;

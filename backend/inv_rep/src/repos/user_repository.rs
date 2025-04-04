@@ -1,6 +1,6 @@
 use sqlx::PgPool;
 use crate::{model::User, unwrap};
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
 pub struct UserRepository {
     pool: PgPool,
