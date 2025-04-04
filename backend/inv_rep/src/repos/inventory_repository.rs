@@ -1,7 +1,7 @@
 use sqlx::{PgPool, Error};
 use uuid::Uuid;
 use crate::model::{FullInventory, RawInventory};
-
+use anyhow::{self, Result};
 pub struct InventoryRepository {
     pool: PgPool
 }
@@ -31,7 +31,7 @@ impl InventoryRepository {
         Ok(writers)
     }
 
-    pub async fn get_full_inventory(&self, uuid: &str) -> Result<Option<FullInventory>, Error> {
+    pub async fn get_full_inventory(&self, uuid: &str) -> Result<FullInventory> {
         let inventory = sqlx::query!(
             "SELECT uuid, owner_uuid, money, name, creation FROM inventory WHERE uuid = $1",
             uuid
@@ -42,7 +42,7 @@ impl InventoryRepository {
         if let Some(inv) = inventory {
             let readers = self.get_readers(&inv.uuid).await?;
             let writers = self.get_writers(&inv.uuid).await?;
-            Ok(Some(FullInventory {
+            Ok(FullInventory {
                 uuid: inv.uuid,
                 owner_uuid: inv.owner_uuid,
                 money: inv.money,
@@ -50,10 +50,36 @@ impl InventoryRepository {
                 reader: readers,
                 writer: writers,
                 creation: inv.creation,
-            }))
+            })
         } else {
-            Ok(None)
+            Err(anyhow::anyhow!("Empty Option"))
         }
+    }
+
+    pub async fn get_all_inventories(&self) -> Result<Vec<FullInventory>, Error> {
+        let inventories = sqlx::query!(
+            "SELECT uuid, owner_uuid, money, name, creation FROM inventory"
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut full_inventories = Vec::new();
+
+        for inv in inventories {
+            let readers = self.get_readers(&inv.uuid).await?;
+            let writers = self.get_writers(&inv.uuid).await?;
+            full_inventories.push(FullInventory {
+                uuid: inv.uuid,
+                owner_uuid: inv.owner_uuid,
+                money: inv.money,
+                name: inv.name,
+                reader: readers,
+                writer: writers,
+                creation: inv.creation,
+            });
+        }
+
+        Ok(full_inventories)
     }
 
     pub async fn create_inventory(&self, owner_uuid: &str, money: i32, name: &str) -> Result<RawInventory, Error> {
@@ -67,12 +93,12 @@ impl InventoryRepository {
         Ok(rec)
     }
 
-    pub async fn get_raw_inventory(&self, uuid: &str) -> Result<Option<RawInventory>, Error> {
+    pub async fn get_raw_inventory(&self, uuid: &str) -> Result<RawInventory, Error> {
         let inventory = sqlx::query_as!(RawInventory,
             "SELECT * FROM inventory WHERE uuid = $1",
             uuid
         )
-        .fetch_optional(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
         Ok(inventory)
     }

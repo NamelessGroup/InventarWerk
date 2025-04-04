@@ -17,6 +17,7 @@ rocket_cors = "0.6.0"
 chrono = { version="0.4.39", features=["serde"]}
 inv_rep = {path = "../inv_rep"}
 rocket-errors = "0.1.0"
+anyhow = { version="1.0.96"}
 
 [features]
 dev = []
