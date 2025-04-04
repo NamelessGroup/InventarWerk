@@ -36,24 +36,19 @@ impl InventoryRepository {
             "SELECT uuid, owner_uuid, money, name, creation FROM inventory WHERE uuid = $1",
             uuid
         )
-        .fetch_optional(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
-        if let Some(inv) = inventory {
-            let readers = self.get_readers(&inv.uuid).await?;
-            let writers = self.get_writers(&inv.uuid).await?;
-            Ok(FullInventory {
-                uuid: inv.uuid,
-                owner_uuid: inv.owner_uuid,
-                money: inv.money,
-                name: inv.name,
-                reader: readers,
-                writer: writers,
-                creation: inv.creation,
-            })
-        } else {
-            Err(anyhow::anyhow!("Empty Option"))
-        }
+        let readers = self.get_readers(&inventory.uuid).await?;
+        let writers = self.get_writers(&inventory.uuid).await?;
+        Ok(FullInventory {
+            uuid: inventory.uuid,
+            owner_uuid: inventory.owner_uuid,
+            money: inventory.money,
+            name: inventory.name,
+            reader: readers,
+            writer: writers,
+            creation: inventory.creation,})
     }
 
     pub async fn get_all_inventories(&self) -> Result<Vec<FullInventory>, Error> {
@@ -103,10 +98,15 @@ impl InventoryRepository {
         Ok(inventory)
     }
 
-    pub async fn update_inventory_money(&self, uuid: &str, money: i32) -> Result<(), Error> {
-        sqlx::query!("UPDATE inventory SET money = $1 WHERE uuid = $2", money, uuid)
-            .execute(&self.pool)
-            .await?;
+    pub async fn update_inventory(&self, uuid: &str, money: Option<i32>, name: Option<&str>) -> Result<(), Error> {
+        sqlx::query!(
+            "UPDATE inventory SET money = COALESCE($1, money), name = COALESCE($2, name) WHERE uuid = $3",
+            money,
+            name,
+            uuid
+        )
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 
@@ -117,28 +117,28 @@ impl InventoryRepository {
         Ok(())
     }
 
-    pub async fn add_reader(&self, user_uuid: &str, inventory_uuid: &str) -> Result<(), Error> {
+    pub async fn add_reader(&self, inventory_uuid: &str, user_uuid: &str) -> Result<(), Error> {
         sqlx::query!("INSERT INTO inventory_reader (user_uuid, inventory_uuid) VALUES ($1, $2)", user_uuid, inventory_uuid)
             .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn remove_reader(&self, user_uuid: &str, inventory_uuid: &str) -> Result<(), Error> {
+    pub async fn remove_reader(&self, inventory_uuid: &str, user_uuid: &str) -> Result<(), Error> {
         sqlx::query!("DELETE FROM inventory_reader WHERE user_uuid = $1 AND inventory_uuid = $2", user_uuid, inventory_uuid)
             .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn add_writer(&self, user_uuid: &str, inventory_uuid: &str) -> Result<(), Error> {
+    pub async fn add_writer(&self, inventory_uuid: &str, user_uuid: &str) -> Result<(), Error> {
         sqlx::query!("INSERT INTO inventory_writer (user_uuid, inventory_uuid) VALUES ($1, $2)", user_uuid, inventory_uuid)
             .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn remove_writer(&self, user_uuid: &str, inventory_uuid: &str) -> Result<(), Error> {
+    pub async fn remove_writer(&self, inventory_uuid: &str, user_uuid: &str) -> Result<(), Error> {
         sqlx::query!("DELETE FROM inventory_writer WHERE user_uuid = $1 AND inventory_uuid = $2", user_uuid, inventory_uuid)
             .execute(&self.pool)
             .await?;

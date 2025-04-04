@@ -1,5 +1,7 @@
 use sqlx::{PgPool, Error};
 use crate::model::ItemPreset;
+use anyhow::Result;
+use uuid::Uuid;
 
 pub struct ItemPresetRepository {
     pool: PgPool,
@@ -8,6 +10,17 @@ pub struct ItemPresetRepository {
 impl ItemPresetRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
+    }
+
+    pub async fn create_from_name(&self, name: &str, owner: &str) -> Result<String> {
+        let id = Uuid::new_v4().to_string();
+        sqlx::query!(
+            "INSERT INTO item_preset (uuid, name, creator) VALUES ($1, $2, $3)",
+            id, name, owner
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(id)
     }
 
     pub async fn create(&self, item: &ItemPreset) -> Result<(), Error> {
@@ -21,12 +34,12 @@ impl ItemPresetRepository {
         Ok(())
     }
 
-    pub async fn get_by_uuid(&self, uuid: &str) -> Result<Option<ItemPreset>, Error> {
+    pub async fn get_by_uuid(&self, uuid: &str) -> Result<ItemPreset, Error> {
         let item = sqlx::query_as!(ItemPreset,
             "SELECT * FROM item_preset WHERE uuid = $1",
             uuid
         )
-        .fetch_optional(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
         Ok(item)
     }

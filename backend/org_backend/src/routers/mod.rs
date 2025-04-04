@@ -8,6 +8,8 @@ pub mod account_router;
 pub mod inventory_router;
 pub mod item_preset_router;
 pub mod last_changes_router;
+mod router_utility;
+
 use inventory_router::*;
 use account_router::*;
 use item_preset_router::*;
@@ -49,3 +51,4 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
         }
     }
 }
+

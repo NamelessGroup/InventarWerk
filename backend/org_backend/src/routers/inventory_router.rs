@@ -1,11 +1,14 @@
-use inv_rep::model::FullInventory;
+use inv_rep::model::{FullInventory, ItemPreset};
 use inv_rep::repos::inventory_repository::InventoryRepository;
+use inv_rep::repos::item_preset_repository::ItemPresetRepository;
 use inv_rep::repos::user_repository::UserRepository;
 use rocket::http::Status;
 use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
 use anyhow::anyhow;
-use rocket_errors::anyhow::Result;
+use rocket_errors::anyhow::{AnyhowError, Result};
+
+use super::router_utility::{user_has_read_access_to_inventory, user_has_write_access_to_inventory, user_is_creator_of_inventory, user_is_dm, ACCESS_DENIAL_MESSAGE};
 
 #[derive(FromForm)]
 pub struct InventoryUUIDParams {
@@ -17,10 +20,14 @@ pub struct GetAllInventoriesReturn{
     inventories: Vec<FullInventory>
 }
 
+fn create_error(msg: &str) -> AnyhowError {
+    anyhow!(msg.to_string()).into()
+}
+
 /// Handles the `/inventory/all` route, returns all inventories in the InventoryReturn form
 #[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
-        inv_rep: &State<InventoryRepository>, usr_rep: &State<UserRepository>) -> Result<Json<GetAllInventoriesReturn>>  {
+        inv_rep: &State<InventoryRepository>) -> Result<Json<GetAllInventoriesReturn>>  {
     let allinvs = inv_rep.get_all_inventories().await?
         .into_iter()
         .filter(|i| i.reader.contains(&user.user_id))
@@ -34,7 +41,7 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>) -> Result<Json<FullInventory>> {
     if !inv_rep.get_readers(&params.inventory_uuid).await?.contains(&user.user_id) {
-        return Err(anyhow!("No access"))
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
     Ok(Json(inv_rep.get_full_inventory(&params.inventory_uuid).await?))
 }
@@ -60,11 +67,11 @@ pub struct InventoryAddItemByPresetParams {
 
 #[put("/inventory/item/addPreset?<params..>")]
 pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser,
-        inv_rep: &State<InventoryRepository>, usr_rep: &State<UserRepository>) -> Result<Status> {
-    if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id)? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
+        inv_rep: &State<InventoryRepository>) -> Result<Status> {
+    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
-    inv_con.add_preset_to_inventory(params.inventory_uuid, params.preset_uuid, params.amount)?;
+    inv_rep.add_inventory_item(&params.inventory_uuid, &params.preset_uuid, "", params.amount, 0, "").await?;
     Ok(Status::NoContent)
 }
 
@@ -77,11 +84,13 @@ pub struct InventoryAddItemByNameParams {
 
 #[put("/inventory/item/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(params:InventoryAddItemByNameParams,  user: super::AuthenticatedUser,
-        inv_rep: &State<InventoryRepository>, usr_rep: &State<UserRepository>) -> Result<Json<ItemPreset>> {
-    if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
+        inv_rep: &State<InventoryRepository>, ipr_rep: &State<ItemPresetRepository>) -> Result<Json<ItemPreset>> {
+    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
-    Ok(Json(inv_con.add_new_item_to_inventory(params.inventory_uuid, params.name, params.amount, user.user_id)?))
+    let id = ipr_rep.create_from_name(&params.name, &user.user_id).await?;
+    inv_rep.add_inventory_item(&params.inventory_uuid, &id, "", params.amount, 0, "").await?;
+    Ok(Json(ipr_rep.get_by_uuid(&id).await?))
     
 }
 
@@ -96,11 +105,18 @@ pub struct ItemEditParams {
 
 #[patch("/inventory/item/edit?<params..>")]
 pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
-        usr_rep: &State<UserRepository>) -> Result<Status> {
-    if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
+        ) -> Result<Status> {
+    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
-    inv_con.edit_inventory_item(params.inventory_uuid, params.item_preset_uuid, params.amount, params.sorting, params.inventory_item_note)?;
+    inv_rep.update_inventory_item(
+        &params.inventory_uuid,
+        &params.item_preset_uuid,
+        None,
+        params.amount,
+        params.sorting,
+        params.inventory_item_note.as_deref(),
+    ).await?;
     Ok(Status::NoContent)
 }
 
@@ -114,10 +130,10 @@ pub struct NoteAddParams {
 #[patch("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
         usr_rep: &State<UserRepository>) -> Result<Status> {
-    if !acc_con.user_is_dm(user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
+    if user_is_dm(usr_rep.inner(), user.user_id.clone()).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
-    inv_con.edit_item_dm_note(params.inventory_uuid, params.item_preset_uuid, params.note)?;
+    inv_rep.update_inventory_item(&params.inventory_uuid, &params.item_preset_uuid, Some(&params.note), None, None, None);
     Ok(Status::NoContent)
 }
 
@@ -129,11 +145,11 @@ pub struct ItemDeleteParams {
 
 #[delete("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
-        inv_rep: &State<InventoryRepository>, usr_rep: &State<UserRepository>) -> Result<Status> {
-    if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
+        inv_rep: &State<InventoryRepository>) -> Result<Status> {
+    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
-    inv_con.delete_item_from_inventory(params.inventory_uuid, params.item_preset_uuid)?;
+    inv_rep.remove_inventory_item(&params.inventory_uuid, &params.item_preset_uuid).await?;
     Ok(Status::NoContent)
 }
 
@@ -145,12 +161,12 @@ pub struct InventoryEditParams {
 }
 
 #[patch("/inventory/edit?<params..>")]
-pub async fn modify_money(params: InventoryEditParams,  user: super::AuthenticatedUser,
-        inv_rep: &State<InventoryRepository>, usr_rep: &State<UserRepository>) -> Result<Status> {
-    if !acc_con.user_has_write_access_to_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"))
+pub async fn edit_inventory(params: InventoryEditParams,  user: super::AuthenticatedUser,
+        inv_rep: &State<InventoryRepository>) -> Result<Status> {
+    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
-    inv_con.edit_inventory(params.inventory_uuid, params.amount, params.name)?;
+    inv_rep.update_inventory(&params.inventory_uuid, params.amount, params.name.as_deref()).await?;
     Ok(Status::NoContent)
 }
 
@@ -164,28 +180,28 @@ pub struct InventoryShareParams {
 #[patch("/inventory/addShare?<params..>")]
 pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>, usr_rep: &State<UserRepository>) -> Result<Status> {
-    if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
+    if user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
     let reader = if params.reader_uuid == None && params.writer_uuid != None &&
-        !acc_con.user_has_read_access_to_inventory(params.inventory_uuid.clone(), params.writer_uuid.clone().unwrap())?
+        user_has_read_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), params.writer_uuid.clone().unwrap()).await?
         {params.writer_uuid.clone()} else {params.reader_uuid};
     let writer = params.writer_uuid;
     if reader == None && writer == None {
-        let users = (acc_con.get_all_users()?).into_iter().map(|x| x.uuid.clone());
-        let current_readers = inv_con.get_readers_for_inventory(params.inventory_uuid.clone())?;
+        let users = (usr_rep.get_all_users().await?).into_iter().map(|x| x.uuid.clone());
+        let current_readers = inv_rep.get_readers(&params.inventory_uuid).await?;
         for reader in users {
             if current_readers.contains(&reader) {
                 continue;
             }
-            inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
+            inv_rep.add_reader(&params.inventory_uuid, &reader).await?;
         }
     }
     if let Some(reader) = reader {
-        inv_con.add_reader_to_inventory(params.inventory_uuid.clone(), reader)?;
+        inv_rep.add_reader(&params.inventory_uuid, &reader).await?;
     }
     if let Some(writer) = writer {
-        inv_con.add_writer_to_inventory(params.inventory_uuid.clone(), writer)?;
+        inv_rep.add_writer(&params.inventory_uuid, &writer).await?;
     }
     Ok(Status::NoContent)
 }
@@ -196,16 +212,16 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
     let reader = params.reader_uuid;
     let writer = params.writer_uuid;
     let some_own_user = Some(user.user_id.clone());
-    if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? &&
+    if user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? &&
      reader.clone() != some_own_user && writer.clone() != some_own_user {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
 
     if let Some(reader) = reader {
-        inv_con.remove_reader_from_inventory(params.inventory_uuid.clone(), reader)?;
+        inv_rep.remove_reader(&params.inventory_uuid, &reader).await?;
     }
     if let Some(writer) = writer {
-        inv_con.remove_writer_from_inventory(params.inventory_uuid.clone(), writer)?;
+        inv_rep.remove_writer(&params.inventory_uuid, &writer).await?;
     }
     
     Ok(Status::NoContent)
@@ -214,9 +230,9 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
 #[delete("/inventory/delete?<params..>")]
 pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
-    if !inv_con.is_creator_of_inventory(params.inventory_uuid.clone(), user.user_id.clone())? {
-        return Err(new_cstat_from_ref(Status::Forbidden, "Not Authorized"));
+    if user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
-    inv_con.delete_inventory(params.inventory_uuid)?;
+    inv_rep.delete_inventory(&params.inventory_uuid).await?;
     Ok(Status::NoContent)
 }
