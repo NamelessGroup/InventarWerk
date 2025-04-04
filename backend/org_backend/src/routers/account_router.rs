@@ -11,10 +11,12 @@ use rocket::response::status::Custom;
 use inv_rep::repos::user_repository::UserRepository;
 use inv_rep::model::User;
 
-use anyhow::Result;
+use rocket_errors::anyhow::Result;
+
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct DMResponse {
     isDm: bool
 }
@@ -76,9 +78,9 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, usr_rep: &State<UserR
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
  -> Result<Json<DMResponse>> {
-    let user_is_dm =  acc_con.user_is_dm(params.account_uuid)?;
+    let user =  usr_rep.get_user(&params.account_uuid).await?;
     Ok(Json(DMResponse {
-        isDm: user_is_dm
+        isDm: (user.dm==1)
     }))
     
 }
@@ -96,7 +98,7 @@ pub async fn login() -> Redirect {
 
 #[get("/account/oauth/callback?<params..>")]
 pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &State<UserRepository>)
- -> Result<Redirect, Custom<String>> {
+ -> Result<Redirect> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");
     let redirect_uri = env::var("DISCORD_REDIRECT_URI").expect("DISCORD_REDIRECT_URI not set");
@@ -116,22 +118,18 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
         .post(token_url)
         .form(&params)
         .send()
-        .await
-        .map_err(|err| {Custom(Status::InternalServerError, err.to_string())})?
+        .await?
         .json::<TokenResponse>()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Conversion to Tokenresponse failed".to_string()))?;
+        .await?;
 
     // Abrufen der Benutzerinformationen mit dem Access Token
     let user_response = client
         .get("https://discord.com/api/users/@me")
         .header("Authorization", format!("Bearer {}", token_response.access_token))
         .send()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Userrequest failed".to_string()))?
+        .await?
         .json::<DiscordUser>()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Conversion to DiscordUser failed".to_string()))?;
+        .await?;
 
     // revoke refresh token
     let revoke_url = "https://discord.com/api/oauth2/token/revoke";
@@ -146,17 +144,17 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
         .post(revoke_url)
         .form(&params)
         .send()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Revoke refresh token failed".to_string()))?;
+        .await?;
 
-    let has_user = acc_con.has_user(user_response.id.clone()).unwrap_or_default();
+    let avatar_unpacked = user_response.avatar.unwrap_or("".to_string());
+    let has_user = usr_rep.user_exists(&user_response.id.clone()).await?;
     if !has_user {
-        let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone(),
-            user_response.avatar.clone().unwrap_or("".to_string()));
+        let _res = usr_rep.create_user(&user_response.id, &user_response.username,
+            &avatar_unpacked);
     } else {
-        let user = acc_con.get_account(user_response.id.clone())?;
-        if user.name != user_response.username || user.avatar != user_response.avatar.clone().unwrap_or_default() {
-            acc_con.update_account(user_response.id.clone(), Some(user_response.username), user_response.avatar)?;
+        let user = usr_rep.get_user(&user_response.id.clone()).await?;
+        if user.name != user_response.username || user.avatar != avatar_unpacked {
+            usr_rep.update_user(&user_response.id, &user_response.username, &avatar_unpacked, user.dm).await?;
         }
     }
     // Speichern eines Cookies als Beispiel
