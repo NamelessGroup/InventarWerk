@@ -1,6 +1,6 @@
 use sqlx::{PgPool, Error};
 use uuid::Uuid;
-use crate::model::{FullInventory, RawInventory};
+use crate::model::{FullInventory, InventoryItem, RawInventory};
 use anyhow::{self, Result};
 pub struct InventoryRepository {
     pool: PgPool
@@ -41,6 +41,7 @@ impl InventoryRepository {
 
         let readers = self.get_readers(&inventory.uuid).await?;
         let writers = self.get_writers(&inventory.uuid).await?;
+        let items = self.get_items_in_inventory(&inventory.uuid).await?;
         Ok(FullInventory {
             uuid: inventory.uuid,
             owner_uuid: inventory.owner_uuid,
@@ -48,10 +49,52 @@ impl InventoryRepository {
             name: inventory.name,
             reader: readers,
             writer: writers,
+            items: items,
             creation: inventory.creation,})
     }
 
-    pub async fn get_all_inventories(&self) -> Result<Vec<FullInventory>, Error> {
+    pub async fn get_user_inventory_ids(&self, user_uuid: &str) -> Result<Vec<String>, Error> {
+        let inventory_ids = sqlx::query!(
+            "SELECT uuid FROM inventory WHERE owner_uuid = $1",
+            user_uuid
+        )
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|record| record.uuid)
+        .collect();
+        Ok(inventory_ids)
+    }
+
+    pub async fn get_inventories_by_reader(&self, user_uuid: &str) -> Result<Vec<String>, Error> {
+        let inventory_ids = sqlx::query!(
+            "SELECT inventory_uuid FROM inventory_reader WHERE user_uuid = $1",
+            user_uuid
+        )
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|record| record.inventory_uuid)
+        .collect();
+
+        Ok(inventory_ids)
+    }
+
+    pub async fn get_inventories_by_writer(&self, user_uuid: &str) -> Result<Vec<String>, Error> {
+        let inventory_ids = sqlx::query!(
+            "SELECT inventory_uuid FROM inventory_writer WHERE user_uuid = $1",
+            user_uuid
+        )
+        .fetch_all(&self.pool)
+        .await?
+        .into_iter()
+        .map(|record| record.inventory_uuid)
+        .collect();
+
+        Ok(inventory_ids)
+    }
+
+    pub async fn get_all_inventories(&self) -> Result<Vec<FullInventory>> {
         let inventories = sqlx::query!(
             "SELECT uuid, owner_uuid, money, name, creation FROM inventory"
         )
@@ -61,17 +104,7 @@ impl InventoryRepository {
         let mut full_inventories = Vec::new();
 
         for inv in inventories {
-            let readers = self.get_readers(&inv.uuid).await?;
-            let writers = self.get_writers(&inv.uuid).await?;
-            full_inventories.push(FullInventory {
-                uuid: inv.uuid,
-                owner_uuid: inv.owner_uuid,
-                money: inv.money,
-                name: inv.name,
-                reader: readers,
-                writer: writers,
-                creation: inv.creation,
-            });
+            full_inventories.push(self.get_full_inventory(&inv.uuid).await?);
         }
 
         Ok(full_inventories)
@@ -167,4 +200,31 @@ impl InventoryRepository {
             .await?;
         Ok(())
     }
+
+    pub async fn item_exists(&self, inventory_uuid: &str, item_preset_uuid: &str) -> Result<bool, Error> {
+        let result = sqlx::query!(
+            "SELECT EXISTS(SELECT 1 FROM inventory_item WHERE inventory_uuid = $1 AND item_preset_uuid = $2) AS exists",
+            inventory_uuid,
+            item_preset_uuid
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(result.exists.unwrap_or(false))
+    }
+
+    pub async fn get_items_in_inventory(&self, inventory_uuid: &str) -> Result<Vec<InventoryItem>, Error> {
+        let items = sqlx::query_as!(
+            InventoryItem,
+            "SELECT inventory_uuid, item_preset_uuid, dm_note, amount, sorting, inventory_item_note, creation 
+             FROM inventory_item 
+             WHERE inventory_uuid = $1",
+            inventory_uuid
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(items)
+    }
+
 }

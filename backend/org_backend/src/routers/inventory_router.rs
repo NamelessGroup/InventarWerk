@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use anyhow::anyhow;
 use rocket_errors::anyhow::{AnyhowError, Result};
 
+use super::create_error;
 use super::router_utility::{user_has_read_access_to_inventory, user_has_write_access_to_inventory, user_is_creator_of_inventory, user_is_dm, ACCESS_DENIAL_MESSAGE};
 
 #[derive(FromForm)]
@@ -20,9 +21,7 @@ pub struct GetAllInventoriesReturn{
     inventories: Vec<FullInventory>
 }
 
-fn create_error(msg: &str) -> AnyhowError {
-    anyhow!(msg.to_string()).into()
-}
+
 
 /// Handles the `/inventory/all` route, returns all inventories in the InventoryReturn form
 #[get("/inventory/all")]

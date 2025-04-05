@@ -4,6 +4,9 @@ use rocket::Request;
 use rocket::http::Status;
 
 
+use anyhow::anyhow;
+use rocket_errors::anyhow::{AnyhowError, Result};
+
 pub mod account_router;
 pub mod inventory_router;
 pub mod item_preset_router;
@@ -17,7 +20,7 @@ use last_changes_router::*;
 
 pub fn get_inventory_routes() -> Vec<Route> {
     routes![get_all_inventories, get_specific_inventory, create_inventory, add_preset_to_inventory, add_new_item_to_inventory,
-        modify_money, add_share_to_inventory, remove_share_from_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
+        edit_inventory, add_share_to_inventory, remove_share_from_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
 }
 
 pub fn get_account_routes() -> Vec<Route> {
@@ -52,3 +55,6 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
     }
 }
 
+fn create_error(msg: &str) -> AnyhowError {
+    anyhow!(msg.to_string()).into()
+}

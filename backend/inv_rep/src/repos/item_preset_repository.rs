@@ -44,10 +44,29 @@ impl ItemPresetRepository {
         Ok(item)
     }
 
-    pub async fn update(&self, item: &ItemPreset) -> Result<(), Error> {
+    pub async fn update_item_preset(
+        &self,
+        uuid: &str,
+        name: Option<&str>,
+        price: Option<i32>,
+        weight: Option<f32>,
+        description: Option<&str>,
+        item_type: Option<&str>,
+    ) -> Result<(), Error> {
         sqlx::query!(
-            "UPDATE item_preset SET name = $1, price = $2, weight = $3, description = $4, creator = $5, item_type = $6 WHERE uuid = $7",
-            item.name, item.price, item.weight, item.description, item.creator, item.item_type, item.uuid
+            "UPDATE item_preset SET 
+                name = COALESCE($1, name), 
+                price = COALESCE($2, price), 
+                weight = COALESCE($3, weight), 
+                description = COALESCE($4, description), 
+                item_type = COALESCE($5, item_type) 
+             WHERE uuid = $6",
+            name,
+            price,
+            weight,
+            description,
+            item_type,
+            uuid
         )
         .execute(&self.pool)
         .await?;
@@ -66,6 +85,21 @@ impl ItemPresetRepository {
             "SELECT * FROM item_preset WHERE creator LIKE 'public%'")
             .fetch_all(&self.pool)
             .await?;
+        Ok(presets)
+    }
+
+    pub async fn get_presets_in_inventory(&self, inventory_uuid: &str) -> Result<Vec<ItemPreset>> {
+        let presets = sqlx::query_as!(
+            ItemPreset,
+            "SELECT ip.uuid, ip.name, ip.price, ip.weight, ip.description, ip.creator, ip.item_type, ip.creation
+             FROM item_preset ip
+             INNER JOIN inventory_item ii ON ip.uuid = ii.item_preset_uuid
+             WHERE ii.inventory_uuid = $1",
+            inventory_uuid
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
         Ok(presets)
     }
 }

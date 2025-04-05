@@ -17,6 +17,7 @@ pub struct FullInventory {
     pub owner_uuid: String,
     pub money: i32,
     pub name: String,
+    pub items: Vec<InventoryItem>,
     pub reader: Vec<String>,
     pub writer: Vec<String>,
     pub creation: Option<PrimitiveDateTime>
@@ -32,7 +33,8 @@ pub struct RawInventory {
 }
 
 
-#[derive(Serialize, Deserialize)]pub struct InventoryReader {
+#[derive(Serialize, Deserialize)]
+pub struct InventoryReader {
     pub user_uuid: String,
     pub inventory_uuid: String,
     pub creation: Option<PrimitiveDateTime>
