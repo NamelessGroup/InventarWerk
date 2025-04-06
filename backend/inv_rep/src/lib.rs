@@ -4,14 +4,11 @@ use anyhow::Result;
 use anyhow::anyhow;
 
 use sqlx::PgPool;
-use tokio::runtime::Runtime;
 
 pub type DbPool = PgPool;
 
-pub fn create_pg_pool(database_url: String) -> Result<PgPool> {
-    let runtime = Runtime::new()?;
-
-    Ok(runtime.block_on(PgPool::connect(&database_url))?)
+pub async fn create_pg_pool(database_url: String) -> Result<PgPool> {
+    Ok(PgPool::connect(&database_url).await?)
 }
 
 pub fn unwrap<T>(r: Option<T>) -> Result<T> {

@@ -18,7 +18,7 @@ use inv_rep::create_pg_pool;
 async fn main() {
     dotenv().ok();
     
-    let dbconn:DbPool = create_pg_pool(env::var("DATABASE_URL").expect("Database url must be set")).expect("Couldn't connect to database");
+    let dbconn:DbPool = create_pg_pool(env::var("DATABASE_URL").expect("Database url must be set")).await.expect("Couldn't connect to database");
 
 
 

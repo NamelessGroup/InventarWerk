@@ -5,8 +5,7 @@ use inv_rep::repos::user_repository::UserRepository;
 use rocket::http::Status;
 use rocket::{form::FromForm, serde::json::Json, State};
 use serde::{Deserialize, Serialize};
-use anyhow::anyhow;
-use rocket_errors::anyhow::{AnyhowError, Result};
+use rocket_errors::anyhow::Result;
 
 use super::create_error;
 use super::router_utility::{user_has_read_access_to_inventory, user_has_write_access_to_inventory, user_is_creator_of_inventory, user_is_dm, ACCESS_DENIAL_MESSAGE};
@@ -132,7 +131,7 @@ pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedU
     if user_is_dm(usr_rep.inner(), user.user_id.clone()).await? {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
-    inv_rep.update_inventory_item(&params.inventory_uuid, &params.item_preset_uuid, Some(&params.note), None, None, None);
+    inv_rep.update_inventory_item(&params.inventory_uuid, &params.item_preset_uuid, Some(&params.note), None, None, None).await?;
     Ok(Status::NoContent)
 }
 

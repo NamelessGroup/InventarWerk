@@ -55,7 +55,7 @@ pub async fn modify_item_preset(params: ItemModifyParams,  user: super::Authenti
 
 #[delete("/itemPreset/delete?<params..>")]
 pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::AuthenticatedUser,
-        ipr_rep: &State<ItemPresetRepository>, inv_rep: &State<InventoryRepository>) -> Result<Status> {
+        ipr_rep: &State<ItemPresetRepository>) -> Result<Status> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
     if preset.creator != user.user_id {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
@@ -118,7 +118,7 @@ pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::Aut
             let res = ipr_rep.create(&preset).await;
             match res {
                 Ok(_res) => break,
-                Err(e) => {
+                Err(_e) => {
                     thread::sleep(Duration::from_secs(1));
                 }
 

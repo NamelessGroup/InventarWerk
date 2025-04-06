@@ -5,7 +5,7 @@ use rocket::http::Status;
 
 
 use anyhow::anyhow;
-use rocket_errors::anyhow::{AnyhowError, Result};
+use rocket_errors::anyhow::AnyhowError;
 
 pub mod account_router;
 pub mod inventory_router;

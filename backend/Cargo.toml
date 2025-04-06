@@ -1,4 +1,5 @@
 [workspace]
 members = [
+  "org_backend",
   "inv_rep",
-  "org_backend"]
+  ]
