@@ -78,4 +78,14 @@ impl UserRepository {
         
         return unwrap(exists);
     }
+
+    pub async fn any_user_exists(&self) -> Result<bool> {
+        let result = sqlx::query!(
+            "SELECT EXISTS(SELECT 1 FROM \"user\") AS exists"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(result.exists.unwrap_or(false))
+    }
 }

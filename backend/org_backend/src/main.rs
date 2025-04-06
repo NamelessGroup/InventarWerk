@@ -1,6 +1,7 @@
 #[macro_use] extern crate rocket;
 
 mod routers;
+mod locked_macros;
 mod last_changes_map_macro;
 
 use openssl::rand::rand_bytes;
@@ -20,15 +21,16 @@ async fn main() {
     
     let dbconn:DbPool = create_pg_pool(env::var("DATABASE_URL").expect("Database url must be set")).await.expect("Couldn't connect to database");
 
-
-
-
     let inv_rep = InventoryRepository::new(dbconn.clone());
-    let acc_rep = UserRepository::new(dbconn.clone());
+    let usr_rep = UserRepository::new(dbconn.clone());
     let ipr_rep = ItemPresetRepository::new(dbconn.clone());
 
     let mut secret_key = [0u8;32];
     let _ = rand_bytes(&mut secret_key);
+
+    if !usr_rep.any_user_exists().await.expect("DB failed in critical point") {
+        lock_toggle!();
+    }
 
     let figment = Config::figment().merge(("secret_key", secret_key));
     let config = Config::from(figment);    
@@ -36,7 +38,7 @@ async fn main() {
     let mut r = rocket::build();
     r = r.configure(config)
         .manage(inv_rep)
-        .manage(acc_rep)
+        .manage(usr_rep)
         .manage(ipr_rep)
         .mount("/", FileServer::from(relative!("static")))
         .mount("/", routers::get_account_routes())
