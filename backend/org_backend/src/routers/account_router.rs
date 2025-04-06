@@ -149,7 +149,7 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
     let has_user = usr_rep.user_exists(&user_response.id.clone()).await?;
     if !has_user {
         let _res = usr_rep.create_user(&user_response.id, &user_response.username,
-            &avatar_unpacked);
+            &avatar_unpacked).await?;
     } else {
         let user = usr_rep.get_user(&user_response.id.clone()).await?;
         if user.name != user_response.username || user.avatar != avatar_unpacked {

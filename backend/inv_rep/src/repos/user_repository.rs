@@ -25,10 +25,10 @@ impl UserRepository {
 
     pub async fn get_user(&self, uuid: &str) -> Result<User> {
         let user = sqlx::query_as!(User, "SELECT * FROM \"user\" WHERE uuid = $1", uuid)
-            .fetch_optional(&self.pool)
+            .fetch_one(&self.pool)
             .await?;
         
-        unwrap(user)
+        Ok(user)
     }
 
     pub async fn get_all_users(&self) -> Result<Vec<User>> {

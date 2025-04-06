@@ -12,6 +12,7 @@ pub struct User {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FullInventory {
     pub uuid: String,
     pub owner_uuid: String,
@@ -24,6 +25,7 @@ pub struct FullInventory {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RawInventory {
     pub uuid: String,
     pub owner_uuid: String,
@@ -34,6 +36,7 @@ pub struct RawInventory {
 
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InventoryReader {
     pub user_uuid: String,
     pub inventory_uuid: String,
@@ -41,6 +44,7 @@ pub struct InventoryReader {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InventoryWriter {
     pub user_uuid: String,
     pub inventory_uuid: String,
@@ -48,6 +52,7 @@ pub struct InventoryWriter {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ItemPreset {
     pub uuid: String,
     pub name: String,
@@ -60,6 +65,7 @@ pub struct ItemPreset {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InventoryItem {
     pub inventory_uuid: String,
     pub item_preset_uuid: String,

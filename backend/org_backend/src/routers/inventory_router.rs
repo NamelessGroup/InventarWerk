@@ -38,10 +38,11 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>) -> Result<Json<FullInventory>> {
-    if !inv_rep.get_readers(&params.inventory_uuid).await?.contains(&user.user_id) {
+    let inv = inv_rep.get_full_inventory(&params.inventory_uuid).await?;
+    if !inv.reader.contains(&user.user_id) && !(inv.owner_uuid == user.user_id) {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
-    Ok(Json(inv_rep.get_full_inventory(&params.inventory_uuid).await?))
+    Ok(Json(inv))
 }
 
 #[derive(FromForm)]
