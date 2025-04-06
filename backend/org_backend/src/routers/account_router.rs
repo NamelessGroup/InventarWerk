@@ -148,8 +148,9 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
     let avatar_unpacked = user_response.avatar.unwrap_or("".to_string());
     let has_user = usr_rep.user_exists(&user_response.id.clone()).await?;
     if !has_user {
-        let _res = usr_rep.create_user(&user_response.id, &user_response.username,
-            &avatar_unpacked).await?;
+        if loc_con.is_locked() {return Err(new_cstat_from_ref(Status::Forbidden, "This Instance does not take new members."))}
+        let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone(),
+            user_response.avatar.clone().unwrap_or("".to_string()));
     } else {
         let user = usr_rep.get_user(&user_response.id.clone()).await?;
         if user.name != user_response.username || user.avatar != avatar_unpacked {
@@ -190,4 +191,23 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Status {
     } else {
         Status::BadRequest
     }
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize)]
+pub struct IsLockedResponse {
+    isLocked: bool
+}
+
+#[get("/account/isLocked")]
+pub async fn is_locked( loc_con: &State<LockController>) -> Json<IsLockedResponse> {
+    Json(IsLockedResponse {
+        isLocked: loc_con.is_locked()
+    })
+}
+
+#[patch("/account/toggleLock")]
+pub async fn toggle_lock(loc_con: &State<LockController>) -> Status {
+    loc_con.toggle_lock();
+    Status::NoContent
 }

@@ -1,8 +1,8 @@
 <template>
-  <PopUp class="!m-0" @close="emit('close')">
+  <PopUp class="m-0!" @close="emit('close')">
     <div class="grid grid-cols-1 gap-2">
       <button
-        class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 outline-none"
+        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 outline-hidden"
         @click="addNewItem"
       >
         Add item
@@ -12,7 +12,7 @@
         id="amount"
         v-model="amountValue"
         :default-value="1"
-        class="w-full rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
       />
       <label for="name">Name:</label>
       <input
@@ -20,7 +20,7 @@
         ref="nameInput"
         v-model="nameValue"
         autocomplete="off"
-        class="w-full rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
       />
       <div class="text-red-500">{{ errorText }}</div>
     </div>
@@ -167,6 +167,8 @@ interface MyCompletionItem extends AutocompleteItem {
 </script>
 
 <style lang="postcss">
+@reference "../style.css";
+
 .selected.autocomplete-item {
   @apply bg-fuchsia-950;
 }
@@ -176,6 +178,6 @@ interface MyCompletionItem extends AutocompleteItem {
 }
 
 .autocomplete {
-  @apply bottom-0 rounded-b;
+  @apply rounded-b;
 }
 </style>

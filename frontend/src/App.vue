@@ -3,27 +3,42 @@
     <div v-if="isLoggedIn" class="w-full bg-slate-950">
       <div class="flex h-12 w-full items-center space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
         <img src="./assets/logo.png" class="h-10" />
-        <div class="flex flex-1 items-center justify-end space-x-5">
+        <div class="flex-1"></div>
+        <div
+          class="hidden max-w-96 flex-1 items-center justify-center gap-x-2 rounded border border-amber-300 bg-fuchsia-900 px-1 py-1 md:flex"
+        >
+          <FontAwesomeIcon :icon="faSearch" />
+          <input
+            v-model="searchString"
+            class="flex-1 bg-transparent outline-none"
+            placeholder="Search for inventories"
+          />
+        </div>
+        <div class="flex-1"></div>
+        <div class="flex flex-1 items-center justify-end space-x-5 md:flex-initial">
           <button
             v-if="store().userIsDm"
-            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
             @click="loadItemFile"
           >
             <FontAwesomeIcon :icon="faUpload" />
           </button>
           <button
-            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
             @click="showManagePresets = true"
           >
             <FontAwesomeIcon :icon="faList" />
           </button>
           <button
-            class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
             @click="showSettings = true"
           >
             <FontAwesomeIcon :icon="faGears" />
           </button>
-          <button class="h-10 w-10 rounded border border-amber-300 bg-fuchsia-900" @click="logOut">
+          <button
+            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+            @click="logOut"
+          >
             <FontAwesomeIcon :icon="faRightFromBracket" />
           </button>
         </div>
@@ -35,10 +50,10 @@
             id="name"
             v-model="nameFieldContent"
             type="text"
-            class="row-start-1 rounded border border-amber-300 bg-fuchsia-900 px-1 outline-none"
+            class="row-start-1 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
           />
           <button
-            class="col-span-2 row-start-2 rounded border border-amber-300 bg-fuchsia-900 p-1"
+            class="col-span-2 row-start-2 rounded-sm border border-amber-300 bg-fuchsia-900 p-1"
             @click="submitAddInventory"
           >
             Submit
@@ -48,9 +63,9 @@
       </PopUp>
       <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
         <InventoryContainer
-          v-for="uuid in store().inventoryUuids"
-          :key="uuid"
-          :inventory="store().inventories[uuid]"
+          v-for="inventory in inventories"
+          :key="inventory.uuid"
+          :inventory="inventory"
         />
       </div>
     </div>
@@ -63,31 +78,31 @@
 
     <button
       v-if="isLoggedIn"
-      class="fixed bottom-2 right-2 z-10 h-10 w-10 rounded border border-amber-300 bg-fuchsia-900"
+      class="fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
       @click="showCreation = true"
     >
       <FontAwesomeIcon :icon="faPlus" />
     </button>
     <a
       :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
-      class="absolute bottom-1 left-1 hidden text-xs text-fuchsia-300 text-opacity-30 underline md:block"
+      class="text-opacity-30 fixed bottom-1 left-1 hidden text-xs text-fuchsia-300 underline md:block"
       >{{ version }}</a
     >
 
     <div
       v-if="!acceptedCookies"
-      class="absolute bottom-0 left-0 right-0 top-0 z-40 bg-slate-900 p-10"
+      class="absolute top-0 right-0 bottom-0 left-0 z-40 bg-slate-900 p-10"
     >
       <div class="flex flex-col items-center space-y-2">
         <p>This website uses cookies.<br />No you can not reject.</p>
         <button
-          class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
+          class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
           @click="acceptCookies"
         >
           Accept Cookies
         </button>
         <button
-          class="w-full rounded border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
+          class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
           @click="acceptCookies"
         >
           Also Accept Cookies
@@ -105,17 +120,19 @@ import {
   faList,
   faPlus,
   faRightFromBracket,
+  faSearch,
   faUpload
 } from '@fortawesome/free-solid-svg-icons'
 import { store } from './store'
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { DatabaseHandler } from './store/DatabaseHandler'
 import PopUp from './components/PopUp.vue'
 import { parseItems } from './utils/itemParser'
 import SettingsPopUp from './components/SettingsPopUp.vue'
 import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
 import { version } from './utils/version'
+import type { Inventory } from './model/Inventory'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
@@ -125,6 +142,21 @@ const showSettings = ref(false)
 const showManagePresets = ref(false)
 
 getAcceptedCookies()
+
+const searchString = ref('')
+const search = computed(() => searchString.value.toLowerCase())
+
+function matchSearchString(inventory: Inventory) {
+  if (inventory.name.toLowerCase().includes(search.value)) {
+    return true
+  }
+  return false
+}
+
+const inventories = computed(() => {
+  const allInventories = store().inventoryUuids.map((uuid) => store().inventories[uuid])
+  return allInventories.filter(matchSearchString)
+})
 
 async function submitAddInventory() {
   if (nameFieldContent.value == '') {
