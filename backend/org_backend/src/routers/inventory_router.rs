@@ -1,4 +1,4 @@
-use inv_rep::model::{FullInventory, ItemPreset};
+use inv_rep::model::{FullFrontendInventory, ItemPreset};
 use inv_rep::repos::inventory_repository::InventoryRepository;
 use inv_rep::repos::item_preset_repository::ItemPresetRepository;
 use inv_rep::repos::user_repository::UserRepository;
@@ -17,7 +17,7 @@ pub struct InventoryUUIDParams {
 
 #[derive(Serialize, Deserialize)]
 pub struct GetAllInventoriesReturn{
-    inventories: Vec<FullInventory>
+    inventories: Vec<FullFrontendInventory>
 }
 
 
@@ -26,10 +26,7 @@ pub struct GetAllInventoriesReturn{
 #[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Json<GetAllInventoriesReturn>>  {
-    let allinvs = inv_rep.get_all_inventories().await?
-        .into_iter()
-        .filter(|i| i.reader.contains(&user.user_id))
-        .collect::<Vec<_>>();
+    let allinvs = inv_rep.get_all_inventories(&user.user_id).await?;
     Ok(Json(GetAllInventoriesReturn{
         inventories: allinvs
     }))
@@ -37,7 +34,7 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
 
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>) -> Result<Json<FullInventory>> {
+    inv_rep: &State<InventoryRepository>) -> Result<Json<FullFrontendInventory>> {
     let inv = inv_rep.get_full_inventory(&params.inventory_uuid).await?;
     if !inv.reader.contains(&user.user_id) && !(inv.owner_uuid == user.user_id) {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
@@ -52,7 +49,7 @@ pub struct InventoryCreateParams {
 
 #[put("/inventory?<params..>")]
 pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
-        ) -> Result<Json<FullInventory>> {
+        ) -> Result<Json<FullFrontendInventory>> {
     let inv = inv_rep.create_inventory(&user.user_id, 0, &params.name).await?;
     get_specific_inventory(InventoryUUIDParams {inventory_uuid: inv.uuid}, user, inv_rep).await
 }

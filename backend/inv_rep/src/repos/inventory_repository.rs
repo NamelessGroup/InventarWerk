@@ -1,6 +1,6 @@
 use sqlx::{PgPool, Error};
 use uuid::Uuid;
-use crate::model::{FullInventory, InventoryItem, RawInventory};
+use crate::model::{FrontendItem, FullFrontendInventory, InventoryItem, RawInventory};
 use anyhow::{self, Result};
 pub struct InventoryRepository {
     pool: PgPool
@@ -31,7 +31,7 @@ impl InventoryRepository {
         Ok(writers)
     }
 
-    pub async fn get_full_inventory(&self, uuid: &str) -> Result<FullInventory> {
+    pub async fn get_full_inventory(&self, uuid: &str) -> Result<FullFrontendInventory> {
         let inventory = sqlx::query!(
             "SELECT uuid, owner_uuid, money, name, creation FROM inventory WHERE uuid = $1",
             uuid
@@ -41,8 +41,8 @@ impl InventoryRepository {
 
         let readers = self.get_readers(&inventory.uuid).await?;
         let writers = self.get_writers(&inventory.uuid).await?;
-        let items = self.get_items_in_inventory(&inventory.uuid).await?;
-        Ok(FullInventory {
+        let items = self.get_frontend_items_in_inventory(&inventory.uuid).await?;
+        Ok(FullFrontendInventory {
             uuid: inventory.uuid,
             owner_uuid: inventory.owner_uuid,
             money: inventory.money,
@@ -52,6 +52,7 @@ impl InventoryRepository {
             items: items,
             creation: inventory.creation,})
     }
+
 
     pub async fn get_user_inventory_ids(&self, user_uuid: &str) -> Result<Vec<String>, Error> {
         let inventory_ids = sqlx::query!(
@@ -94,12 +95,16 @@ impl InventoryRepository {
         Ok(inventory_ids)
     }
 
-    pub async fn get_all_inventories(&self) -> Result<Vec<FullInventory>> {
-        let inventories = sqlx::query!(
-            "SELECT uuid, owner_uuid, money, name, creation FROM inventory"
-        )
-        .fetch_all(&self.pool)
-        .await?;
+    pub async fn get_all_inventories(&self, user_uuid: &str) -> Result<Vec<FullFrontendInventory>> {
+        let query = sqlx::query!(
+            "SELECT DISTINCT i.uuid
+             FROM inventory i
+             LEFT JOIN inventory_reader ir ON i.uuid = ir.inventory_uuid
+             WHERE i.owner_uuid = $1 OR ir.user_uuid = $1",
+            user_uuid
+        );
+
+        let inventories = query.fetch_all(&self.pool).await?;
 
         let mut full_inventories = Vec::new();
 
@@ -225,6 +230,38 @@ impl InventoryRepository {
         .await?;
 
         Ok(items)
+    }
+
+    pub async fn get_frontend_items_in_inventory(&self, inventory_uuid: &str) -> Result<Vec<FrontendItem>, Error> {
+        let items = sqlx::query!(
+            "SELECT ii.inventory_uuid, ii.item_preset_uuid, ii.dm_note, ii.amount, ii.sorting, ii.inventory_item_note, ii.creation,
+                    ip.name, ip.description, ip.price, ip.creator AS preset_creator, ip.weight, ip.item_type
+             FROM inventory_item ii
+             INNER JOIN item_preset ip ON ii.item_preset_uuid = ip.uuid
+             WHERE ii.inventory_uuid = $1",
+            inventory_uuid
+        )
+        .fetch_all(&self.pool)
+        .await?;
+    
+        let frontend_items = items
+            .into_iter()
+            .map(|item| FrontendItem {
+                name: item.name,
+                amount: item.amount,
+                dm_note: item.dm_note,
+                description: item.description,
+                price: item.price,
+                preset_creator: item.preset_creator,
+                weight: item.weight,
+                sorting: item.sorting,
+                item_type: item.item_type,
+                preset_reference: item.item_preset_uuid,
+                inventory_item_note: item.inventory_item_note,
+            })
+            .collect();
+    
+        Ok(frontend_items)
     }
 
 }
