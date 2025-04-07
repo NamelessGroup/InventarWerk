@@ -123,6 +123,8 @@ impl InventoryRepository {
         )
         .fetch_one(&self.pool)
         .await?;
+        self.add_reader(&uuid, owner_uuid).await?;
+        self.add_writer(&uuid, owner_uuid).await?;
         Ok(rec)
     }
 

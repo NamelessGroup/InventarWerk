@@ -15,8 +15,9 @@ impl ItemPresetRepository {
     pub async fn create_from_name(&self, name: &str, owner: &str) -> Result<String> {
         let id = Uuid::new_v4().to_string();
         sqlx::query!(
-            "INSERT INTO item_preset (uuid, name, creator) VALUES ($1, $2, $3)",
-            id, name, owner
+            "INSERT INTO item_preset (uuid, name, price, weight, description, creator, item_type) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7)",
+            id, name, 0, 0.0, "", owner, ""
         )
         .execute(&self.pool)
         .await?;

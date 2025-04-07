@@ -64,7 +64,7 @@ pub struct InventoryAddItemByPresetParams {
 #[put("/inventory/item/addPreset?<params..>")]
 pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
-    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id).await? {
+    if !user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id).await? {
         return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
     inv_rep.add_inventory_item(&params.inventory_uuid, &params.preset_uuid, "", params.amount, 0, "").await?;
@@ -81,7 +81,7 @@ pub struct InventoryAddItemByNameParams {
 #[put("/inventory/item/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(params:InventoryAddItemByNameParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>, ipr_rep: &State<ItemPresetRepository>) -> Result<Json<ItemPreset>> {
-    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+    if !user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
         return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
     let id = ipr_rep.create_from_name(&params.name, &user.user_id).await?;
@@ -102,7 +102,7 @@ pub struct ItemEditParams {
 #[patch("/inventory/item/edit?<params..>")]
 pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
         ) -> Result<Status> {
-    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+    if !user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
         return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
     inv_rep.update_inventory_item(
@@ -126,7 +126,7 @@ pub struct NoteAddParams {
 #[patch("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
         usr_rep: &State<UserRepository>) -> Result<Status> {
-    if user_is_dm(usr_rep.inner(), user.user_id.clone()).await? {
+    if !user_is_dm(usr_rep.inner(), user.user_id.clone()).await? {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
     inv_rep.update_inventory_item(&params.inventory_uuid, &params.item_preset_uuid, Some(&params.note), None, None, None).await?;
@@ -142,7 +142,7 @@ pub struct ItemDeleteParams {
 #[delete("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
-    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+    if !user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
         return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
     inv_rep.remove_inventory_item(&params.inventory_uuid, &params.item_preset_uuid).await?;
@@ -159,7 +159,7 @@ pub struct InventoryEditParams {
 #[patch("/inventory/edit?<params..>")]
 pub async fn edit_inventory(params: InventoryEditParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
-    if user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
+    if !user_has_write_access_to_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id.clone()).await? {
         return Err(create_error(ACCESS_DENIAL_MESSAGE))
     }
     inv_rep.update_inventory(&params.inventory_uuid, params.amount, params.name.as_deref()).await?;
