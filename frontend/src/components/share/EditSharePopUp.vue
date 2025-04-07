@@ -47,7 +47,7 @@ const accounts = computed(() =>
         accessType: hasWrite ? 'write' : hasRead ? 'read' : 'none'
       } as Account & { accessType: Access }
     })
-    .filter((account) => account.uuid != props.inventory.owner && !account.dm)
+    .filter((account) => account.uuid != props.inventory.ownerUuid && !account.dm)
 )
 
 const emit = defineEmits(['close'])
