@@ -106,7 +106,7 @@ pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::Aut
         let mut i = 0;
         loop {
             let preset = ItemPreset {
-                uuid: x.uuid.clone(),
+                uuid: "".to_string(),
                 name: x.name.clone(),
                 price: x.price,
                 weight: x.weight,
@@ -118,14 +118,16 @@ pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::Aut
             let res = ipr_rep.create(&preset).await;
             match res {
                 Ok(_res) => break,
-                Err(_e) => {
+                Err(e) => {
+                    println!("Error creating preset {}: {}", x.name, e);
                     thread::sleep(Duration::from_secs(1));
                 }
 
             }
             i += 1;
             if i > 5 {
-                print!("Skipped {}", x.name)
+                print!("Skipped {}", x.name);
+                break;
             }
         
         }

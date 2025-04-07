@@ -25,10 +25,11 @@ impl ItemPresetRepository {
     }
 
     pub async fn create(&self, item: &ItemPreset) -> Result<(), Error> {
+        let id = Uuid::new_v4().to_string();
         sqlx::query!(
             "INSERT INTO item_preset (uuid, name, price, weight, description, creator, item_type, creation)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-            item.uuid, item.name, item.price, item.weight, item.description, item.creator, item.item_type, item.creation
+            id, item.name, item.price, item.weight, item.description, item.creator, item.item_type, item.creation
         )
         .execute(&self.pool)
         .await?;
