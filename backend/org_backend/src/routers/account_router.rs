@@ -6,15 +6,20 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
 use rocket::http::{Cookie, CookieJar, Status};
 use reqwest::Client;
-use rocket::response::status::Custom;
 
-use crate::controller::account_controller::AccountController;
-use crate::controller::lock_controller::LockController;
-use crate::controller::{new_cstat_from_ref, CStat};
-use crate::model::User;
+use inv_rep::repos::user_repository::UserRepository;
+use inv_rep::model::User;
+
+use rocket_errors::anyhow::Result;
+
+use crate::{lock_toggle, locked_status};
+
+use super::create_error;
+
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct DMResponse {
     isDm: bool
 }
@@ -63,9 +68,9 @@ pub struct AccountUUIDParams {
 }
 
 #[get("/account/get")]
-pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<AccountResponse>, CStat> {
-    let all_users =  acc_con.get_all_users()?;
+pub async fn get_accounts(_user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
+ -> Result<Json<AccountResponse>> {
+    let all_users =  usr_rep.get_all_users().await?;
     Ok(Json(
         AccountResponse {
             accounts: all_users
@@ -74,11 +79,11 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, acc_con: &State<Accou
 }
 
 #[get("/account/isDm?<params..>")]
-pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, acc_con: &State<AccountController>)
- -> Result<Json<DMResponse>, CStat> {
-    let user_is_dm =  acc_con.user_is_dm(params.account_uuid)?;
+pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
+ -> Result<Json<DMResponse>> {
+    let user =  usr_rep.get_user(&params.account_uuid).await?;
     Ok(Json(DMResponse {
-        isDm: user_is_dm
+        isDm: (user.dm==1)
     }))
     
 }
@@ -95,8 +100,8 @@ pub async fn login() -> Redirect {
 }
 
 #[get("/account/oauth/callback?<params..>")]
-pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &State<AccountController>, loc_con: &State<LockController>)
- -> Result<Redirect, Custom<String>> {
+pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &State<UserRepository>)
+ -> Result<Redirect> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");
     let redirect_uri = env::var("DISCORD_REDIRECT_URI").expect("DISCORD_REDIRECT_URI not set");
@@ -116,22 +121,18 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         .post(token_url)
         .form(&params)
         .send()
-        .await
-        .map_err(|err| {Custom(Status::InternalServerError, err.to_string())})?
+        .await?
         .json::<TokenResponse>()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Conversion to Tokenresponse failed".to_string()))?;
+        .await?;
 
     // Abrufen der Benutzerinformationen mit dem Access Token
     let user_response = client
         .get("https://discord.com/api/users/@me")
         .header("Authorization", format!("Bearer {}", token_response.access_token))
         .send()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Userrequest failed".to_string()))?
+        .await?
         .json::<DiscordUser>()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Conversion to DiscordUser failed".to_string()))?;
+        .await?;
 
     // revoke refresh token
     let revoke_url = "https://discord.com/api/oauth2/token/revoke";
@@ -146,18 +147,18 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, acc_con: &Sta
         .post(revoke_url)
         .form(&params)
         .send()
-        .await
-        .map_err(|_| Custom(Status::InternalServerError, "Revoke refresh token failed".to_string()))?;
+        .await?;
 
-    let has_user = acc_con.has_user(user_response.id.clone()).unwrap_or_default();
+    let avatar_unpacked = user_response.avatar.unwrap_or("".to_string());
+    let has_user = usr_rep.user_exists(&user_response.id.clone()).await?;
     if !has_user {
-        if loc_con.is_locked() {return Err(new_cstat_from_ref(Status::Forbidden, "This Instance does not take new members."))}
-        let _res = acc_con.add_user(user_response.id.clone(), user_response.username.clone(),
-            user_response.avatar.clone().unwrap_or("".to_string()));
+        if !locked_status!() {return Err(create_error("No new Users allowed"))}
+        let _res = usr_rep.create_user(&user_response.id, &user_response.username,
+            &avatar_unpacked).await?;
     } else {
-        let user = acc_con.get_account(user_response.id.clone())?;
-        if user.name != user_response.username || user.avatar != user_response.avatar.clone().unwrap_or_default() {
-            acc_con.update_account(user_response.id.clone(), Some(user_response.username), user_response.avatar)?;
+        let user = usr_rep.get_user(&user_response.id.clone()).await?;
+        if user.name != user_response.username || user.avatar != avatar_unpacked {
+            usr_rep.update_user(&user_response.id, &user_response.username, &avatar_unpacked, user.dm).await?;
         }
     }
     // Speichern eines Cookies als Beispiel
@@ -203,14 +204,14 @@ pub struct IsLockedResponse {
 }
 
 #[get("/account/isLocked")]
-pub async fn is_locked( loc_con: &State<LockController>) -> Json<IsLockedResponse> {
+pub async fn is_locked() -> Json<IsLockedResponse> {
     Json(IsLockedResponse {
-        isLocked: loc_con.is_locked()
+        isLocked: locked_status!()
     })
 }
 
 #[patch("/account/toggleLock")]
-pub async fn toggle_lock(loc_con: &State<LockController>) -> Status {
-    loc_con.toggle_lock();
+pub async fn toggle_lock() -> Status {
+    lock_toggle!();
     Status::NoContent
 }

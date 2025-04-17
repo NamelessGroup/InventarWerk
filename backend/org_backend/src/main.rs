@@ -1,57 +1,45 @@
 #[macro_use] extern crate rocket;
 
 mod routers;
-mod controller;
-mod dbmod;
-mod model;
-mod schema;
-mod frontend_model;
+mod locked_macros;
 mod last_changes_map_macro;
 
-
-use controller::account_controller::AccountController;
-use controller::item_preset_controller::ItemPresetController;
-use controller::lock_controller::LockController;
-use diesel::RunQueryDsl;
 use openssl::rand::rand_bytes;
 use rocket::fs::{FileServer, relative};
 use dotenvy::dotenv;
 use std::env;
-use controller::inventory_controller::InventoryController;
-use dbmod::DbPool;
-use dbmod::establish_connection;
 use rocket::config::Config;
+use inv_rep::DbPool;
+use inv_rep::repos::inventory_repository::InventoryRepository;
+use inv_rep::repos::item_preset_repository::ItemPresetRepository;
+use inv_rep::repos::user_repository::UserRepository;
+use inv_rep::create_pg_pool;
 
 #[rocket::main]
 async fn main() {
     dotenv().ok();
     
-    let dbconn:DbPool = establish_connection();
+    let dbconn:DbPool = create_pg_pool(env::var("DATABASE_URL").expect("Database url must be set")).await.expect("Couldn't connect to database");
 
-    let mut conn = dbconn.get().expect("Failed to get connection from pool");
+    let inv_rep = InventoryRepository::new(dbconn.clone());
+    let usr_rep = UserRepository::new(dbconn.clone());
+    let ipr_rep = ItemPresetRepository::new(dbconn.clone());
 
-
-    
-    diesel::sql_query("PRAGMA journal_mode = WAL;")
-        .execute(&mut conn)
-        .expect("Failed to set journal mode");
-
-    let inv_cont = InventoryController::new(dbconn.clone());
-    let acc_con = AccountController::new(dbconn.clone());
-    let ip_con = ItemPresetController::new(dbconn.clone());
-    let loc_con = LockController::new(acc_con.has_users().unwrap_or(false));
     let mut secret_key = [0u8;32];
     let _ = rand_bytes(&mut secret_key);
+
+    if !usr_rep.any_user_exists().await.expect("DB failed in critical point") {
+        lock_toggle!();
+    }
 
     let figment = Config::figment().merge(("secret_key", secret_key));
     let config = Config::from(figment);    
 
     let mut r = rocket::build();
     r = r.configure(config)
-        .manage(inv_cont)
-        .manage(acc_con)
-        .manage(ip_con)
-        .manage(loc_con)
+        .manage(inv_rep)
+        .manage(usr_rep)
+        .manage(ipr_rep)
         .mount("/", FileServer::from(relative!("static")))
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())

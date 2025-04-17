@@ -5,7 +5,7 @@
       <div
         ref="nameInput"
         class="bold break-wrap ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-hidden"
-        :contenteditable="inventory.owner === store().uuid"
+        :contenteditable="inventory.ownerUuid === store().uuid"
         @blur="updateName()"
         @keydown="
           (e) => {
@@ -20,7 +20,7 @@
         {{ inventory.name }}
       </div>
       <button
-        v-if="inventory.owner === store().uuid"
+        v-if="inventory.ownerUuid === store().uuid"
         class="mr-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
         @click="editName()"
       >
@@ -34,7 +34,7 @@
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <button
-        v-if="inventory.owner === store().uuid"
+        v-if="inventory.ownerUuid === store().uuid"
         class="ml-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
         @click="deleteInventory"
       >
@@ -80,12 +80,12 @@
   </div>
 
   <EditSharePopUp
-    v-if="showSharePopup && store().uuid === inventory.owner"
+    v-if="showSharePopup && store().uuid === inventory.ownerUuid"
     :inventory="inventory"
     @close="showSharePopup = false"
   />
   <ViewSharePopUp
-    v-if="showSharePopup && store().uuid !== inventory.owner"
+    v-if="showSharePopup && store().uuid !== inventory.ownerUuid"
     :inventory="inventory"
     @close="showSharePopup = false"
   />
@@ -124,7 +124,7 @@ const showAddItemPopup = ref(false)
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
 const creator = computed(
   () =>
-    store().accounts.filter((account) => account.uuid === props.inventory.owner)[0] ?? {
+    store().accounts.filter((account) => account.uuid === props.inventory.ownerUuid)[0] ?? {
       name: 'Unknown',
       avatar: null,
       dm: false,
