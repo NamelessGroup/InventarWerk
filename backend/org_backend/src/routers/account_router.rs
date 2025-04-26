@@ -12,6 +12,7 @@ use inv_rep::model::User;
 
 use rocket_errors::anyhow::Result;
 
+use crate::routers::router_utility::user_is_dm;
 use crate::{lock_toggle, locked_status};
 
 use super::create_error;
@@ -67,9 +68,17 @@ pub struct AccountUUIDParams {
     account_uuid: String
 }
 
+/// Endpoint to retrieve all users.
+///
+/// # Notes
+/// Requires authentication.
+///
+/// # Returns
+/// A JSON response containing all users.
 #[get("/account/get")]
 pub async fn get_accounts(_user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
  -> Result<Json<AccountResponse>> {
+    
     let all_users =  usr_rep.get_all_users().await?;
     Ok(Json(
         AccountResponse {
@@ -78,6 +87,16 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, usr_rep: &State<UserR
     ))
 }
 
+/// Endpoint to check if a user is a Dungeon Master (DM).
+///
+/// # Notes
+/// Requires authentication.
+///
+/// # Parameters
+/// - `params`: The UUID of the user.
+///
+/// # Returns
+/// A JSON response indicating whether the user is a DM.
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
  -> Result<Json<DMResponse>> {
@@ -88,6 +107,11 @@ pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::Authenticat
     
 }
 
+
+/// Endpoint to redirect the user to the Discord login page.
+///
+/// # Returns
+/// A redirect to the Discord login page.
 #[get("/account/login")]
 pub async fn login() -> Redirect {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
@@ -98,7 +122,10 @@ pub async fn login() -> Redirect {
     );
     Redirect::to(url)
 }
-
+/// Callback to process the information retrieved from Discord
+/// 
+/// # Returns
+/// A redirect to the base url
 #[get("/account/oauth/callback?<params..>")]
 pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &State<UserRepository>)
  -> Result<Redirect> {
@@ -173,6 +200,13 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
     }
 }
 
+/// Endpoint to retrieve user information.
+///
+/// # Notes
+/// Requires authentication.
+///
+/// # Returns
+/// The UUID of the authenticated user.
 #[get("/account/info")]
 pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
     return Json(InfoResponse {
@@ -180,6 +214,10 @@ pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> 
     })
 }
 
+/// Endpoint to check if a user is logged in.
+///
+/// # Returns
+/// `true` if the user is logged in, otherwise `false`.
 #[get("/account/isLoggedIn")]
 pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     return Json(LoggedInResponse {
@@ -187,6 +225,10 @@ pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     });
 }
 
+/// Endpoint to log out the user.
+///
+/// # Returns
+/// HTTP status `NoContent` if the user is successfully logged out, otherwise `BadRequest`.
 #[get("/account/logout")]
 pub async fn logout(cookies: &CookieJar<'_>) -> Status {
     if let Some(_cookie) = cookies.get_private("user_id") {
@@ -203,6 +245,10 @@ pub struct IsLockedResponse {
     isLocked: bool
 }
 
+/// Endpoint to check if the system is locked.
+///
+/// # Returns
+/// `true` if the system is locked, otherwise `false`.
 #[get("/account/isLocked")]
 pub async fn is_locked() -> Json<IsLockedResponse> {
     Json(IsLockedResponse {
@@ -210,8 +256,18 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
     })
 }
 
+/// Endpoint to toggle the lock status of the system.
+///
+/// # Notes
+/// Requires authentication.
+///
+/// # Returns
+/// HTTP status `NoContent`.
 #[patch("/account/toggleLock")]
-pub async fn toggle_lock() -> Status {
+pub async fn toggle_lock(user: super::AuthenticatedUser, usr_rep: &State<UserRepository>) -> Status {
+    if (!user_is_dm(usr_rep.inner(), user.user_id)) {
+        Status::ImATeapot
+    }
     lock_toggle!();
     Status::NoContent
 }

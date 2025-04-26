@@ -22,7 +22,13 @@ pub struct GetAllInventoriesReturn{
 
 
 
-/// Handles the `/inventory/all` route, returns all inventories in the InventoryReturn form
+/// Retrieves all inventories associated with the authenticated user.
+///
+/// # Authentication
+/// Requires authentication.
+///
+/// # Errors
+/// Returns an error if the retrieval fails or the user is not authenticated.
 #[get("/inventory/all")]
 pub async fn get_all_inventories(user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Json<GetAllInventoriesReturn>>  {
@@ -32,6 +38,13 @@ pub async fn get_all_inventories(user: super::AuthenticatedUser,
     }))
 }
 
+/// Retrieves the full inventory associated with the given inventory UUID.
+///
+/// # Authentication
+/// Requires authentication.
+///
+/// # Errors
+/// Returns an error if the inventory cannot be retrieved or the user lacks access.
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(params: InventoryUUIDParams,  user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>) -> Result<Json<FullFrontendInventory>> {
@@ -47,6 +60,13 @@ pub struct InventoryCreateParams {
     name: String
 }
 
+/// Creates a new inventory entry in the system.
+///
+/// # Authentication
+/// Requires authentication.
+///
+/// # Errors
+/// Returns an error if creation fails.
 #[put("/inventory?<params..>")]
 pub async fn create_inventory(params: InventoryCreateParams,  user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
         ) -> Result<Json<FullFrontendInventory>> {
@@ -61,6 +81,13 @@ pub struct InventoryAddItemByPresetParams {
     amount:i32
 }
 
+/// Adds an item to an inventory by preset.
+///
+/// # Authentication
+/// Requires authentication and write access.
+///
+/// # Errors
+/// Returns an error if the user lacks write access or the operation fails.
 #[put("/inventory/item/addPreset?<params..>")]
 pub async fn add_preset_to_inventory(params: InventoryAddItemByPresetParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
@@ -78,6 +105,13 @@ pub struct InventoryAddItemByNameParams {
     amount:i32
 }
 
+/// Adds a new item to an inventory by name.
+///
+/// # Authentication
+/// Requires authentication and write access.
+///
+/// # Errors
+/// Returns an error if the user lacks write access or the operation fails.
 #[put("/inventory/item/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(params:InventoryAddItemByNameParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>, ipr_rep: &State<ItemPresetRepository>) -> Result<Json<ItemPreset>> {
@@ -99,6 +133,13 @@ pub struct ItemEditParams {
     inventory_item_note: Option<String>
 }
 
+/// Edits an item in an inventory.
+///
+/// # Authentication
+/// Requires authentication and write access.
+///
+/// # Errors
+/// Returns an error if the user lacks write access or the operation fails.
 #[patch("/inventory/item/edit?<params..>")]
 pub async fn edit_item(params: ItemEditParams, user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
         ) -> Result<Status> {
@@ -123,6 +164,13 @@ pub struct NoteAddParams {
     note: String
 }
 
+/// Adds a DM note to an item in an inventory.
+///
+/// # Authentication
+/// Requires authentication and DM privileges.
+///
+/// # Errors
+/// Returns an error if the user is not a DM or the operation fails.
 #[patch("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(params: NoteAddParams, user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
         usr_rep: &State<UserRepository>) -> Result<Status> {
@@ -139,6 +187,13 @@ pub struct ItemDeleteParams {
     item_preset_uuid: String
 }
 
+/// Removes an item from an inventory.
+///
+/// # Authentication
+/// Requires authentication and write access.
+///
+/// # Errors
+/// Returns an error if the user lacks write access or the operation fails.
 #[delete("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(params: ItemDeleteParams, user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
@@ -156,6 +211,13 @@ pub struct InventoryEditParams {
     name: Option<String>
 }
 
+/// Edits inventory properties.
+///
+/// # Authentication
+/// Requires authentication and write access.
+///
+/// # Errors
+/// Returns an error if the user lacks write access or the operation fails.
 #[patch("/inventory/edit?<params..>")]
 pub async fn edit_inventory(params: InventoryEditParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
@@ -173,6 +235,13 @@ pub struct InventoryShareParams {
     writer_uuid: Option<String>
 }
 
+/// Adds reader or writer permissions to an inventory.
+///
+/// # Authentication
+/// Requires authentication and creator privileges.
+///
+/// # Errors
+/// Returns an error if the user is not the creator or the operation fails.
 #[patch("/inventory/addShare?<params..>")]
 pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>, usr_rep: &State<UserRepository>) -> Result<Status> {
@@ -202,6 +271,13 @@ pub async fn add_share_to_inventory(params: InventoryShareParams,  user: super::
     Ok(Status::NoContent)
 }
 
+/// Removes reader or writer permissions from an inventory.
+///
+/// # Authentication
+/// Requires authentication and creator privileges.
+///
+/// # Errors
+/// Returns an error if the user is not the creator or the operation fails.
 #[patch("/inventory/removeShare?<params..>")]
 pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
@@ -223,6 +299,13 @@ pub async fn remove_share_from_inventory(params: InventoryShareParams,  user: su
     Ok(Status::NoContent)
 }
 
+/// Deletes an inventory.
+///
+/// # Authentication
+/// Requires authentication and creator privileges.
+///
+/// # Errors
+/// Returns an error if the user is not the creator or the operation fails.
 #[delete("/inventory/delete?<params..>")]
 pub async fn delete_inventory(params:InventoryUUIDParams,  user: super::AuthenticatedUser,
         inv_rep: &State<InventoryRepository>) -> Result<Status> {
