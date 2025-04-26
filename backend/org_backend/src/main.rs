@@ -15,6 +15,7 @@ use inv_rep::repos::item_preset_repository::ItemPresetRepository;
 use inv_rep::repos::user_repository::UserRepository;
 use inv_rep::create_pg_pool;
 
+/// Main async entry point for the backend server.
 #[rocket::main]
 async fn main() {
     dotenv().ok();
