@@ -8,6 +8,18 @@ use rocket_errors::anyhow::Result;
 
 use super::{create_error, router_utility::{user_has_read_access_to_item_preset, ACCESS_DENIAL_MESSAGE}};
 
+//! # Item Preset Router
+//!
+//! This module provides endpoints for managing item presets, including retrieval, modification, deletion, and import of external presets.
+//! All endpoints require authentication via `AuthenticatedUser` unless otherwise noted.
+//!
+//! ## Endpoints
+//! - `GET /itemPreset`: Get a specific item preset by UUID.
+//! - `PATCH /itemPreset/modify`: Modify an item preset (only by creator).
+//! - `DELETE /itemPreset/delete`: Delete an item preset (only by creator).
+//! - `GET /itemPreset/all`: Get all item presets accessible to the user.
+//! - `PUT /itemPreset/addExtern`: Import external item presets.
+
 
 #[derive(Serialize, Deserialize)]
 pub struct GetItemPresetReturn{
@@ -20,8 +32,13 @@ pub struct ItemPresetUUIDParams {
 }
 
 
-
-
+/// Retrieves a specific item preset by UUID.
+///
+/// # Authentication
+/// Requires authentication and read access.
+///
+/// # Errors
+/// Returns an error if the user lacks access or the preset does not exist.
 #[get("/itemPreset?<params..>")]
 pub async fn get_item_preset(params: ItemPresetUUIDParams,  user: super::AuthenticatedUser, ipr_rep: &State<ItemPresetRepository>,
         inv_rep: &State<InventoryRepository>) -> Result<Json<ItemPreset>> {
@@ -42,6 +59,13 @@ pub struct ItemModifyParams {
     item_type: Option<String>
 }
 
+/// Modifies an item preset. Only the creator can modify their preset.
+///
+/// # Authentication
+/// Requires authentication and creator privileges.
+///
+/// # Errors
+/// Returns an error if the user is not the creator or the operation fails.
 #[patch("/itemPreset/modify?<params..>")]
 pub async fn modify_item_preset(params: ItemModifyParams,  user: super::AuthenticatedUser,
         ipr_rep: &State<ItemPresetRepository>) -> Result<Status> {
@@ -53,6 +77,13 @@ pub async fn modify_item_preset(params: ItemModifyParams,  user: super::Authenti
     Ok(Status::NoContent)
 }
 
+/// Deletes an item preset. Only the creator can delete their preset.
+///
+/// # Authentication
+/// Requires authentication and creator privileges.
+///
+/// # Errors
+/// Returns an error if the user is not the creator or the operation fails.
 #[delete("/itemPreset/delete?<params..>")]
 pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::AuthenticatedUser,
         ipr_rep: &State<ItemPresetRepository>) -> Result<Status> {
@@ -65,6 +96,13 @@ pub async fn delete_item_preset(params: ItemPresetUUIDParams,  user: super::Auth
     Ok(Status::NoContent)
 }
 
+/// Retrieves all item presets accessible to the user (public and those in the user's inventories).
+///
+/// # Authentication
+/// Requires authentication.
+///
+/// # Errors
+/// Returns an error if the retrieval fails.
 #[get("/itemPreset/all")]
 pub async fn get_all_item_presets(user: super::AuthenticatedUser, inv_rep: &State<InventoryRepository>,
         ipr_rep: &State<ItemPresetRepository>) -> Result<Json<GetItemPresetReturn>> {
@@ -99,6 +137,13 @@ pub struct ExternPresetDataList {
     presets: Vec<ExternPresetData>
 }
 
+/// Imports external item presets into the system.
+///
+/// # Authentication
+/// Requires authentication.
+///
+/// # Errors
+/// Retries up to 5 times per preset on failure, then skips the preset.
 #[put("/itemPreset/addExtern", data="<json_data>")]
 pub async fn add_extern(json_data: Json<ExternPresetDataList>, _user: super::AuthenticatedUser, ipr_rep: &State<ItemPresetRepository>)
     -> Result<Status>  {

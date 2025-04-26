@@ -10,6 +10,26 @@ use rocket_errors::anyhow::Result;
 use super::create_error;
 use super::router_utility::{user_has_read_access_to_inventory, user_has_write_access_to_inventory, user_is_creator_of_inventory, user_is_dm, ACCESS_DENIAL_MESSAGE};
 
+//! # Inventory Router
+//!
+//! This module provides endpoints for managing inventories, items, and sharing permissions.
+//! All endpoints require authentication via `AuthenticatedUser`.
+//!
+//! ## Endpoints
+//! - `GET /inventory/all`: Get all inventories for the authenticated user.
+//! - `GET /inventory`: Get a specific inventory by UUID.
+//! - `PUT /inventory`: Create a new inventory.
+//! - `PUT /inventory/item/addPreset`: Add an item to an inventory by preset.
+//! - `PUT /inventory/item/addNew`: Add a new item to an inventory by name.
+//! - `PATCH /inventory/item/edit`: Edit an item in an inventory.
+//! - `PATCH /inventory/item/addNote`: Add a DM note to an item.
+//! - `DELETE /inventory/item/remove`: Remove an item from an inventory.
+//! - `PATCH /inventory/edit`: Edit inventory properties.
+//! - `PATCH /inventory/addShare`: Add reader/writer permissions to an inventory.
+//! - `PATCH /inventory/removeShare`: Remove reader/writer permissions from an inventory.
+//! - `DELETE /inventory/delete`: Delete an inventory.
+
+
 #[derive(FromForm)]
 pub struct InventoryUUIDParams {
     inventory_uuid: String
