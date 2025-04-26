@@ -25,7 +25,7 @@ async fn main() {
         create_pg_pool(env::var("DATABASE_URL").expect("Database url must be set"))
             .await
             .expect("Couldn't connect to database");
-
+    
     let inv_rep = InventoryRepository::new(dbconn.clone());
     let usr_rep = UserRepository::new(dbconn.clone());
     let ipr_rep = ItemPresetRepository::new(dbconn.clone());
