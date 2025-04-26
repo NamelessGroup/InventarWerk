@@ -3,7 +3,6 @@ use std::sync::Mutex;
 
 use lazy_static::lazy_static;
 
-/// Global, thread-safe map storing the last change timestamp for each inventory by UUID.
 lazy_static! {
     pub static ref GLOBAL_MAP: Mutex<HashMap<String, u128>> = Mutex::new(HashMap::new());
 }

@@ -1,4 +1,4 @@
-use crate::{model::User, unwrap};
+use crate::model::User;
 use anyhow::Result;
 use sqlx::PgPool;
 
@@ -66,10 +66,10 @@ impl UserRepository {
             dm,
             uuid
         )
-        .fetch_optional(&self.pool)
+        .fetch_one(&self.pool)
         .await?;
 
-        unwrap(user)
+        Ok(user)
     }
 
     /// Checks if a user with the given UUID exists.
@@ -81,7 +81,7 @@ impl UserRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        unwrap(exists)
+        Ok(exists.unwrap_or(false))
     }
 
     /// Checks if any user with DM status exists.
@@ -90,7 +90,7 @@ impl UserRepository {
             .fetch_one(&self.pool)
             .await?;
 
-        return unwrap(exists);
+        Ok(exists.unwrap_or(false))
     }
 
     /// Checks if any user exists in the database.

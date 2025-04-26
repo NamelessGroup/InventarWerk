@@ -2,7 +2,6 @@ use std::sync::Mutex;
 
 use lazy_static::lazy_static;
 
-/// Global, thread-safe boolean indicating the locked status.
 lazy_static! {
     pub static ref GLOBAL_LOCKED: Mutex<bool> = Mutex::new(true);
 }

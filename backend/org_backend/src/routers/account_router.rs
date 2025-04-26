@@ -280,10 +280,10 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
 pub async fn toggle_lock(
     user: super::AuthenticatedUser,
     usr_rep: &State<UserRepository>,
-) -> Status {
-    if (!user_is_dm(usr_rep.inner(), user.user_id)) {
-        Status::ImATeapot
+) -> Result<Status> {
+    if !user_is_dm(usr_rep.inner(), user.user_id).await? {
+        return Ok(Status::ImATeapot);
     }
     lock_toggle!();
-    Status::NoContent
+    Ok(Status::NoContent)
 }
