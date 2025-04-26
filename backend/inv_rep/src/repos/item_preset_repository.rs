@@ -1,6 +1,6 @@
-use sqlx::{PgPool, Error};
 use crate::model::ItemPreset;
 use anyhow::Result;
+use sqlx::{Error, PgPool};
 use uuid::Uuid;
 
 pub struct ItemPresetRepository {
@@ -17,7 +17,13 @@ impl ItemPresetRepository {
         sqlx::query!(
             "INSERT INTO item_preset (uuid, name, price, weight, description, creator, item_type) 
              VALUES ($1, $2, $3, $4, $5, $6, $7)",
-            id, name, 0, 0.0, "", owner, ""
+            id,
+            name,
+            0,
+            0.0,
+            "",
+            owner,
+            ""
         )
         .execute(&self.pool)
         .await?;
@@ -37,7 +43,8 @@ impl ItemPresetRepository {
     }
 
     pub async fn get_by_uuid(&self, uuid: &str) -> Result<ItemPreset, Error> {
-        let item = sqlx::query_as!(ItemPreset,
+        let item = sqlx::query_as!(
+            ItemPreset,
             "SELECT * FROM item_preset WHERE uuid = $1",
             uuid
         )
@@ -83,10 +90,12 @@ impl ItemPresetRepository {
     }
 
     pub async fn get_public_presets(&self) -> Result<Vec<ItemPreset>, Error> {
-        let presets = sqlx::query_as!(ItemPreset,
-            "SELECT * FROM item_preset WHERE creator LIKE 'public%'")
-            .fetch_all(&self.pool)
-            .await?;
+        let presets = sqlx::query_as!(
+            ItemPreset,
+            "SELECT * FROM item_preset WHERE creator LIKE 'public%'"
+        )
+        .fetch_all(&self.pool)
+        .await?;
         Ok(presets)
     }
 

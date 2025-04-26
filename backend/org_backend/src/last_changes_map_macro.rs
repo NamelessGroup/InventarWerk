@@ -3,16 +3,6 @@ use std::sync::Mutex;
 
 use lazy_static::lazy_static;
 
-//! # Last Changes Map Macro
-//!
-//! This module provides global state and macros for tracking and retrieving the last change timestamps of inventories.
-//! It uses a global, thread-safe `HashMap` to store the last modification time (as a `u128` UNIX timestamp in milliseconds) for each inventory by its UUID.
-//!
-//! ## Macros
-//! - [`report_change_on_inventory!($id)`]: Updates the last change timestamp for the given inventory UUID.
-//! - [`get_last_inventory_change!($id)`]: Retrieves the last change timestamp for the given inventory UUID, or `0` if not set.
-
-
 /// Global, thread-safe map storing the last change timestamp for each inventory by UUID.
 lazy_static! {
     pub static ref GLOBAL_MAP: Mutex<HashMap<String, u128>> = Mutex::new(HashMap::new());
@@ -22,10 +12,11 @@ lazy_static! {
 #[macro_export]
 macro_rules! report_change_on_inventory {
     ($id:expr) => {
-        use std::time::{SystemTime, UNIX_EPOCH};
         use crate::last_changes_map_macro::GLOBAL_MAP;
+        use std::time::{SystemTime, UNIX_EPOCH};
         let start = SystemTime::now();
-        let duration = start.duration_since(UNIX_EPOCH)
+        let duration = start
+            .duration_since(UNIX_EPOCH)
             .expect("Time went backwards");
         let timestamp_in_seconds = duration.as_millis();
         let mut map = GLOBAL_MAP.lock().unwrap();
@@ -39,6 +30,10 @@ macro_rules! report_change_on_inventory {
 #[macro_export]
 macro_rules! get_last_inventory_change {
     ($id:expr) => {
-        *crate::last_changes_map_macro::GLOBAL_MAP.lock().unwrap().get($id).unwrap_or(&0)
+        *crate::last_changes_map_macro::GLOBAL_MAP
+            .lock()
+            .unwrap()
+            .get($id)
+            .unwrap_or(&0)
     };
 }

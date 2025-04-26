@@ -1,7 +1,7 @@
 pub mod model;
 pub mod repos;
-use anyhow::Result;
 use anyhow::anyhow;
+use anyhow::Result;
 
 use sqlx::PgPool;
 

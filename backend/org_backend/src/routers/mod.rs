@@ -1,8 +1,7 @@
-use rocket::request::Outcome;
-use rocket::{request::FromRequest, Route};
-use rocket::Request;
 use rocket::http::Status;
-
+use rocket::request::Outcome;
+use rocket::Request;
+use rocket::{request::FromRequest, Route};
 
 use anyhow::anyhow;
 use rocket_errors::anyhow::AnyhowError;
@@ -13,33 +12,42 @@ pub mod item_preset_router;
 pub mod last_changes_router;
 mod router_utility;
 
-use inventory_router::*;
 use account_router::*;
+use inventory_router::*;
 use item_preset_router::*;
 use last_changes_router::*;
 
-//! # Routers Module
-//!
-//! This module aggregates and exposes all API routes for the backend, including account, inventory, item preset, and last changes endpoints.
-//!
-//! ## Route Groups
-//! - `get_inventory_routes`: Inventory management endpoints
-//! - `get_account_routes`: Account and authentication endpoints
-//! - `get_last_changes_routes`: Endpoints for retrieving last change timestamps
-//! - `get_item_preset_routes`: Item preset management endpoints
-//!
-//! ## Authentication
-//! The [`AuthenticatedUser`] extractor is provided to require authentication for protected endpoints. It checks for a private `user_id` cookie and returns `Status::Unauthorized` if not present.
-
 /// Returns all inventory-related routes.
 pub fn get_inventory_routes() -> Vec<Route> {
-    routes![get_all_inventories, get_specific_inventory, create_inventory, add_preset_to_inventory, add_new_item_to_inventory,
-        edit_inventory, add_share_to_inventory, remove_share_from_inventory, delete_inventory, edit_item, delete_item_from_inventory, add_note_to_item]
+    routes![
+        get_all_inventories,
+        get_specific_inventory,
+        create_inventory,
+        add_preset_to_inventory,
+        add_new_item_to_inventory,
+        edit_inventory,
+        add_share_to_inventory,
+        remove_share_from_inventory,
+        delete_inventory,
+        edit_item,
+        delete_item_from_inventory,
+        add_note_to_item
+    ]
 }
 
 /// Returns all account-related routes.
 pub fn get_account_routes() -> Vec<Route> {
-    routes![get_accounts, is_account_dm, callback, login, account_info, user_logged_in, logout, is_locked, toggle_lock]
+    routes![
+        get_accounts,
+        is_account_dm,
+        callback,
+        login,
+        account_info,
+        user_logged_in,
+        logout,
+        is_locked,
+        toggle_lock
+    ]
 }
 
 /// Returns all last-changes-related routes.
@@ -49,14 +57,19 @@ pub fn get_last_changes_routes() -> Vec<Route> {
 
 /// Returns all item preset-related routes.
 pub fn get_item_preset_routes() -> Vec<Route> {
-    routes![get_item_preset, modify_item_preset, delete_item_preset, get_all_item_presets, add_extern]
+    routes![
+        get_item_preset,
+        modify_item_preset,
+        delete_item_preset,
+        get_all_item_presets,
+        add_extern
+    ]
 }
-
 
 /// Extractor for authenticated users based on a private `user_id` cookie.
 pub struct AuthenticatedUser {
     /// The user id of the authenticated user
-    pub user_id: String
+    pub user_id: String,
 }
 
 #[rocket::async_trait]
@@ -67,7 +80,7 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
 
         if let Some(cookie) = cookies.get_private("user_id") {
             let user_id = cookie.value().to_string();
-            Outcome::Success(AuthenticatedUser {user_id})
+            Outcome::Success(AuthenticatedUser { user_id })
         } else {
             Outcome::Error((Status::Unauthorized, ()))
         }

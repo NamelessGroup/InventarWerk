@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
 use time::PrimitiveDateTime;
 
-
 #[derive(Serialize, Deserialize)]
 pub struct User {
     pub uuid: String,
     pub name: String,
     pub avatar: String,
     pub dm: i32,
-    pub creation: Option<PrimitiveDateTime>
+    pub creation: Option<PrimitiveDateTime>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -21,7 +20,7 @@ pub struct FullFrontendInventory {
     pub items: Vec<FrontendItem>,
     pub reader: Vec<String>,
     pub writer: Vec<String>,
-    pub creation: Option<PrimitiveDateTime>
+    pub creation: Option<PrimitiveDateTime>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -31,16 +30,15 @@ pub struct RawInventory {
     pub owner_uuid: String,
     pub money: i32,
     pub name: String,
-    pub creation: Option<PrimitiveDateTime>
+    pub creation: Option<PrimitiveDateTime>,
 }
-
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InventoryReader {
     pub user_uuid: String,
     pub inventory_uuid: String,
-    pub creation: Option<PrimitiveDateTime>
+    pub creation: Option<PrimitiveDateTime>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -48,7 +46,7 @@ pub struct InventoryReader {
 pub struct InventoryWriter {
     pub user_uuid: String,
     pub inventory_uuid: String,
-    pub creation: Option<PrimitiveDateTime>
+    pub creation: Option<PrimitiveDateTime>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -61,7 +59,7 @@ pub struct ItemPreset {
     pub description: String,
     pub creator: String,
     pub item_type: String,
-    pub creation: Option<PrimitiveDateTime>
+    pub creation: Option<PrimitiveDateTime>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -73,9 +71,8 @@ pub struct InventoryItem {
     pub amount: i32,
     pub sorting: i32,
     pub inventory_item_note: String,
-    pub creation: Option<PrimitiveDateTime>
+    pub creation: Option<PrimitiveDateTime>,
 }
-
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -91,4 +88,4 @@ pub struct FrontendItem {
     pub item_type: String,
     pub preset_reference: String,
     pub inventory_item_note: String,
-  }
+}

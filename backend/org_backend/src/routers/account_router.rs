@@ -1,14 +1,14 @@
+use reqwest::Client;
 use rocket::form::FromForm;
+use rocket::http::{Cookie, CookieJar, Status};
 use rocket::response::Redirect;
+use rocket::serde::json::Json;
+use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 use std::env;
-use rocket::serde::{Deserialize, Serialize};
-use rocket::serde::json::Json;
-use rocket::http::{Cookie, CookieJar, Status};
-use reqwest::Client;
 
-use inv_rep::repos::user_repository::UserRepository;
 use inv_rep::model::User;
+use inv_rep::repos::user_repository::UserRepository;
 
 use rocket_errors::anyhow::Result;
 
@@ -17,23 +17,22 @@ use crate::{lock_toggle, locked_status};
 
 use super::create_error;
 
-
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub struct DMResponse {
-    isDm: bool
+    isDm: bool,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct AccountResponse {
-    accounts: Vec<User>
+    accounts: Vec<User>,
 }
 
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct LoggedInResponse {
-    loggedIn: bool
+    loggedIn: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,7 +47,7 @@ pub struct TokenResponse {
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InfoResponse {
-    userUUID: String
+    userUUID: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,12 +59,12 @@ pub struct DiscordUser {
 }
 #[derive(FromForm)]
 pub struct CodeParams {
-    code: String
+    code: String,
 }
 
 #[derive(FromForm)]
 pub struct AccountUUIDParams {
-    account_uuid: String
+    account_uuid: String,
 }
 
 /// Endpoint to retrieve all users.
@@ -76,15 +75,14 @@ pub struct AccountUUIDParams {
 /// # Returns
 /// A JSON response containing all users.
 #[get("/account/get")]
-pub async fn get_accounts(_user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
- -> Result<Json<AccountResponse>> {
-    
-    let all_users =  usr_rep.get_all_users().await?;
-    Ok(Json(
-        AccountResponse {
-            accounts: all_users
-        }
-    ))
+pub async fn get_accounts(
+    _user: super::AuthenticatedUser,
+    usr_rep: &State<UserRepository>,
+) -> Result<Json<AccountResponse>> {
+    let all_users = usr_rep.get_all_users().await?;
+    Ok(Json(AccountResponse {
+        accounts: all_users,
+    }))
 }
 
 /// Endpoint to check if a user is a Dungeon Master (DM).
@@ -98,15 +96,16 @@ pub async fn get_accounts(_user: super::AuthenticatedUser, usr_rep: &State<UserR
 /// # Returns
 /// A JSON response indicating whether the user is a DM.
 #[get("/account/isDm?<params..>")]
-pub async fn is_account_dm(params: AccountUUIDParams,  _user: super::AuthenticatedUser, usr_rep: &State<UserRepository>)
- -> Result<Json<DMResponse>> {
-    let user =  usr_rep.get_user(&params.account_uuid).await?;
+pub async fn is_account_dm(
+    params: AccountUUIDParams,
+    _user: super::AuthenticatedUser,
+    usr_rep: &State<UserRepository>,
+) -> Result<Json<DMResponse>> {
+    let user = usr_rep.get_user(&params.account_uuid).await?;
     Ok(Json(DMResponse {
-        isDm: (user.dm==1)
+        isDm: (user.dm == 1),
     }))
-    
 }
-
 
 /// Endpoint to redirect the user to the Discord login page.
 ///
@@ -123,12 +122,15 @@ pub async fn login() -> Redirect {
     Redirect::to(url)
 }
 /// Callback to process the information retrieved from Discord
-/// 
+///
 /// # Returns
 /// A redirect to the base url
 #[get("/account/oauth/callback?<params..>")]
-pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &State<UserRepository>)
- -> Result<Redirect> {
+pub async fn callback(
+    params: CodeParams,
+    cookies: &CookieJar<'_>,
+    usr_rep: &State<UserRepository>,
+) -> Result<Redirect> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");
     let redirect_uri = env::var("DISCORD_REDIRECT_URI").expect("DISCORD_REDIRECT_URI not set");
@@ -155,7 +157,10 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
     // Abrufen der Benutzerinformationen mit dem Access Token
     let user_response = client
         .get("https://discord.com/api/users/@me")
-        .header("Authorization", format!("Bearer {}", token_response.access_token))
+        .header(
+            "Authorization",
+            format!("Bearer {}", token_response.access_token),
+        )
         .send()
         .await?
         .json::<DiscordUser>()
@@ -167,35 +172,43 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
         ("client_id", client_id.as_str()),
         ("client_secret", client_secret.as_str()),
         ("token", token_response.refresh_token.as_str()),
-        ("token_type_hint", "access_token")
+        ("token_type_hint", "access_token"),
     ];
 
-    let _response = client 
-        .post(revoke_url)
-        .form(&params)
-        .send()
-        .await?;
+    let _response = client.post(revoke_url).form(&params).send().await?;
 
     let avatar_unpacked = user_response.avatar.unwrap_or("".to_string());
     let has_user = usr_rep.user_exists(&user_response.id.clone()).await?;
     if !has_user {
-        if !locked_status!() {return Err(create_error("No new Users allowed"))}
-        let _res = usr_rep.create_user(&user_response.id, &user_response.username,
-            &avatar_unpacked).await?;
+        if !locked_status!() {
+            return Err(create_error("No new Users allowed"));
+        }
+        let _res = usr_rep
+            .create_user(&user_response.id, &user_response.username, &avatar_unpacked)
+            .await?;
     } else {
         let user = usr_rep.get_user(&user_response.id.clone()).await?;
         if user.name != user_response.username || user.avatar != avatar_unpacked {
-            usr_rep.update_user(&user_response.id, &user_response.username, &avatar_unpacked, user.dm).await?;
+            usr_rep
+                .update_user(
+                    &user_response.id,
+                    &user_response.username,
+                    &avatar_unpacked,
+                    user.dm,
+                )
+                .await?;
         }
     }
     // Speichern eines Cookies als Beispiel
     let new_cookie = Cookie::build(("user_id", user_response.id.clone())).http_only(false);
     cookies.add_private(new_cookie);
 
-    #[cfg(feature = "dev")] {
+    #[cfg(feature = "dev")]
+    {
         return Ok(Redirect::to(uri!("http://localhost:5173")));
     }
-    #[cfg(not(feature = "dev"))] {
+    #[cfg(not(feature = "dev"))]
+    {
         return Ok(Redirect::to(uri!("/")));
     }
 }
@@ -210,8 +223,8 @@ pub async fn callback(params: CodeParams, cookies: &CookieJar<'_>, usr_rep: &Sta
 #[get("/account/info")]
 pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
     return Json(InfoResponse {
-        userUUID: user.user_id
-    })
+        userUUID: user.user_id,
+    });
 }
 
 /// Endpoint to check if a user is logged in.
@@ -221,7 +234,7 @@ pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> 
 #[get("/account/isLoggedIn")]
 pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     return Json(LoggedInResponse {
-        loggedIn: cookies.get_private("user_id") != None
+        loggedIn: cookies.get_private("user_id") != None,
     });
 }
 
@@ -242,7 +255,7 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Status {
 #[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
 pub struct IsLockedResponse {
-    isLocked: bool
+    isLocked: bool,
 }
 
 /// Endpoint to check if the system is locked.
@@ -252,7 +265,7 @@ pub struct IsLockedResponse {
 #[get("/account/isLocked")]
 pub async fn is_locked() -> Json<IsLockedResponse> {
     Json(IsLockedResponse {
-        isLocked: locked_status!()
+        isLocked: locked_status!(),
     })
 }
 
@@ -264,7 +277,10 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
 /// # Returns
 /// HTTP status `NoContent`.
 #[patch("/account/toggleLock")]
-pub async fn toggle_lock(user: super::AuthenticatedUser, usr_rep: &State<UserRepository>) -> Status {
+pub async fn toggle_lock(
+    user: super::AuthenticatedUser,
+    usr_rep: &State<UserRepository>,
+) -> Status {
     if (!user_is_dm(usr_rep.inner(), user.user_id)) {
         Status::ImATeapot
     }
