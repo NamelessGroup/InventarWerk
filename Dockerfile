@@ -1,5 +1,3 @@
-
-
 # Build-Stage
 FROM rust:latest as builder
 WORKDIR /usr/src/app
