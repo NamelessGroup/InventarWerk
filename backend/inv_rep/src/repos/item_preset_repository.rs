@@ -12,6 +12,7 @@ impl ItemPresetRepository {
         Self { pool }
     }
 
+    /// Creates a new item preset with the given name and owner, using default values for other fields.
     pub async fn create_from_name(&self, name: &str, owner: &str) -> Result<String> {
         let id = Uuid::new_v4().to_string();
         sqlx::query!(
@@ -30,6 +31,7 @@ impl ItemPresetRepository {
         Ok(id)
     }
 
+    /// Creates a new item preset from an `ItemPreset` struct.
     pub async fn create(&self, item: &ItemPreset) -> Result<(), Error> {
         let id = Uuid::new_v4().to_string();
         sqlx::query!(
@@ -42,6 +44,7 @@ impl ItemPresetRepository {
         Ok(())
     }
 
+    /// Retrieves an item preset by its UUID.
     pub async fn get_by_uuid(&self, uuid: &str) -> Result<ItemPreset, Error> {
         let item = sqlx::query_as!(
             ItemPreset,
@@ -53,6 +56,7 @@ impl ItemPresetRepository {
         Ok(item)
     }
 
+    /// Updates an item preset's fields by UUID. Only non-`None` fields are updated.
     pub async fn update_item_preset(
         &self,
         uuid: &str,
@@ -82,6 +86,7 @@ impl ItemPresetRepository {
         Ok(())
     }
 
+    /// Deletes an item preset by UUID.
     pub async fn delete(&self, uuid: &str) -> Result<(), Error> {
         sqlx::query!("DELETE FROM item_preset WHERE uuid = $1", uuid)
             .execute(&self.pool)
@@ -89,6 +94,7 @@ impl ItemPresetRepository {
         Ok(())
     }
 
+    /// Retrieves all public item presets (where the creator starts with "public").
     pub async fn get_public_presets(&self) -> Result<Vec<ItemPreset>, Error> {
         let presets = sqlx::query_as!(
             ItemPreset,
@@ -99,6 +105,7 @@ impl ItemPresetRepository {
         Ok(presets)
     }
 
+    /// Retrieves all item presets present in a specific inventory.
     pub async fn get_presets_in_inventory(&self, inventory_uuid: &str) -> Result<Vec<ItemPreset>> {
         let presets = sqlx::query_as!(
             ItemPreset,
