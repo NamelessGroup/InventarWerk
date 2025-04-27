@@ -14,7 +14,6 @@ ENV DATABASE_URL=${POSTGRES_URI}
 
 RUN cargo sqlx migrate run --source inv_rep
 
-RUN cd ..
 
 RUN cargo build ${FEATURES} --release
 
