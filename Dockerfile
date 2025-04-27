@@ -3,14 +3,21 @@ FROM rust:latest as builder
 WORKDIR /usr/src/app
 
 ARG FEATURES=""
-
+ARG POSTGRES_URI="postgres://inventarwerk:inventarwerk@localhost:5432/inventarwerk"
 
 # Anwendung bauen
 COPY ./backend/ ./
-RUN cargo build $FEATURES --release
+
+RUN cargo install sqlx-cli --no-default-features --features postgres
+
+ENV DATABASE_URL=${POSTGRES_URI}
+
+RUN cargo sqlx migrate run
+
+RUN cargo build ${FEATURES} --release
 
 # 2. Frontend Build Stage
-FROM node:22 AS frontend-builder
+FROM node:23 AS frontend-builder
 WORKDIR /frontend
 
 #Copy Frontend source code
