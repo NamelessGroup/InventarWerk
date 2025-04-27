@@ -12,9 +12,7 @@ RUN cargo install sqlx-cli --no-default-features --features postgres
 
 ENV DATABASE_URL=${POSTGRES_URI}
 
-RUN cd inv_rep/migrations
-RUN ls -la
-RUN cargo sqlx migrate run
+RUN cargo sqlx migrate run --source inv_rep
 
 RUN cd ..
 
