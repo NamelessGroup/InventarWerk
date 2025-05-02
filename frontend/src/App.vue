@@ -3,7 +3,19 @@
     <div v-if="isLoggedIn" class="w-full bg-slate-950">
       <div class="flex h-12 w-full items-center space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
         <img src="./assets/logo.png" class="h-10" />
-        <div class="flex flex-1 items-center justify-end space-x-5">
+        <div class="flex-1"></div>
+        <div
+          class="hidden max-w-96 flex-1 items-center justify-center gap-x-2 rounded border border-amber-300 bg-fuchsia-900 px-1 py-1 md:flex"
+        >
+          <FontAwesomeIcon :icon="faSearch" />
+          <input
+            v-model="searchString"
+            class="flex-1 bg-transparent outline-none"
+            placeholder="Search for inventories"
+          />
+        </div>
+        <div class="flex-1"></div>
+        <div class="flex flex-1 items-center justify-end space-x-5 md:flex-initial">
           <button
             v-if="store().userIsDm"
             class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
@@ -51,9 +63,9 @@
       </PopUp>
       <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
         <InventoryContainer
-          v-for="uuid in store().inventoryUuids"
-          :key="uuid"
-          :inventory="store().inventories[uuid]"
+          v-for="inventory in inventories"
+          :key="inventory.uuid"
+          :inventory="inventory"
         />
       </div>
     </div>
@@ -108,17 +120,19 @@ import {
   faList,
   faPlus,
   faRightFromBracket,
+  faSearch,
   faUpload
 } from '@fortawesome/free-solid-svg-icons'
 import { store } from './store'
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { DatabaseHandler } from './store/DatabaseHandler'
 import PopUp from './components/PopUp.vue'
 import { parseItems } from './utils/itemParser'
 import SettingsPopUp from './components/SettingsPopUp.vue'
 import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
 import { version } from './utils/version'
+import type { Inventory } from './model/Inventory'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
@@ -128,6 +142,21 @@ const showSettings = ref(false)
 const showManagePresets = ref(false)
 
 getAcceptedCookies()
+
+const searchString = ref('')
+const search = computed(() => searchString.value.toLowerCase())
+
+function matchSearchString(inventory: Inventory) {
+  if (inventory.name.toLowerCase().includes(search.value)) {
+    return true
+  }
+  return false
+}
+
+const inventories = computed(() => {
+  const allInventories = store().inventoryUuids.map((uuid) => store().inventories[uuid])
+  return allInventories.filter(matchSearchString)
+})
 
 async function submitAddInventory() {
   if (nameFieldContent.value == '') {
