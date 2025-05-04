@@ -75,6 +75,8 @@ jobs:
           context: .
           driver-opts: |
             network=host
+          build-args: |
+            POSTGRES_URI=postgres://inventarwerk:inventarwerk@localhost:5432/inventarwerk
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
