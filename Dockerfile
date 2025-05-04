@@ -3,7 +3,7 @@ FROM rust:latest as builder
 WORKDIR /usr/src/app
 
 ARG FEATURES=""
-ARG POSTGRES_URI="postgres://inventarwerk:inventarwerk@host.docker.internal:host-gateway:5432/inventarwerk"
+ARG POSTGRES_URI="postgres://inventarwerk:inventarwerk@host.docker.internal:5432/inventarwerk"
 
 # Anwendung bauen
 COPY ./backend/ ./
