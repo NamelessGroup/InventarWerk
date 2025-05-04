@@ -75,8 +75,9 @@ jobs:
           context: .
           driver-opts: |
             network=host
+          buildkitd-flags: '--allow-insecure-entitlement network.host'
           build-args: |
-            POSTGRES_URI=postgres://inventarwerk:inventarwerk@localhost:5432/inventarwerk
+            POSTGRES_URI=postgres://inventarwerk:inventarwerk@172.17.0.1:5432/inventarwerk
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
