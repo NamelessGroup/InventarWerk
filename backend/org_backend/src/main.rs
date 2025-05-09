@@ -1,67 +1,66 @@
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
-mod routers;
-mod controller;
-mod dbmod;
-mod model;
-mod schema;
-mod frontend_model;
 mod last_changes_map_macro;
+mod locked_macros;
+mod routers;
 
-
-use controller::account_controller::AccountController;
-use controller::item_preset_controller::ItemPresetController;
-use controller::lock_controller::LockController;
-use diesel::RunQueryDsl;
-use openssl::rand::rand_bytes;
-use rocket::fs::{FileServer, relative};
 use dotenvy::dotenv;
-use std::env;
-use controller::inventory_controller::InventoryController;
-use dbmod::DbPool;
-use dbmod::establish_connection;
+use inv_rep::create_pg_pool;
+use inv_rep::repos::inventory_repository::InventoryRepository;
+use inv_rep::repos::item_preset_repository::ItemPresetRepository;
+use inv_rep::repos::user_repository::UserRepository;
+use inv_rep::DbPool;
+use openssl::rand::rand_bytes;
 use rocket::config::Config;
+use rocket::fs::{relative, FileServer};
+use std::env;
 
+/// Main async entry point for the backend server.
 #[rocket::main]
 async fn main() {
     dotenv().ok();
+
+    let dbconn: DbPool =
+        create_pg_pool(env::var("DATABASE_URL").expect("Database url must be set"))
+            .await
+            .expect("Couldn't connect to database");
     
-    let dbconn:DbPool = establish_connection();
+    let inv_rep = InventoryRepository::new(dbconn.clone());
+    let usr_rep = UserRepository::new(dbconn.clone());
+    let ipr_rep = ItemPresetRepository::new(dbconn.clone());
 
-    let mut conn = dbconn.get().expect("Failed to get connection from pool");
-
-
-    
-    diesel::sql_query("PRAGMA journal_mode = WAL;")
-        .execute(&mut conn)
-        .expect("Failed to set journal mode");
-
-    let inv_cont = InventoryController::new(dbconn.clone());
-    let acc_con = AccountController::new(dbconn.clone());
-    let ip_con = ItemPresetController::new(dbconn.clone());
-    let loc_con = LockController::new(acc_con.has_users().unwrap_or(false));
-    let mut secret_key = [0u8;32];
+    let mut secret_key = [0u8; 32];
     let _ = rand_bytes(&mut secret_key);
 
+    if !usr_rep
+        .any_user_exists()
+        .await
+        .expect("DB failed in critical point")
+    {
+        lock_toggle!();
+    }
+
     let figment = Config::figment().merge(("secret_key", secret_key));
-    let config = Config::from(figment);    
+    let config = Config::from(figment);
 
     let mut r = rocket::build();
-    r = r.configure(config)
-        .manage(inv_cont)
-        .manage(acc_con)
-        .manage(ip_con)
-        .manage(loc_con)
+    r = r
+        .configure(config)
+        .manage(inv_rep)
+        .manage(usr_rep)
+        .manage(ipr_rep)
         .mount("/", FileServer::from(relative!("static")))
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())
         .mount("/", routers::get_item_preset_routes())
         .mount("/", routers::get_last_changes_routes());
 
-    #[cfg(any(feature = "dev", feature="dev-deploy"))] {
+    #[cfg(any(feature = "dev", feature = "dev-deploy"))]
+    {
         println!("Starting with CORS.\nOnly do this in development.");
         use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
-         // Configure CORS
+        // Configure CORS
         let cors = CorsOptions {
             allowed_origins: AllowedOrigins::all(), // Allow all origins, or customize this
             allowed_methods: vec!["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
@@ -74,8 +73,7 @@ async fn main() {
         }
         .to_cors()
         .expect("Error configuring CORS");
-        
-        
+
         r = r.attach(cors); // Attach the CORS fairing
     }
     let _res = r.launch().await;
