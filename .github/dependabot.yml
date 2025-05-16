@@ -4,13 +4,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "13:37"
-      timezone: "Europe/Berlin"
-    reviewers:
-      - "Kr0nox"
-      - "ProgramPhoenix"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
