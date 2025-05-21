@@ -4,13 +4,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "13:37"
-      timezone: "Europe/Berlin"
-    reviewers:
-      - "Kr0nox"
-      - "ProgramPhoenix"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
@@ -20,12 +14,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "13:37"
-      timezone: "Europe/Berlin"
-    reviewers:
-      - "Kr0nox"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
@@ -35,12 +24,7 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/backend"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "13:37"
-      timezone: "Europe/Berlin"
-    reviewers:
-      - "ProgramPhoenix"
+      interval: "monthly"
     labels:
       - "dependencies"
     commit-message:
