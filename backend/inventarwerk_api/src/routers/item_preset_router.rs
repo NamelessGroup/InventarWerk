@@ -1,7 +1,7 @@
 use std::thread;
 use std::time::Duration;
 
-use inv_rep::{
+use repos::{
     model::ItemPreset,
     repos::{
         inventory_repository::InventoryRepository, item_preset_repository::ItemPresetRepository,

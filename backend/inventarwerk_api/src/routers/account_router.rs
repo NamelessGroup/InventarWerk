@@ -7,8 +7,8 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 use std::env;
 
-use inv_rep::model::User;
-use inv_rep::repos::user_repository::UserRepository;
+use repos::model::User;
+use repos::repos::user_repository::UserRepository;
 
 use rocket_errors::anyhow::Result;
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use inv_rep::repos::inventory_repository::InventoryRepository;
+use repos::repos::inventory_repository::InventoryRepository;
 use rocket::{serde::json::Json, State};
 
 use crate::get_last_inventory_change;

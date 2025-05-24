@@ -1,5 +1,5 @@
 [package]
-name = "backend"
+name = "inventarwerk_api"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,7 +13,7 @@ rand = "0.9.0"
 lazy_static = "1.4"
 rocket_cors = "0.6.0"
 chrono = { version="0.4.39", features=["serde"]}
-inv_rep = {path = "../inv_rep"}
+repos = {path = "../repositories"}
 rocket-errors = "0.1.0"
 anyhow = { version="1.0.96"}
 

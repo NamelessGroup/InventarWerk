@@ -1,7 +1,7 @@
-use inv_rep::model::{FullFrontendInventory, ItemPreset};
-use inv_rep::repos::inventory_repository::InventoryRepository;
-use inv_rep::repos::item_preset_repository::ItemPresetRepository;
-use inv_rep::repos::user_repository::UserRepository;
+use repos::model::{FullFrontendInventory, ItemPreset};
+use repos::repos::inventory_repository::InventoryRepository;
+use repos::repos::item_preset_repository::ItemPresetRepository;
+use repos::repos::user_repository::UserRepository;
 use rocket::http::Status;
 use rocket::{form::FromForm, serde::json::Json, State};
 use rocket_errors::anyhow::Result;

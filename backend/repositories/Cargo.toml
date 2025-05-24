@@ -1,5 +1,5 @@
 [package]
-name = "inv_rep"
+name = "repos"
 version = "0.1.0"
 edition = "2021"
 

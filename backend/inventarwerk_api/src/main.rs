@@ -6,11 +6,11 @@ mod locked_macros;
 mod routers;
 
 use dotenvy::dotenv;
-use inv_rep::create_pg_pool;
-use inv_rep::repos::inventory_repository::InventoryRepository;
-use inv_rep::repos::item_preset_repository::ItemPresetRepository;
-use inv_rep::repos::user_repository::UserRepository;
-use inv_rep::DbPool;
+use repos::create_pg_pool;
+use repos::repos::inventory_repository::InventoryRepository;
+use repos::repos::item_preset_repository::ItemPresetRepository;
+use repos::repos::user_repository::UserRepository;
+use repos::DbPool;
 use openssl::rand::rand_bytes;
 use rocket::config::Config;
 use rocket::fs::{relative, FileServer};
