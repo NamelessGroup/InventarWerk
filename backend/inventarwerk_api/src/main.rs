@@ -13,7 +13,7 @@ use repos::repos::item_preset_repository::ItemPresetRepository;
 use repos::repos::user_repository::UserRepository;
 use repos::DbPool;
 use rocket::config::Config;
-use rocket::fs::{relative, FileServer};
+use rocket::fs::FileServer;
 use std::env;
 
 use routers::account_router::AccountApiDoc;
