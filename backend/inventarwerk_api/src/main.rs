@@ -6,21 +6,20 @@ mod locked_macros;
 mod routers;
 
 use dotenvy::dotenv;
+use openssl::rand::rand_bytes;
 use repos::create_pg_pool;
 use repos::repos::inventory_repository::InventoryRepository;
 use repos::repos::item_preset_repository::ItemPresetRepository;
 use repos::repos::user_repository::UserRepository;
 use repos::DbPool;
-use openssl::rand::rand_bytes;
 use rocket::config::Config;
 use rocket::fs::{relative, FileServer};
 use std::env;
 
+use routers::account_router::AccountApiDoc;
 use routers::inventory_router::InventoryApiDoc;
 use routers::item_preset_router::ItemPresetApiDoc;
-use routers::account_router::AccountApiDoc;
 use routers::last_changes_router::LastChangesApiDoc;
-
 
 use utoipa::OpenApi;
 
@@ -35,7 +34,7 @@ async fn main() {
         create_pg_pool(env::var("DATABASE_URL").expect("Database url must be set"))
             .await
             .expect("Couldn't connect to database");
-    
+
     let inv_rep = InventoryRepository::new(dbconn.clone());
     let usr_rep = UserRepository::new(dbconn.clone());
     let ipr_rep = ItemPresetRepository::new(dbconn.clone());
@@ -68,10 +67,19 @@ async fn main() {
         .mount(
             "/",
             SwaggerUi::new("/swagger-ui/<_..>")
-                .url("/api-docs/openapi_inventory.json", InventoryApiDoc::openapi())
-                .url("/api-docs/openapi_item_preset.json", ItemPresetApiDoc::openapi())
+                .url(
+                    "/api-docs/openapi_inventory.json",
+                    InventoryApiDoc::openapi(),
+                )
+                .url(
+                    "/api-docs/openapi_item_preset.json",
+                    ItemPresetApiDoc::openapi(),
+                )
                 .url("/api-docs/openapi_account.json", AccountApiDoc::openapi())
-                .url("/api-docs/openapi_last_changes.json", LastChangesApiDoc::openapi()),
+                .url(
+                    "/api-docs/openapi_last_changes.json",
+                    LastChangesApiDoc::openapi(),
+                ),
         );
 
     #[cfg(any(feature = "dev", feature = "dev-deploy"))]

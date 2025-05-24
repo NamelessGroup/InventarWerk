@@ -7,10 +7,9 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 use std::env;
 
-use utoipa::ToSchema;
 use utoipa::IntoParams;
 use utoipa::OpenApi;
-
+use utoipa::ToSchema;
 
 use repos::model::User;
 use repos::repos::user_repository::UserRepository;
@@ -341,7 +340,6 @@ pub async fn toggle_lock(
     lock_toggle!();
     Ok(Status::NoContent)
 }
-
 
 #[derive(OpenApi)]
 #[openapi(

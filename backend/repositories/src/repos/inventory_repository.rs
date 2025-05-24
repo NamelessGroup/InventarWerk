@@ -286,11 +286,7 @@ impl InventoryRepository {
     }
 
     /// Checks if an item exists in an inventory.
-    pub async fn item_exists(
-        &self,
-        inventory_uuid: &str,
-        item_preset_uuid: &str,
-    ) -> Result<bool> {
+    pub async fn item_exists(&self, inventory_uuid: &str, item_preset_uuid: &str) -> Result<bool> {
         let result = sqlx::query!(
             "SELECT EXISTS(SELECT 1 FROM inventory_item WHERE inventory_uuid = $1 AND item_preset_uuid = $2) AS exists",
             inventory_uuid,
@@ -303,10 +299,7 @@ impl InventoryRepository {
     }
 
     /// Returns all items in an inventory as `InventoryItem`.
-    pub async fn get_items_in_inventory(
-        &self,
-        inventory_uuid: &str,
-    ) -> Result<Vec<InventoryItem>> {
+    pub async fn get_items_in_inventory(&self, inventory_uuid: &str) -> Result<Vec<InventoryItem>> {
         let items = sqlx::query_as!(
             InventoryItem,
             "SELECT inventory_uuid, item_preset_uuid, dm_note, amount, sorting, inventory_item_note, creation 

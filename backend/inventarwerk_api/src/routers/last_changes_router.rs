@@ -8,7 +8,6 @@ use utoipa::OpenApi;
 use crate::get_last_inventory_change;
 use rocket_errors::anyhow::Result;
 
-
 #[utoipa::path(
     get,
     path = "/lastChanges",
@@ -32,7 +31,6 @@ pub async fn last_changes(
     }
     Ok(Json(inv_hash))
 }
-
 
 #[derive(OpenApi)]
 #[openapi(

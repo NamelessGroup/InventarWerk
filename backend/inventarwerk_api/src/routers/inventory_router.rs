@@ -7,10 +7,9 @@ use rocket::{form::FromForm, serde::json::Json, State};
 use rocket_errors::anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use utoipa::ToSchema;
 use utoipa::IntoParams;
 use utoipa::OpenApi;
-
+use utoipa::ToSchema;
 
 use super::create_error;
 use super::router_utility::{
@@ -391,7 +390,6 @@ pub struct InventoryShareParams {
     reader_uuid: Option<String>,
     writer_uuid: Option<String>,
 }
-
 
 #[utoipa::path(
     patch,

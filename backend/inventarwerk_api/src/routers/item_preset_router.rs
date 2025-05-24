@@ -11,9 +11,9 @@ use rocket::{form::FromForm, http::Status, serde::json::Json, State};
 use rocket_errors::anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use utoipa::ToSchema;
 use utoipa::IntoParams;
 use utoipa::OpenApi;
+use utoipa::ToSchema;
 
 use super::{
     create_error,
@@ -240,7 +240,6 @@ pub async fn add_extern(
 
     Ok(Status::NoContent)
 }
-
 
 #[derive(OpenApi)]
 #[openapi(
