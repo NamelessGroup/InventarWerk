@@ -11,28 +11,39 @@ use rocket::{form::FromForm, http::Status, serde::json::Json, State};
 use rocket_errors::anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+use utoipa::ToSchema;
+use utoipa::IntoParams;
+use utoipa::OpenApi;
+
 use super::{
     create_error,
     router_utility::{user_has_read_access_to_item_preset, ACCESS_DENIAL_MESSAGE},
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetItemPresetReturn {
     item_presets: Vec<ItemPreset>,
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, ToSchema, IntoParams)]
 pub struct ItemPresetUUIDParams {
     item_preset_uuid: String,
 }
 
-/// Retrieves a specific item preset by UUID.
-///
-/// # Authentication
-/// Requires authentication and read access.
-///
-/// # Errors
-/// Returns an error if the user lacks access or the preset does not exist.
+#[utoipa::path(
+    get,
+    path = "/itemPreset",
+    summary = "Retrieve a specific item preset",
+    description = r#"Retrieves a specific item preset by UUID.
+
+Requires authentication and read access. Returns an error if the user lacks access or the preset does not exist."#,
+    params(ItemPresetUUIDParams),
+    responses(
+        (status = 200, description = "Returns the requested item preset", body = ItemPreset)
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Item Presets"
+)]
 #[get("/itemPreset?<params..>")]
 pub async fn get_item_preset(
     params: ItemPresetUUIDParams,
@@ -54,7 +65,7 @@ pub async fn get_item_preset(
     Ok(Json(preset))
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, ToSchema, IntoParams)]
 pub struct ItemModifyParams {
     item_preset_uuid: String,
     name: Option<String>,
@@ -64,13 +75,20 @@ pub struct ItemModifyParams {
     item_type: Option<String>,
 }
 
-/// Modifies an item preset. Only the creator can modify their preset.
-///
-/// # Authentication
-/// Requires authentication and creator privileges.
-///
-/// # Errors
-/// Returns an error if the user is not the creator or the operation fails.
+#[utoipa::path(
+    patch,
+    path = "/itemPreset/modify",
+    summary = "Modify an existing item preset",
+    description = r#"Modifies an item preset. Only the creator can modify their preset.
+
+Requires authentication and creator privileges. Returns an error if the user is not the creator."#,
+    params(ItemModifyParams),
+    responses(
+        (status = 204, description = "Item preset successfully modified")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Item Presets"
+)]
 #[patch("/itemPreset/modify?<params..>")]
 pub async fn modify_item_preset(
     params: ItemModifyParams,
@@ -94,13 +112,20 @@ pub async fn modify_item_preset(
     Ok(Status::NoContent)
 }
 
-/// Deletes an item preset. Only the creator can delete their preset.
-///
-/// # Authentication
-/// Requires authentication and creator privileges.
-///
-/// # Errors
-/// Returns an error if the user is not the creator or the operation fails.
+#[utoipa::path(
+    delete,
+    path = "/itemPreset/delete",
+    summary = "Delete an existing item preset",
+    description = r#"Deletes an item preset. Only the creator can delete their preset.
+
+Requires authentication and creator privileges. Returns an error if the user is not the creator."#,
+    params(ItemPresetUUIDParams),
+    responses(
+        (status = 204, description = "Item preset successfully deleted")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Item Presets"
+)]
 #[delete("/itemPreset/delete?<params..>")]
 pub async fn delete_item_preset(
     params: ItemPresetUUIDParams,
@@ -116,13 +141,19 @@ pub async fn delete_item_preset(
     Ok(Status::NoContent)
 }
 
-/// Retrieves all item presets accessible to the user (public and those in the user's inventories).
-///
-/// # Authentication
-/// Requires authentication.
-///
-/// # Errors
-/// Returns an error if the retrieval fails.
+#[utoipa::path(
+    get,
+    path = "/itemPreset/all",
+    summary = "Retrieve all accessible item presets",
+    description = r#"Retrieves all public item presets and those in the user's inventories.
+
+Requires authentication. Returns an error if the retrieval fails."#,
+    responses(
+        (status = 200, description = "Returns a list of all accessible item presets", body = GetItemPresetReturn)
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Item Presets"
+)]
 #[get("/itemPreset/all")]
 pub async fn get_all_item_presets(
     user: super::AuthenticatedUser,
@@ -142,7 +173,7 @@ pub async fn get_all_item_presets(
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ExternPresetData {
     name: String,
     uuid: String,
@@ -153,18 +184,25 @@ pub struct ExternPresetData {
     itemType: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ExternPresetDataList {
     presets: Vec<ExternPresetData>,
 }
 
-/// Imports external item presets into the system.
-///
-/// # Authentication
-/// Requires authentication.
-///
-/// # Errors
-/// Retries up to 5 times per preset on failure, then skips the preset.
+#[utoipa::path(
+    put,
+    path = "/itemPreset/addExtern",
+    summary = "Import external item presets",
+    description = r#"Imports external item presets from the provided JSON list.
+
+Requires authentication. Retries up to 5 times on creation errors, then skips the preset."#,
+    request_body = ExternPresetDataList,
+    responses(
+        (status = 204, description = "External item presets successfully imported")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Item Presets"
+)]
 #[put("/itemPreset/addExtern", data = "<json_data>")]
 pub async fn add_extern(
     json_data: Json<ExternPresetDataList>,
@@ -202,3 +240,29 @@ pub async fn add_extern(
 
     Ok(Status::NoContent)
 }
+
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        get_item_preset,
+        modify_item_preset,
+        delete_item_preset,
+        get_all_item_presets,
+        add_extern
+    ),
+    components(
+        schemas(
+            GetItemPresetReturn,
+            ItemPresetUUIDParams,
+            ItemModifyParams,
+            ItemPreset,
+            ExternPresetData,
+            ExternPresetDataList
+        )
+    ),
+    tags(
+        (name = "Item Presets", description = "Endpoints for managing item presets")
+    )
+)]
+pub struct ItemPresetApiDoc;

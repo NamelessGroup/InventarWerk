@@ -7,6 +7,11 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 use std::env;
 
+use utoipa::ToSchema;
+use utoipa::IntoParams;
+use utoipa::OpenApi;
+
+
 use repos::model::User;
 use repos::repos::user_repository::UserRepository;
 
@@ -18,24 +23,24 @@ use crate::{lock_toggle, locked_status};
 use super::create_error;
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 #[serde(crate = "rocket::serde")]
 pub struct DMResponse {
     isDm: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct AccountResponse {
     accounts: Vec<User>,
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct LoggedInResponse {
     loggedIn: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct TokenResponse {
     access_token: String,
     token_type: String,
@@ -45,35 +50,39 @@ pub struct TokenResponse {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct InfoResponse {
     userUUID: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct DiscordUser {
     id: String,
     username: String,
     discriminator: String,
     avatar: Option<String>,
 }
-#[derive(FromForm)]
+#[derive(FromForm, ToSchema, IntoParams)]
 pub struct CodeParams {
     code: String,
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, ToSchema, IntoParams)]
 pub struct AccountUUIDParams {
     account_uuid: String,
 }
 
-/// Endpoint to retrieve all users.
-///
-/// # Notes
-/// Requires authentication.
-///
-/// # Returns
-/// A JSON response containing all users.
+#[utoipa::path(
+    get,
+    path = "/account/get",
+    summary = "Retrieve all users",
+    description = r#"Returns a JSON response containing all users. Requires authentication."#,
+    responses(
+        (status = 200, description = "A list of user accounts", body = AccountResponse)
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Accounts"
+)]
 #[get("/account/get")]
 pub async fn get_accounts(
     _user: super::AuthenticatedUser,
@@ -85,16 +94,18 @@ pub async fn get_accounts(
     }))
 }
 
-/// Endpoint to check if a user is a Dungeon Master (DM).
-///
-/// # Notes
-/// Requires authentication.
-///
-/// # Parameters
-/// - `params`: The UUID of the user.
-///
-/// # Returns
-/// A JSON response indicating whether the user is a DM.
+#[utoipa::path(
+    get,
+    path = "/account/isDm",
+    params(AccountUUIDParams),
+    summary = "Check if a user is a DM",
+    description = r#"Checks if a user (by UUID) is a Dungeon Master (DM). Requires authentication."#,
+    responses(
+        (status = 200, description = "A JSON response indicating whether the user is DM", body = DMResponse)
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Accounts"
+)]
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(
     params: AccountUUIDParams,
@@ -107,10 +118,16 @@ pub async fn is_account_dm(
     }))
 }
 
-/// Endpoint to redirect the user to the Discord login page.
-///
-/// # Returns
-/// A redirect to the Discord login page.
+#[utoipa::path(
+    get,
+    path = "/account/login",
+    summary = "Redirect to the Discord login page",
+    description = r#"Redirects the user to the Discord OAuth login page."#,
+    responses(
+        (status = 307, description = "Redirecting to Discord login")
+    ),
+    tag = "Accounts"
+)]
 #[get("/account/login")]
 pub async fn login() -> Redirect {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
@@ -121,10 +138,19 @@ pub async fn login() -> Redirect {
     );
     Redirect::to(url)
 }
-/// Callback to process the information retrieved from Discord
-///
-/// # Returns
-/// A redirect to the base url
+
+#[utoipa::path(
+    get,
+    path = "/account/oauth/callback",
+    params(CodeParams),
+    summary = "Handle OAuth callback from Discord",
+    description = r#"Enters the OAuth flow, exchanging the code for a token. Retrieves user info from Discord and creates/updates a user in the DB."#,
+    responses(
+        (status = 307, description = "Redirects to the base URL after processing the OAuth callback")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Accounts"
+)]
 #[get("/account/oauth/callback?<params..>")]
 pub async fn callback(
     params: CodeParams,
@@ -213,13 +239,17 @@ pub async fn callback(
     }
 }
 
-/// Endpoint to retrieve user information.
-///
-/// # Notes
-/// Requires authentication.
-///
-/// # Returns
-/// The UUID of the authenticated user.
+#[utoipa::path(
+    get,
+    path = "/account/info",
+    summary = "Get authenticated user info",
+    description = r#"Returns the UUID of the authenticated user."#,
+    responses(
+        (status = 200, description = "UUID of the authenticated user", body = InfoResponse)
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Accounts"
+)]
 #[get("/account/info")]
 pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
     return Json(InfoResponse {
@@ -227,10 +257,16 @@ pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> 
     });
 }
 
-/// Endpoint to check if a user is logged in.
-///
-/// # Returns
-/// `true` if the user is logged in, otherwise `false`.
+#[utoipa::path(
+    get,
+    path = "/account/isLoggedIn",
+    summary = "Check if a user is logged in",
+    description = r#"Returns `true` if the user is currently logged in, or `false` otherwise."#,
+    responses(
+        (status = 200, description = "Indicates whether the user is logged in", body = LoggedInResponse)
+    ),
+    tag = "Accounts"
+)]
 #[get("/account/isLoggedIn")]
 pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     return Json(LoggedInResponse {
@@ -238,10 +274,17 @@ pub async fn user_logged_in(cookies: &CookieJar<'_>) -> Json<LoggedInResponse> {
     });
 }
 
-/// Endpoint to log out the user.
-///
-/// # Returns
-/// HTTP status `NoContent` if the user is successfully logged out, otherwise `BadRequest`.
+#[utoipa::path(
+    get,
+    path = "/account/logout",
+    summary = "Log out the current user",
+    description = r#"Removes the login cookie for the user. If no cookie is set, returns `BadRequest`."#,
+    responses(
+        (status = 204, description = "User successfully logged out"),
+        (status = 400, description = "No user was logged in")
+    ),
+    tag = "Accounts"
+)]
 #[get("/account/logout")]
 pub async fn logout(cookies: &CookieJar<'_>) -> Status {
     if let Some(_cookie) = cookies.get_private("user_id") {
@@ -253,15 +296,21 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Status {
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct IsLockedResponse {
     isLocked: bool,
 }
 
-/// Endpoint to check if the system is locked.
-///
-/// # Returns
-/// `true` if the system is locked, otherwise `false`.
+#[utoipa::path(
+    get,
+    path = "/account/isLocked",
+    summary = "Check if the system is locked",
+    description = r#"Returns `true` if the system is locked, otherwise `false`."#,
+    responses(
+        (status = 200, description = "Lock status of the system", body = IsLockedResponse)
+    ),
+    tag = "Accounts"
+)]
 #[get("/account/isLocked")]
 pub async fn is_locked() -> Json<IsLockedResponse> {
     Json(IsLockedResponse {
@@ -269,13 +318,18 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
     })
 }
 
-/// Endpoint to toggle the lock status of the system.
-///
-/// # Notes
-/// Requires authentication.
-///
-/// # Returns
-/// HTTP status `NoContent`.
+#[utoipa::path(
+    patch,
+    path = "/account/toggleLock",
+    summary = "Toggle the lock status of the system",
+    description = r#"Only a DM can toggle the system lock. Returns an error if the user is not a DM."#,
+    responses(
+        (status = 204, description = "System lock toggled successfully"),
+        (status = 418, description = "User is not a Dungeon Master")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Accounts"
+)]
 #[patch("/account/toggleLock")]
 pub async fn toggle_lock(
     user: super::AuthenticatedUser,
@@ -287,3 +341,36 @@ pub async fn toggle_lock(
     lock_toggle!();
     Ok(Status::NoContent)
 }
+
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        get_accounts,
+        is_account_dm,
+        login,
+        callback,
+        account_info,
+        user_logged_in,
+        logout,
+        is_locked,
+        toggle_lock
+    ),
+    components(
+        schemas(
+            DMResponse,
+            AccountResponse,
+            LoggedInResponse,
+            TokenResponse,
+            InfoResponse,
+            DiscordUser,
+            CodeParams,
+            AccountUUIDParams,
+            IsLockedResponse
+        )
+    ),
+    tags(
+        (name = "Accounts", description = "Endpoints for managing user accounts")
+    )
+)]
+pub struct AccountApiDoc;

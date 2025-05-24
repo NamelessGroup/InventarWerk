@@ -16,6 +16,8 @@ chrono = { version="0.4.39", features=["serde"]}
 repos = {path = "../repositories"}
 rocket-errors = "0.1.0"
 anyhow = { version="1.0.96"}
+utoipa = {version="5.3.1"}
+utoipa-swagger-ui = {version="9", features = ["rocket"]}
 
 [features]
 dev = []

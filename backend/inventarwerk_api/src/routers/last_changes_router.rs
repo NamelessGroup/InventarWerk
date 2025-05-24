@@ -3,16 +3,23 @@ use std::collections::HashMap;
 use repos::repos::inventory_repository::InventoryRepository;
 use rocket::{serde::json::Json, State};
 
+use utoipa::OpenApi;
+
 use crate::get_last_inventory_change;
 use rocket_errors::anyhow::Result;
 
-/// Returns the last change timestamps for all inventories accessible to the authenticated user.
-///
-/// # Authentication
-/// Requires authentication.
-///
-/// # Returns
-/// A JSON map where the key is the inventory UUID and the value is the last change timestamp (`u128`).
+
+#[utoipa::path(
+    get,
+    path = "/lastChanges",
+    summary = "Retrieve last change timestamps",
+    description = "Returns the last change timestamps for all inventories accessible to the authenticated user.",
+    responses(
+        (status = 200, description = "Map of last changes keyed by inventory UUID")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Last Changes"
+)]
 #[get("/lastChanges")]
 pub async fn last_changes(
     user: super::AuthenticatedUser,
@@ -25,3 +32,15 @@ pub async fn last_changes(
     }
     Ok(Json(inv_hash))
 }
+
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        last_changes
+    ),
+    tags(
+        (name = "Last Changes", description = "Endpoint to get last changes")
+    )
+)]
+pub struct LastChangesApiDoc;

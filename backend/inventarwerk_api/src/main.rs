@@ -16,6 +16,16 @@ use rocket::config::Config;
 use rocket::fs::{relative, FileServer};
 use std::env;
 
+use routers::inventory_router::InventoryApiDoc;
+use routers::item_preset_router::ItemPresetApiDoc;
+use routers::account_router::AccountApiDoc;
+use routers::last_changes_router::LastChangesApiDoc;
+
+
+use utoipa::OpenApi;
+
+use utoipa_swagger_ui::SwaggerUi;
+
 /// Main async entry point for the backend server.
 #[rocket::main]
 async fn main() {
@@ -54,7 +64,15 @@ async fn main() {
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())
         .mount("/", routers::get_item_preset_routes())
-        .mount("/", routers::get_last_changes_routes());
+        .mount("/", routers::get_last_changes_routes())
+        .mount(
+            "/",
+            SwaggerUi::new("/swagger-ui/<_..>")
+                .url("/api-docs/openapi_inventory.json", InventoryApiDoc::openapi())
+                .url("/api-docs/openapi_item_preset.json", ItemPresetApiDoc::openapi())
+                .url("/api-docs/openapi_account.json", AccountApiDoc::openapi())
+                .url("/api-docs/openapi_last_changes.json", LastChangesApiDoc::openapi()),
+        );
 
     #[cfg(any(feature = "dev", feature = "dev-deploy"))]
     {
