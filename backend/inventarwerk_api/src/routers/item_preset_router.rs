@@ -161,9 +161,7 @@ pub async fn get_all_item_presets(
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Json<GetItemPresetReturn>> {
     let mut item_presets = ipr_rep.get_public_presets().await?;
-    let mut invs = inv_rep.get_user_inventory_ids(&user.user_id).await?;
-    let read_invs = inv_rep.get_inventories_by_reader(&user.user_id).await?;
-    invs.extend(read_invs);
+    let invs = inv_rep.get_owned_and_readable_inventory_ids(&user.user_id).await?;
     for i in invs {
         item_presets.extend(ipr_rep.get_presets_in_inventory(&i).await?);
     }
