@@ -38,7 +38,7 @@ WORKDIR /usr/src/app
 RUN apt-get update && apt-get install -y libsqlite3-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Anwendung und Migrations kopieren
-COPY --from=builder /usr/src/app/target/release/backend ./
+COPY --from=builder /usr/src/app/target/release/inventarwerk_api ./
 
 #COPY ./backend/static ./static
 

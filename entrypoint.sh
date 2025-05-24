@@ -2,4 +2,4 @@
 
 # Anwendung starten
 echo "Starte die Anwendung..."
-exec ./backend
+exec ./inventarwerk_api
