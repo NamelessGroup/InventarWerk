@@ -25,7 +25,9 @@ pub async fn last_changes(
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Json<HashMap<String, u128>>> {
     let mut inv_hash: HashMap<String, u128> = HashMap::new();
-    let invs = inv_rep.get_owned_and_readable_inventory_ids(&user.user_id).await?;
+    let invs = inv_rep
+        .get_owned_and_readable_inventory_ids(&user.user_id)
+        .await?;
     for i in invs {
         inv_hash.insert(i.clone(), get_last_inventory_change!(&i));
     }

@@ -94,7 +94,10 @@ impl InventoryRepository {
         Ok(inventory_ids)
     }
 
-    pub async fn get_owned_and_readable_inventory_ids(&self, user_uuid: &str) -> Result<Vec<String>> {
+    pub async fn get_owned_and_readable_inventory_ids(
+        &self,
+        user_uuid: &str,
+    ) -> Result<Vec<String>> {
         let mut invs = self.get_user_inventory_ids(user_uuid).await?;
         let read_invs = self.get_inventories_by_reader(user_uuid).await?;
         invs.extend(read_invs);
