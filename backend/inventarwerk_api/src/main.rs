@@ -59,7 +59,7 @@ async fn main() {
         .manage(inv_rep)
         .manage(usr_rep)
         .manage(ipr_rep)
-        .mount("/", FileServer::from(relative!("static")))
+        .mount("/", FileServer::from(relative!("../static")))
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())
         .mount("/", routers::get_item_preset_routes())
