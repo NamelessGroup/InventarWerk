@@ -45,7 +45,7 @@ async fn main() {
     if !usr_rep
         .any_user_exists()
         .await
-        .expect("DB failed in critical point")
+        .expect("DB failed during startup, can not recover from this.")
     {
         lock_toggle!();
     }
