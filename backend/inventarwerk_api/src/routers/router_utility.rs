@@ -114,7 +114,8 @@ pub async fn has_access_to_item(
     let mut has_access = false;
     for i in inventories {
         if inv_rep.item_exists(&i, searched_item_preset).await? {
-            has_access = true
+            has_access = true;
+            break;
         }
     }
     return Ok(has_access);
