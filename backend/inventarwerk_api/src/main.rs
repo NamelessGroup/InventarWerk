@@ -52,7 +52,7 @@ async fn main() {
 
     let figment = Config::figment().merge(("secret_key", secret_key));
     let config = Config::from(figment);
-
+    #[allow(unused_mut)]
     let mut r = rocket::build()
         .configure(config)
         .manage(inv_rep)
