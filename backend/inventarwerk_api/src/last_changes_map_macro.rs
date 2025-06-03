@@ -17,9 +17,9 @@ macro_rules! report_change_on_inventory {
         let duration = start
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards");
-        let timestamp_in_seconds = duration.as_millis();
+        let timestamp_in_milliseconds = duration.as_millis();
         let mut map = GLOBAL_MAP.lock().unwrap();
-        map.insert($id.to_string(), (timestamp_in_seconds));
+        map.insert($id.to_string(), (timestamp_in_milliseconds));
     };
 }
 
