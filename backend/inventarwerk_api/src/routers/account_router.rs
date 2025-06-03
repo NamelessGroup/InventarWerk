@@ -21,54 +21,17 @@ use crate::{lock_toggle, locked_status};
 
 use super::create_error;
 
-#[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
-#[serde(crate = "rocket::serde")]
-pub struct DMResponse {
-    isDm: bool,
+
+
+
+#[derive(FromForm, ToSchema, IntoParams)]
+pub struct AccountUUIDParams {
+    account_uuid: String,
 }
 
 #[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct AccountResponse {
     accounts: Vec<User>,
-}
-
-#[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct LoggedInResponse {
-    loggedIn: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct TokenResponse {
-    access_token: String,
-    token_type: String,
-    expires_in: u64,
-    refresh_token: String,
-    scope: String,
-}
-
-#[allow(non_snake_case)]
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct InfoResponse {
-    userUUID: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct DiscordUser {
-    id: String,
-    username: String,
-    discriminator: String,
-    avatar: Option<String>,
-}
-#[derive(FromForm, ToSchema, IntoParams)]
-pub struct CodeParams {
-    code: String,
-}
-
-#[derive(FromForm, ToSchema, IntoParams)]
-pub struct AccountUUIDParams {
-    account_uuid: String,
 }
 
 #[utoipa::path(
@@ -91,6 +54,13 @@ pub async fn get_accounts(
     Ok(Json(AccountResponse {
         accounts: all_users,
     }))
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[serde(crate = "rocket::serde")]
+pub struct DMResponse {
+    isDm: bool,
 }
 
 #[utoipa::path(
@@ -136,6 +106,29 @@ pub async fn login() -> Redirect {
         client_id, redirect_uri
     );
     Redirect::to(url)
+}
+
+#[derive(FromForm, ToSchema, IntoParams)]
+pub struct CodeParams {
+    code: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct TokenResponse {
+    access_token: String,
+    token_type: String,
+    expires_in: u64,
+    refresh_token: String,
+    scope: String,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct DiscordUser {
+    id: String,
+    username: String,
+    discriminator: String,
+    avatar: Option<String>,
 }
 
 #[utoipa::path(
@@ -238,6 +231,12 @@ pub async fn callback(
     }
 }
 
+#[allow(non_snake_case)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct InfoResponse {
+    userUUID: String,
+}
+
 #[utoipa::path(
     get,
     path = "/account/info",
@@ -254,6 +253,12 @@ pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> 
     return Json(InfoResponse {
         userUUID: user.user_id,
     });
+}
+
+#[allow(non_snake_case)]
+#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+pub struct LoggedInResponse {
+    loggedIn: bool,
 }
 
 #[utoipa::path(
