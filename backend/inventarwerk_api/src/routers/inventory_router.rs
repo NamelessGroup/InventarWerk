@@ -106,8 +106,8 @@ pub async fn create_inventory(
         .await?;
     let dms = usr_rep.get_all_dm_ids().await?;
     for dm_id in dms {
-        inv_rep.add_reader(&inv.uuid, &dm_id);
-        inv_rep.add_writer(&inv.uuid, &dm_id);
+        inv_rep.add_reader(&inv.uuid, &dm_id).await;
+        inv_rep.add_writer(&inv.uuid, &dm_id).await;
     }
     get_specific_inventory(
         InventoryUUIDParams {
