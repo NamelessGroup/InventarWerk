@@ -21,9 +21,6 @@ use crate::{lock_toggle, locked_status};
 
 use super::create_error;
 
-
-
-
 #[derive(FromForm, ToSchema, IntoParams)]
 pub struct AccountUUIDParams {
     account_uuid: String,
@@ -121,7 +118,6 @@ pub struct TokenResponse {
     refresh_token: String,
     scope: String,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct DiscordUser {
