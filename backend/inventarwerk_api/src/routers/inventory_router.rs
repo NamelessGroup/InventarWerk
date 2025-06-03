@@ -99,7 +99,7 @@ pub async fn create_inventory(
     params: InventoryCreateParams,
     user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
-    usr_rep: &State<UserRepository>
+    usr_rep: &State<UserRepository>,
 ) -> Result<Json<FullFrontendInventory>> {
     let inv = inv_rep
         .create_inventory(&user.user_id, 0, &params.name)

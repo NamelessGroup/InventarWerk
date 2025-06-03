@@ -95,11 +95,9 @@ impl UserRepository {
 
     /// Retrieves the IDs of all users with DM status.
     pub async fn get_all_dm_ids(&self) -> Result<Vec<String>> {
-        let dm_ids = sqlx::query_scalar!(
-            "SELECT uuid FROM \"user\" WHERE dm = 1"
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let dm_ids = sqlx::query_scalar!("SELECT uuid FROM \"user\" WHERE dm = 1")
+            .fetch_all(&self.pool)
+            .await?;
 
         Ok(dm_ids)
     }
