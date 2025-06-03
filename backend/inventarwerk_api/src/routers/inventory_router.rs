@@ -99,10 +99,16 @@ pub async fn create_inventory(
     params: InventoryCreateParams,
     user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
+    usr_rep: &State<UserRepository>
 ) -> Result<Json<FullFrontendInventory>> {
     let inv = inv_rep
         .create_inventory(&user.user_id, 0, &params.name)
         .await?;
+    let dms = usr_rep.get_all_dm_ids().await?;
+    for dm_id in dms {
+        inv_rep.add_reader(&inv.uuid, &dm_id);
+        inv_rep.add_writer(&inv.uuid, &dm_id);
+    }
     get_specific_inventory(
         InventoryUUIDParams {
             inventory_uuid: inv.uuid,

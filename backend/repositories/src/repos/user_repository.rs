@@ -93,6 +93,17 @@ impl UserRepository {
         Ok(exists.unwrap_or(false))
     }
 
+    /// Retrieves the IDs of all users with DM status.
+    pub async fn get_all_dm_ids(&self) -> Result<Vec<String>> {
+        let dm_ids = sqlx::query_scalar!(
+            "SELECT uuid FROM \"user\" WHERE dm = 1"
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(dm_ids)
+    }
+
     /// Checks if any user exists in the database.
     pub async fn any_user_exists(&self) -> Result<bool> {
         let result = sqlx::query!("SELECT EXISTS(SELECT 1 FROM \"user\") AS exists")
