@@ -83,7 +83,8 @@ async fn main() {
 
     #[cfg(any(feature = "dev", feature = "dev-deploy"))]
     {
-        println!("Starting with CORS.\nOnly do this in development.");
+        println!("Starting with CORS.");
+        println!("Only do this in development.");
         use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
         // Configure CORS
         let cors = CorsOptions {

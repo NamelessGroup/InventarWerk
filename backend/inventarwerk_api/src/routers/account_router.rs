@@ -170,7 +170,7 @@ pub async fn callback(
         ("redirect_uri", redirect_uri.as_str()),
     ];
 
-    // Austausch des Authorization Codes gegen einen Token
+    // Exchange Authorization Codes for Token
     let token_response = client
         .post(token_url)
         .form(&params)
@@ -179,7 +179,7 @@ pub async fn callback(
         .json::<TokenResponse>()
         .await?;
 
-    // Abrufen der Benutzerinformationen mit dem Access Token
+    // Get Userinformation with Access Token
     let user_response = client
         .get("https://discord.com/api/users/@me")
         .header(
@@ -224,7 +224,7 @@ pub async fn callback(
                 .await?;
         }
     }
-    // Speichern eines Cookies als Beispiel
+    // Save Cookie
     let new_cookie = Cookie::build(("user_id", user_response.id.clone())).http_only(false);
     cookies.add_private(new_cookie);
 
