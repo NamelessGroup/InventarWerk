@@ -34,7 +34,7 @@ const props = defineProps({
 
 const creator = computed(() => {
   return (
-    store().accounts.filter((account) => account.uuid === props.inventory.owner)[0] ?? {
+    store().accounts.filter((account) => account.uuid === props.inventory.ownerUuid)[0] ?? {
       name: 'Unknown',
       avatar: null,
       dm: false,

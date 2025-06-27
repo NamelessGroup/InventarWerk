@@ -1,24 +1,24 @@
-
-
 # Build-Stage
 FROM rust:latest as builder
 WORKDIR /usr/src/app
 
 ARG FEATURES=""
-
-# Diesel CLI installieren
-RUN cargo install diesel_cli --no-default-features --features sqlite
-
-# Rust-Abhängigkeiten cachen
-COPY backend/Cargo.toml ./
-#RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -r src
+ARG POSTGRES_URI=""
 
 # Anwendung bauen
 COPY ./backend/ ./
-RUN cargo build $FEATURES --release
+
+RUN cargo install sqlx-cli --no-default-features --features postgres
+
+ENV DATABASE_URL=${POSTGRES_URI}
+
+RUN cargo sqlx migrate run --source repositories/migrations
+
+
+RUN cargo build ${FEATURES} --release
 
 # 2. Frontend Build Stage
-FROM node:22 AS frontend-builder
+FROM node:23 AS frontend-builder
 WORKDIR /frontend
 
 #Copy Frontend source code
@@ -37,12 +37,8 @@ WORKDIR /usr/src/app
 # Laufzeitabhängigkeiten installieren
 RUN apt-get update && apt-get install -y libsqlite3-dev ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Diesel CLI aus dem Build-Container kopieren
-COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
-
 # Anwendung und Migrations kopieren
-COPY --from=builder /usr/src/app/target/release/backend ./
-COPY --from=builder /usr/src/app/migrations ./migrations
+COPY --from=builder /usr/src/app/target/release/inventarwerk_api ./
 
 #COPY ./backend/static ./static
 

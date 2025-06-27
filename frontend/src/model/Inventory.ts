@@ -5,7 +5,7 @@ interface RawInventory<T> {
   uuid: string
   name: string
   money: T
-  owner: string
+  ownerUuid: string
   reader: string[]
   writer: string[]
   items: Item[]

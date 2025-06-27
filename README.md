@@ -41,6 +41,7 @@ networks:
 Nginx runs in another container, that routes the traffic over the nginxbridge to the container.
 ## Dockerfile
 The Dockerfile supports build args i.e. "--build-arg FEATURES="--features dev-deploy""
+You should also specify a postgres server, while building "--build-arg POSTGRES_URI="<YOUR_URL>""
 
 
 <details>
