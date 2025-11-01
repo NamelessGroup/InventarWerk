@@ -1,5 +1,5 @@
 # Build-Stage
-FROM rust:bookworm as builder
+FROM rust:latest as builder
 WORKDIR /usr/src/app
 
 ARG FEATURES=""
@@ -31,7 +31,7 @@ RUN npm run build:prod
 
 
 # Runtime-Stage
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 WORKDIR /usr/src/app
 
 # Laufzeitabhängigkeiten installieren
