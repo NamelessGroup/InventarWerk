@@ -31,7 +31,7 @@ RUN npm run build:prod
 
 
 # Runtime-Stage
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 WORKDIR /usr/src/app
 
 # Laufzeitabhängigkeiten installieren
