@@ -1,5 +1,5 @@
 # Build-Stage
-FROM rust:latest as builder
+FROM rust:bookworm as builder
 WORKDIR /usr/src/app
 
 ARG FEATURES=""
