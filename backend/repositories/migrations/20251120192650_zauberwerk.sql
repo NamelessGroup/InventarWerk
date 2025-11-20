@@ -62,7 +62,7 @@ CREATE TABLE spell_preset_feats {
 }
 
 CREATE TABLE spell_list {
-    uuid TEXT NOT NULL,
+    uuid TEXT NOT NULL PRIMARY KEY,
     owner_uuid TEXT NOT NULL,
     name TEXT NOT NULL
 }
