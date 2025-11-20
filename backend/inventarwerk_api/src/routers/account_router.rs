@@ -193,8 +193,9 @@ pub async fn callback(
 
     let avatar_unpacked = user_response.avatar.unwrap_or("".to_string());
     let has_user = usr_rep.user_exists(&user_response.id.clone()).await?;
+    
     if !has_user {
-        if !locked_status!() {
+        if locked_status!() {
             return Err(create_error("No new Users allowed"));
         }
         let _res = usr_rep
