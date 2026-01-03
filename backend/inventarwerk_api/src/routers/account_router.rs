@@ -6,6 +6,7 @@ use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 use std::env;
+use utils::AuthenticatedUser;
 
 use utoipa::IntoParams;
 use utoipa::OpenApi;
@@ -44,7 +45,7 @@ pub struct AccountResponse {
 )]
 #[get("/account/get")]
 pub async fn get_accounts(
-    _user: super::AuthenticatedUser,
+    _user: AuthenticatedUser,
     usr_rep: &State<UserRepository>,
 ) -> Result<Json<AccountResponse>> {
     let all_users = usr_rep.get_all_users().await?;
@@ -75,7 +76,7 @@ pub struct DMResponse {
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(
     params: AccountUUIDParams,
-    _user: super::AuthenticatedUser,
+    _user: AuthenticatedUser,
     usr_rep: &State<UserRepository>,
 ) -> Result<Json<DMResponse>> {
     let user = usr_rep.get_user(&params.account_uuid).await?;
@@ -246,7 +247,7 @@ pub struct InfoResponse {
     tag = "Accounts"
 )]
 #[get("/account/info")]
-pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
+pub async fn account_info(user: AuthenticatedUser) -> Json<InfoResponse> {
     return Json(InfoResponse {
         userUUID: user.user_id,
     });
@@ -333,7 +334,7 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
 )]
 #[patch("/account/toggleLock")]
 pub async fn toggle_lock(
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     usr_rep: &State<UserRepository>,
 ) -> Result<Status> {
     if !user_is_dm(usr_rep.inner(), user.user_id).await? {

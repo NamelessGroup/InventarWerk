@@ -15,6 +15,9 @@ use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
+
+use utils::AuthenticatedUser;
+
 use super::{
     create_error,
     router_utility::{user_has_read_access_to_item_preset, ACCESS_DENIAL_MESSAGE},
@@ -47,7 +50,7 @@ Requires authentication and read access. Returns an error if the user lacks acce
 #[get("/itemPreset?<params..>")]
 pub async fn get_item_preset(
     params: ItemPresetUUIDParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     ipr_rep: &State<ItemPresetRepository>,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Json<ItemPreset>> {
@@ -92,7 +95,7 @@ Requires authentication and creator privileges. Returns an error if the user is 
 #[patch("/itemPreset/modify?<params..>")]
 pub async fn modify_item_preset(
     params: ItemModifyParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Status> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
@@ -129,7 +132,7 @@ Requires authentication and creator privileges. Returns an error if the user is 
 #[delete("/itemPreset/delete?<params..>")]
 pub async fn delete_item_preset(
     params: ItemPresetUUIDParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Status> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
@@ -156,7 +159,7 @@ Requires authentication. Returns an error if the retrieval fails."#,
 )]
 #[get("/itemPreset/all")]
 pub async fn get_all_item_presets(
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Json<GetItemPresetReturn>> {
@@ -206,7 +209,7 @@ Requires authentication. Retries up to 5 times on creation errors, then skips th
 #[put("/itemPreset/addExtern", data = "<json_data>")]
 pub async fn add_extern(
     json_data: Json<ExternPresetDataList>,
-    _user: super::AuthenticatedUser,
+    _user: AuthenticatedUser,
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Status> {
     for x in &json_data.presets {

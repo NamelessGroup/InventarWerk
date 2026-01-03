@@ -7,6 +7,9 @@ use rocket::{form::FromForm, serde::json::Json, State};
 use rocket_errors::anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+
+use utils::AuthenticatedUser;
+
 use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
@@ -41,7 +44,7 @@ Requires authentication. Returns an error if retrieval fails."#,
 )]
 #[get("/inventory/all")]
 pub async fn get_all_inventories(
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Json<GetAllInventoriesReturn>> {
     let allinvs = inv_rep.get_all_inventories(&user.user_id).await?;
@@ -66,7 +69,7 @@ Requires authentication. Returns an error if the user lacks access."#,
 #[get("/inventory?<params..>")]
 pub async fn get_specific_inventory(
     params: InventoryUUIDParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Json<FullFrontendInventory>> {
     let inv = inv_rep.get_full_inventory(&params.inventory_uuid).await?;
@@ -97,7 +100,7 @@ Requires authentication. Returns an error if creation fails."#,
 #[put("/inventory?<params..>")]
 pub async fn create_inventory(
     params: InventoryCreateParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
     usr_rep: &State<UserRepository>,
 ) -> Result<Json<FullFrontendInventory>> {
@@ -142,7 +145,7 @@ Requires authentication and write access. Returns an error if access is denied."
 #[put("/inventory/item/addPreset?<params..>")]
 pub async fn add_preset_to_inventory(
     params: InventoryAddItemByPresetParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
@@ -190,7 +193,7 @@ Requires authentication and write access. Returns an error if access is denied."
 #[put("/inventory/item/addNew?<params..>")]
 pub async fn add_new_item_to_inventory(
     params: InventoryAddItemByNameParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Json<ItemPreset>> {
@@ -237,7 +240,7 @@ Requires authentication and write access. Returns an error if access is denied."
 #[patch("/inventory/item/edit?<params..>")]
 pub async fn edit_item(
     params: ItemEditParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
@@ -285,7 +288,7 @@ Requires authentication and DM privileges. Returns an error if user is not a DM.
 #[patch("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(
     params: NoteAddParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
     usr_rep: &State<UserRepository>,
 ) -> Result<Status> {
@@ -327,7 +330,7 @@ Requires authentication and write access. Returns an error if access is denied."
 #[delete("/inventory/item/remove?<params..>")]
 pub async fn delete_item_from_inventory(
     params: ItemDeleteParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
@@ -368,7 +371,7 @@ Requires authentication and write access. Returns an error if access is denied."
 #[patch("/inventory/edit?<params..>")]
 pub async fn edit_inventory(
     params: InventoryEditParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
@@ -413,7 +416,7 @@ Requires authentication and creator privileges. Returns an error if user is not 
 #[patch("/inventory/addShare?<params..>")]
 pub async fn add_share_to_inventory(
     params: InventoryShareParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
     usr_rep: &State<UserRepository>,
 ) -> Result<Status> {
@@ -473,7 +476,7 @@ Requires authentication and creator privileges. Returns an error if user is not 
 #[patch("/inventory/removeShare?<params..>")]
 pub async fn remove_share_from_inventory(
     params: InventoryShareParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
     let reader = params.reader_uuid;
@@ -521,7 +524,7 @@ Requires authentication and creator privileges. Returns an error if the user is 
 #[delete("/inventory/delete?<params..>")]
 pub async fn delete_inventory(
     params: InventoryUUIDParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
     if user_is_creator_of_inventory(

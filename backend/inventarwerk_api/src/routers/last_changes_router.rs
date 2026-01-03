@@ -8,6 +8,9 @@ use utoipa::OpenApi;
 use crate::get_last_inventory_change;
 use rocket_errors::anyhow::Result;
 
+
+use utils::AuthenticatedUser;
+
 #[utoipa::path(
     get,
     path = "/lastChanges",
@@ -21,7 +24,7 @@ use rocket_errors::anyhow::Result;
 )]
 #[get("/lastChanges")]
 pub async fn last_changes(
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Json<HashMap<String, u128>>> {
     let mut inv_hash: HashMap<String, u128> = HashMap::new();

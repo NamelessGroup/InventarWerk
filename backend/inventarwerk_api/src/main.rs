@@ -50,7 +50,14 @@ async fn main() {
         lock_toggle!();
     }
 
-    let figment = Config::figment().merge(("secret_key", secret_key));
+    let mut figment = Config::figment().merge(("secret_key", secret_key));
+
+    #[cfg(any(feature = "dev"))]
+    {
+        figment = figment.merge(("address", "127.0.0.1"))
+        .merge(("port", 8000));
+    }
+
     let config = Config::from(figment);
     #[allow(unused_mut)]
     let mut r = rocket::build()
@@ -81,7 +88,7 @@ async fn main() {
                 ),
         );
 
-    #[cfg(any(feature = "dev", feature = "dev-deploy"))]
+    #[cfg(any(feature = "dev"))]
     {
         println!("Starting with CORS.");
         println!("Only do this in development.");
