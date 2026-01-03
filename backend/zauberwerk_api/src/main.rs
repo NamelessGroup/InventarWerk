@@ -1,13 +1,14 @@
 #[macro_use]
 extern crate rocket;
 
+mod routers;
+
 use dotenvy::dotenv;
 use openssl::rand::rand_bytes;
 
 use rocket::config::Config;
 use rocket::fs::FileServer;
 use std::env;
-
 
 use repos::DbPool;
 use repos::create_pg_pool;

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "inventarwerk_api",
+  "inventarwerk_api", "last_changes_api",
   "repositories", "utils", "zauberwerk_api",
   ]
 
