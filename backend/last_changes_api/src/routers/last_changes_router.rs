@@ -8,7 +8,10 @@ use utils::AuthenticatedUser;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct InventoryChangeEvent {
-    pub inventory_uuid: String,
+    pub uuid: String,
+    pub source: String,
+    #[serde(rename = "type")]
+    pub change_type: String,
     pub timestamp: u128,
 }
 

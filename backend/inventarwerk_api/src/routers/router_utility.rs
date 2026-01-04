@@ -45,18 +45,6 @@ pub async fn user_has_write_access_to_inventory(
         .contains(&user_id))
 }
 
-/// Checks if a user is a Dungeon Master (DM).
-///
-/// # Arguments
-/// * `usr_rep` - Reference to the user repository.
-/// * `user_id` - The UUID of the user.
-///
-/// # Returns
-/// `true` if the user is a DM, otherwise `false`.
-pub async fn user_is_dm(usr_rep: &UserRepository, user_id: String) -> Result<bool> {
-    Ok(usr_rep.get_user(&user_id).await?.dm == 1)
-}
-
 /// Checks if a user is the creator (owner) of a specific inventory.
 ///
 /// # Arguments

@@ -1,4 +1,5 @@
-pub mod model;
+pub mod model_inventarwerk;
+pub mod model_zauberwerk;
 pub mod repos;
 use anyhow::Result;
 

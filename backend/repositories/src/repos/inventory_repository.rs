@@ -1,4 +1,4 @@
-use crate::model::{FrontendItem, FullFrontendInventory, InventoryItem, RawInventory};
+use crate::model_inventarwerk::{FrontendItem, FullFrontendInventory, InventoryItem, RawInventory};
 use anyhow::{self, Result};
 use sqlx::{Error, PgPool};
 use uuid::Uuid;

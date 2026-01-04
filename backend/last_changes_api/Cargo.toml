@@ -17,6 +17,7 @@ utoipa = {version="5.3.1"}
 utoipa-swagger-ui = {version="9", features = ["rocket"]}
 tokio = { version = "1", features = ["full"] }
 sqlx = { version = "0.8.2", features = ["runtime-tokio-rustls", "postgres"] }
+serde_json = "1.0"
 
 [features]
 dev = []

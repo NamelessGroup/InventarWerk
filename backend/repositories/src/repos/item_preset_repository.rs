@@ -1,4 +1,4 @@
-use crate::model::ItemPreset;
+use crate::model_inventarwerk::ItemPreset;
 use anyhow::Result;
 use sqlx::{Error, PgPool};
 use uuid::Uuid;

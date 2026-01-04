@@ -6,6 +6,8 @@ mod routers;
 use dotenvy::dotenv;
 use openssl::rand::rand_bytes;
 
+use repos::repos::zauberwek::spell_preset_repository::SpellPresetRepository;
+use repos::repos::user_repository::UserRepository;
 use rocket::config::Config;
 use rocket::fs::FileServer;
 use std::env;
@@ -16,6 +18,7 @@ use repos::create_pg_pool;
 use utoipa::OpenApi;
 
 use utoipa_swagger_ui::SwaggerUi;
+
 
 /// Main async entry point for the backend server.
 #[rocket::main]
@@ -32,6 +35,9 @@ async fn main() {
     let mut secret_key = [0u8; 32];
     let _ = rand_bytes(&mut secret_key);
 
+    let spp_repo: SpellPresetRepository = SpellPresetRepository::new(dbconn.clone());
+    let usr_rep = UserRepository::new(dbconn.clone());
+
 
 
     let mut figment = Config::figment().merge(("secret_key", secret_key));
@@ -46,7 +52,13 @@ async fn main() {
     #[allow(unused_mut)]
     let mut r = rocket::build()
         .configure(config)
-        .mount("/", FileServer::from("./static"));
+        .manage(spp_repo)
+        .manage(usr_rep)
+        .mount("/", FileServer::from("./static"))
+        .mount("/", routers::get_spell_list_routes())
+        .mount("/", routers::get_concentration_routes())
+        .mount("/", routers::get_spell_preset_routes())
+        .mount("/", routers::get_spell_slot_routes());
 
     #[cfg(any(feature = "dev"))]
     {

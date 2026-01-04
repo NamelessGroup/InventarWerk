@@ -12,12 +12,12 @@ use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
-use repos::model::User;
+use repos::model_inventarwerk::User;
 use repos::repos::user_repository::UserRepository;
 
 use rocket_errors::anyhow::Result;
 
-use crate::routers::router_utility::user_is_dm;
+use utils::user_is_dm;
 use crate::{lock_toggle, locked_status};
 
 use super::create_error;

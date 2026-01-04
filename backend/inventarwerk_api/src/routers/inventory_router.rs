@@ -1,4 +1,4 @@
-use repos::model::{FullFrontendInventory, ItemPreset};
+use repos::model_inventarwerk::{FullFrontendInventory, ItemPreset};
 use repos::repos::inventory_repository::InventoryRepository;
 use repos::repos::item_preset_repository::ItemPresetRepository;
 use repos::repos::user_repository::UserRepository;
@@ -14,10 +14,12 @@ use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
+use utils::user_is_dm;
+
 use super::create_error;
 use super::router_utility::{
     user_has_read_access_to_inventory, user_has_write_access_to_inventory,
-    user_is_creator_of_inventory, user_is_dm, ACCESS_DENIAL_MESSAGE,
+    user_is_creator_of_inventory, ACCESS_DENIAL_MESSAGE,
 };
 
 #[derive(FromForm, ToSchema, IntoParams)]

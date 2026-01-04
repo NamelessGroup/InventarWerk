@@ -1,4 +1,4 @@
-use crate::model::User;
+use crate::model_inventarwerk::User;
 use anyhow::Result;
 use sqlx::PgPool;
 

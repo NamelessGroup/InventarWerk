@@ -36,19 +36,34 @@ async fn postgres_listener_task(
                 loop {
                     match listener.recv().await {
                         Ok(notification) => {
-                            let inventory_uuid = notification.payload().to_string();
-                            let timestamp = std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .expect("Time went backwards")
-                                .as_millis();
+                            let payload = notification.payload();
+                            
+                            // Parse JSON payload from Postgres trigger
+                            match serde_json::from_str::<serde_json::Value>(payload) {
+                                Ok(json) => {
+                                    let uuid = json["uuid"].as_str().unwrap_or("").to_string();
+                                    let source = json["source"].as_str().unwrap_or("").to_string();
+                                    let change_type = json["type"].as_str().unwrap_or("").to_string();
+                                    
+                                    let timestamp = std::time::SystemTime::now()
+                                        .duration_since(std::time::UNIX_EPOCH)
+                                        .expect("Time went backwards")
+                                        .as_millis();
 
-                            let event = InventoryChangeEvent {
-                                inventory_uuid,
-                                timestamp,
-                            };
+                                    let event = InventoryChangeEvent {
+                                        uuid,
+                                        source,
+                                        change_type,
+                                        timestamp,
+                                    };
 
-                            // Broadcast to all SSE clients
-                            let _ = tx.send(event);
+                                    // Broadcast to all SSE clients
+                                    let _ = tx.send(event);
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to parse notification payload: {} - {}", payload, e);
+                                }
+                            }
                         }
                         Err(e) => {
                             eprintln!("Error receiving notification: {}", e);

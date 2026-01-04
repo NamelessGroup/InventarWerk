@@ -2,9 +2,9 @@ use std::thread;
 use std::time::Duration;
 
 use repos::{
-    model::ItemPreset,
+    model_inventarwerk::ItemPreset,
     repos::{
-        inventory_repository::InventoryRepository, item_preset_repository::ItemPresetRepository,
+        inventory_repository::InventoryRepository, item_preset_repository::ItemPresetRepository, user_repository::UserRepository,
     },
 };
 use rocket::{form::FromForm, http::Status, serde::json::Json, State};
@@ -14,6 +14,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
+
+use utils::user_is_dm;
 
 
 use utils::AuthenticatedUser;
@@ -209,9 +211,13 @@ Requires authentication. Retries up to 5 times on creation errors, then skips th
 #[put("/itemPreset/addExtern", data = "<json_data>")]
 pub async fn add_extern(
     json_data: Json<ExternPresetDataList>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
+    usr_rep: &State<UserRepository>,
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Status> {
+    if !user_is_dm(usr_rep, user.user_id).await? {
+        return Ok(Status::Forbidden);
+    }
     for x in &json_data.presets {
         let mut i = 0;
         loop {
