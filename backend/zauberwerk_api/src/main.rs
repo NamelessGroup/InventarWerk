@@ -6,8 +6,10 @@ mod routers;
 use dotenvy::dotenv;
 use openssl::rand::rand_bytes;
 
+use repos::repos::zauberwek::concentration_repository::ConcentrationRepository;
 use repos::repos::zauberwek::spell_preset_repository::SpellPresetRepository;
 use repos::repos::user_repository::UserRepository;
+use repos::repos::zauberwek::spell_slot_repository::SpellSlotRepository;
 use rocket::config::Config;
 use rocket::fs::FileServer;
 use std::env;
@@ -35,8 +37,10 @@ async fn main() {
     let mut secret_key = [0u8; 32];
     let _ = rand_bytes(&mut secret_key);
 
-    let spp_repo: SpellPresetRepository = SpellPresetRepository::new(dbconn.clone());
+    let spp_rep = SpellPresetRepository::new(dbconn.clone());
     let usr_rep = UserRepository::new(dbconn.clone());
+    let con_rep = ConcentrationRepository::new(dbconn.clone());
+    let ssl_rep = SpellSlotRepository::new(dbconn.clone());
 
 
 
@@ -52,8 +56,10 @@ async fn main() {
     #[allow(unused_mut)]
     let mut r = rocket::build()
         .configure(config)
-        .manage(spp_repo)
+        .manage(spp_rep)
         .manage(usr_rep)
+        .manage(con_rep)
+        .manage(ssl_rep)
         .mount("/", FileServer::from("./static"))
         .mount("/", routers::get_spell_list_routes())
         .mount("/", routers::get_concentration_routes())

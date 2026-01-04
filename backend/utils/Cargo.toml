@@ -7,3 +7,4 @@ edition = "2024"
 rocket = { version = "0.5.1", features = ["json", "secrets"] }
 repos = {path = "../repositories"}
 anyhow = { version="1.0.96"}
+rocket-errors = "0.1.0"

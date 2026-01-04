@@ -17,10 +17,9 @@ use repos::repos::user_repository::UserRepository;
 
 use rocket_errors::anyhow::Result;
 
-use utils::user_is_dm;
+use utils::{user_is_dm, create_error};
 use crate::{lock_toggle, locked_status};
 
-use super::create_error;
 
 #[derive(FromForm, ToSchema, IntoParams)]
 pub struct AccountUUIDParams {

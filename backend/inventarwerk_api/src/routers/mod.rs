@@ -67,7 +67,4 @@ pub fn get_item_preset_routes() -> Vec<Route> {
 }
 
 
-/// Helper to create an error for API responses.
-fn create_error(msg: &str) -> AnyhowError {
-    anyhow!(msg.to_string()).into()
-}
+

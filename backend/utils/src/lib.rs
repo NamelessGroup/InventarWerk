@@ -5,6 +5,8 @@ use rocket::Request;
 use rocket::{request::FromRequest, Route};
 use repos::repos::user_repository::UserRepository;
 use anyhow::Result;
+use anyhow::anyhow;
+use rocket_errors::anyhow::AnyhowError;
 
 /// Extractor for authenticated users based on a private `user_id` cookie.
 pub struct AuthenticatedUser {
@@ -37,4 +39,10 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
 /// `true` if the user is a DM, otherwise `false`.
 pub async fn user_is_dm(usr_rep: &UserRepository, user_id: String) -> Result<bool> {
     Ok(usr_rep.get_user(&user_id).await?.dm == 1)
+}
+
+
+/// Helper to create an error for API responses.
+pub fn create_error(msg: &str) -> AnyhowError {
+    anyhow!(msg.to_string()).into()
 }

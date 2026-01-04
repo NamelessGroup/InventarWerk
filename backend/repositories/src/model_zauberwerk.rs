@@ -25,8 +25,24 @@ pub struct SpellPreset {
 #[derive(Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SpellList {
-    uuid: String,
-    name: String,
-    owner_uuid: String,
-    spell_uuids: Vec<String>,
+    pub uuid: String,
+    pub name: String,
+    pub owner_uuid: String,
+    pub spell_uuids: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellSlot {
+    pub owner_uuid: String,
+    pub spell_slot_level: i32,
+    pub spell_slot_maxima: i32,
+    pub spell_slot_available: i32,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Concentration {
+    pub owner_uuid: String,
+    pub concentration: i32,
 }

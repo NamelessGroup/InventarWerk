@@ -14,9 +14,8 @@ use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
-use utils::user_is_dm;
+use utils::{user_is_dm, create_error};
 
-use super::create_error;
 use super::router_utility::{
     user_has_read_access_to_inventory, user_has_write_access_to_inventory,
     user_is_creator_of_inventory, ACCESS_DENIAL_MESSAGE,

@@ -1,4 +1,4 @@
-use repos::repos::{inventory_repository::InventoryRepository, user_repository::UserRepository};
+use repos::repos::{inventory_repository::InventoryRepository};
 use rocket_errors::anyhow::Result;
 
 pub static ACCESS_DENIAL_MESSAGE: &str = "no access";
