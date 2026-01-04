@@ -7,7 +7,7 @@ use rocket_errors::anyhow::Result;
 use rocket::serde::json::Json;
 
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, ToSchema)]
 pub struct SpellPresetUUID{
     pub spell_preset_uuid: String
 }

@@ -18,7 +18,7 @@ pub async fn get_concentration(
     con_rep: &State<ConcentrationRepository>,
     params: ConcentrationUUID) -> Result<Json<Concentration>> {
     if params.uuid.is_some() && !user_is_dm(usr_rep, user.user_id.clone()).await? {
-        return Err(create_error("msg"));
+        return Err(create_error("Forbidden"));
     }
 
     let concentration = match params.uuid {
