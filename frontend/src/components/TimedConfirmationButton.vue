@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps({
   confirmationTime: {
@@ -24,7 +24,7 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits(['click'])
+const emit = defineEmits(['click'])
 
 const confirmTimeRemaining = ref(-1)
 const confirmTimer = ref<number | undefined>(undefined)
@@ -38,7 +38,7 @@ function click(e: Event) {
     clearInterval(confirmTimer.value)
     confirmTimer.value = undefined
     confirmTimeRemaining.value = -1
-    emits('click')
+    emit('click')
   }
 }
 
@@ -50,4 +50,8 @@ function timerTick() {
     confirmTimeRemaining.value = -1
   }
 }
+
+onBeforeUnmount(() => {
+  clearInterval(confirmTimer.value)
+})
 </script>
