@@ -68,9 +68,7 @@
 
     <div class="space-y-2">
       <template v-for="(item, idx) in inventory.items" :key="item.presetReference">
-        <GhostItem
-          v-if="ghostPosition === idx"
-        />
+        <GhostItem v-if="ghostPosition === idx" />
         <ItemRowDisplay
           :can-edit="canEdit"
           :item="item"
@@ -135,7 +133,7 @@ const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
 const ghostPosition = ref(-1)
-const currentlyHovering = ref<null | HTMLElement>(null);
+const currentlyHovering = ref<null | HTMLElement>(null)
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
 const creator = computed(
   () =>
@@ -178,9 +176,9 @@ function dragEnterContainer(e: DragEvent) {
   }
 
   if (ghostPosition.value < 0) {
-    ghostPosition.value = 0;
+    ghostPosition.value = 0
   }
-  currentlyHovering.value = e.target as HTMLElement;
+  currentlyHovering.value = e.target as HTMLElement
 }
 
 function dragLeaveContainer(e: DragEvent) {
@@ -189,8 +187,8 @@ function dragLeaveContainer(e: DragEvent) {
   }
 
   if (currentlyHovering.value === e.target) {
-    ghostPosition.value = -1;
-    currentlyHovering.value = null;
+    ghostPosition.value = -1
+    currentlyHovering.value = null
   }
 }
 
@@ -198,7 +196,7 @@ function dragEnterItem(index: number, e: DragEvent) {
   if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
     return
   }
-  
+
   ghostPosition.value = index
   currentlyHovering.value = e.target as HTMLElement
 }
@@ -211,7 +209,10 @@ async function dropItem(e: DragEvent) {
   const sourceInventory = e.dataTransfer.getData('sourceInventory')
   const preset = e.dataTransfer.getData('preset')
 
-  if (sourceInventory !== props.inventory.uuid && props.inventory.items.some((item) => item.presetReference === preset)) {
+  if (
+    sourceInventory !== props.inventory.uuid &&
+    props.inventory.items.some((item) => item.presetReference === preset)
+  ) {
     ghostPosition.value = -1
     currentlyHovering.value = null
     throw new Error(`This inventory already contains the target item!`)
@@ -222,7 +223,7 @@ async function dropItem(e: DragEvent) {
     .filter((item) => item.presetReference !== preset)
     .map((item) => ({ item: item.presetReference, sorting: -1, oldSorting: item.sorting }))
   sortedItems.splice(ghostPosition.value, 0, { item: preset, sorting: -1, oldSorting: -1 })
-  sortedItems.forEach((item, idx) => item.sorting = idx)
+  sortedItems.forEach((item, idx) => (item.sorting = idx))
 
   ghostPosition.value = -1
   currentlyHovering.value = null

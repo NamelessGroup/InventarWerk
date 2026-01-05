@@ -132,7 +132,7 @@ export const store = defineStore('store', {
     },
     async moveItem(sourceInventoryUuid: string, targetInventoryUuid: string, itemUuid: string) {
       const item = this.inventories[sourceInventoryUuid].items.find(
-        (item) => (item.presetReference === itemUuid)
+        (item) => item.presetReference === itemUuid
       )!
       this.inventories[targetInventoryUuid].items.push(item)
       this.inventories[sourceInventoryUuid].items = this.inventories[

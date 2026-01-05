@@ -1,7 +1,7 @@
 <template>
-    <div class="bg-fuchsia-800 border border-dashed w-full h-10 grid place-items-center justify-items-center text-2xl rounded-sm">
-        <div>
-            +
-        </div>
-    </div>
+  <div
+    class="grid h-10 w-full place-items-center justify-items-center rounded-sm border border-dashed bg-fuchsia-800 text-2xl"
+  >
+    <div>+</div>
+  </div>
 </template>

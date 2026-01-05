@@ -101,7 +101,7 @@ const props = defineProps({
     default: false
   }
 })
-defineEmits(['dragenter']);
+defineEmits(['dragenter'])
 
 const expanded = ref(false)
 const amountValue = ref(props.item.amount)
