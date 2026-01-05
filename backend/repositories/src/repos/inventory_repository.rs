@@ -351,7 +351,8 @@ impl InventoryRepository {
                     ip.name, ip.description, ip.price, ip.creator AS preset_creator, ip.weight, ip.item_type
              FROM inventory_item ii
              INNER JOIN item_preset ip ON ii.item_preset_uuid = ip.uuid
-             WHERE ii.inventory_uuid = $1",
+             WHERE ii.inventory_uuid = $1
+             ORDER BY ii.sorting",
             inventory_uuid
         )
         .fetch_all(&self.pool)

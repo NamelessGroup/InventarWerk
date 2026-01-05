@@ -231,6 +231,13 @@ export class DatabaseHandler {
     )
   }
 
+  public async changeItemSorting(inventoryUuid: string, itemUuid: string, newSorting: number) {
+    await this.patch<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'],
+      { inventory_uuid: inventoryUuid, item_preset_uuid: itemUuid, sorting: newSorting.toString() }
+    )
+  }
+
   public async addNewItem(inventoryUuid: string, name: string, amount: number) {
     const response = await this.put<ItemPreset>(
       [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'],

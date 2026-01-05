@@ -81,6 +81,13 @@ export const store = defineStore('store', {
       )!.amount = newAmount
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
     },
+    changeItemSorting(inventoryUuid: string, itemUuid: string, newSorting: number) {
+      this.inventories[inventoryUuid].items.find(
+        (item) => item.presetReference === itemUuid
+      )!.sorting = newSorting
+      this.inventories[inventoryUuid].items.sort((a, b) => a.sorting - b.sorting)
+      DatabaseHandler.getInstance().changeItemSorting(inventoryUuid, itemUuid, newSorting)
+    },
     async toggleLock() {
       if ((await DatabaseHandler.getInstance().changeServerLockStatus()) !== undefined) {
         this.isServerLocked = !this.isServerLocked
@@ -125,7 +132,7 @@ export const store = defineStore('store', {
     },
     async moveItem(sourceInventoryUuid: string, targetInventoryUuid: string, itemUuid: string) {
       const item = this.inventories[sourceInventoryUuid].items.find(
-        (item) => (item.presetReference = itemUuid)
+        (item) => (item.presetReference === itemUuid)
       )!
       this.inventories[targetInventoryUuid].items.push(item)
       this.inventories[sourceInventoryUuid].items = this.inventories[

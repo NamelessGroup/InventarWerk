@@ -3,7 +3,8 @@
     class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2"
     @drop="dropItem"
     @dragover.prevent
-    @dragenter.prevent
+    @dragenter.capture="(e) => dragEnterContainer(e)"
+    @dragleave.self="(e) => dragLeaveContainer(e)"
   >
     <div class="flex items-center overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
@@ -66,13 +67,19 @@
     </div>
 
     <div class="space-y-2">
-      <ItemRowDisplay
-        v-for="item in inventory.items"
-        :key="item.presetReference"
-        :can-edit="canEdit"
-        :item="item"
-        :inventory-uuid="inventory.uuid"
-      />
+      <template v-for="(item, idx) in inventory.items" :key="item.presetReference">
+        <GhostItem
+          v-if="ghostPosition === idx"
+        />
+        <ItemRowDisplay
+          :can-edit="canEdit"
+          :item="item"
+          :inventory-uuid="inventory.uuid"
+          @dragenter="(e) => dragEnterItem(idx, e)"
+        />
+      </template>
+
+      <GhostItem v-if="ghostPosition === 0 && inventory.items.length === 0" />
     </div>
 
     <button
@@ -115,6 +122,7 @@ import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
+import GhostItem from './GhostItem.vue'
 
 const props = defineProps({
   inventory: {
@@ -126,6 +134,8 @@ const props = defineProps({
 const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
+const ghostPosition = ref(-1)
+const currentlyHovering = ref<null | HTMLElement>(null);
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
 const creator = computed(
   () =>
@@ -162,6 +172,37 @@ function deleteInventory() {
   store().deleteInventory(props.inventory.uuid)
 }
 
+function dragEnterContainer(e: DragEvent) {
+  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
+    return
+  }
+
+  if (ghostPosition.value < 0) {
+    ghostPosition.value = 0;
+  }
+  currentlyHovering.value = e.target as HTMLElement;
+}
+
+function dragLeaveContainer(e: DragEvent) {
+  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
+    return
+  }
+
+  if (currentlyHovering.value === e.target) {
+    ghostPosition.value = -1;
+    currentlyHovering.value = null;
+  }
+}
+
+function dragEnterItem(index: number, e: DragEvent) {
+  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
+    return
+  }
+  
+  ghostPosition.value = index
+  currentlyHovering.value = e.target as HTMLElement
+}
+
 async function dropItem(e: DragEvent) {
   if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
     return
@@ -170,11 +211,25 @@ async function dropItem(e: DragEvent) {
   const sourceInventory = e.dataTransfer.getData('sourceInventory')
   const preset = e.dataTransfer.getData('preset')
 
-  if (sourceInventory === props.inventory.uuid) {
-    return
+  // Figuring out the new sorting value of every item in the inventory
+  const sortedItems = [...props.inventory.items]
+    .filter((item) => item.presetReference !== preset)
+    .map((item) => ({ item: item.presetReference, sorting: -1, oldSorting: item.sorting }))
+  sortedItems.splice(ghostPosition.value, 0, { item: preset, sorting: -1, oldSorting: -1 })
+  sortedItems.forEach((item, idx) => item.sorting = idx)
+
+  ghostPosition.value = -1
+  currentlyHovering.value = null
+
+  if (sourceInventory !== props.inventory.uuid) {
+    store().moveItem(sourceInventory, props.inventory.uuid, preset)
   }
 
-  store().moveItem(sourceInventory, props.inventory.uuid, preset)
+  for (const item of sortedItems) {
+    if (item.oldSorting !== item.sorting) {
+      store().changeItemSorting(props.inventory.uuid, item.item, item.sorting)
+    }
+  }
 }
 
 const moneyFieldValues = ref({

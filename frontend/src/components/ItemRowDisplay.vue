@@ -8,6 +8,7 @@
     }"
     :draggable="canEdit"
     @dragstart="startDrag"
+    @dragenter="(e) => $emit('dragenter', e)"
     @click="expanded = !expanded"
   >
     <div class="grid grid-cols-[auto_1fr_auto] overflow-hidden">
@@ -100,6 +101,7 @@ const props = defineProps({
     default: false
   }
 })
+defineEmits(['dragenter']);
 
 const expanded = ref(false)
 const amountValue = ref(props.item.amount)
