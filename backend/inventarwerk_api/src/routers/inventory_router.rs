@@ -527,7 +527,7 @@ pub async fn delete_inventory(
     user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
-    if user_is_creator_of_inventory(
+    if !user_is_creator_of_inventory(
         inv_rep.inner(),
         params.inventory_uuid.clone(),
         user.user_id.clone(),
