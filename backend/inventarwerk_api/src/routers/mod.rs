@@ -3,12 +3,14 @@ use rocket::Route;
 
 
 pub mod account_router;
+pub mod backup_router;
 pub mod inventory_router;
 pub mod item_preset_router;
 pub mod last_changes_router;
 mod router_utility;
 
 use account_router::*;
+use backup_router::*;
 use inventory_router::*;
 use item_preset_router::*;
 use last_changes_router::*;
@@ -60,6 +62,11 @@ pub fn get_item_preset_routes() -> Vec<Route> {
         get_all_item_presets,
         add_extern
     ]
+}
+
+/// Returns all backup-related routes.
+pub fn get_backup_routes() -> Vec<Route> {
+    routes![create_database_backup]
 }
 
 

@@ -17,6 +17,7 @@ use rocket::fs::FileServer;
 use std::env;
 
 use routers::account_router::AccountApiDoc;
+use routers::backup_router::BackupApiDoc;
 use routers::inventory_router::InventoryApiDoc;
 use routers::item_preset_router::ItemPresetApiDoc;
 use routers::last_changes_router::LastChangesApiDoc;
@@ -39,8 +40,16 @@ async fn main() {
     let usr_rep = UserRepository::new(dbconn.clone());
     let ipr_rep = ItemPresetRepository::new(dbconn.clone());
 
+    // Use shared secret key from environment variable or generate one
     let mut secret_key = [0u8; 32];
-    let _ = rand_bytes(&mut secret_key);
+    if let Ok(key_str) = env::var("SECRET_KEY") {
+        let key_bytes = key_str.as_bytes();
+        let len = key_bytes.len().min(32);
+        secret_key[..len].copy_from_slice(&key_bytes[..len]);
+    } else {
+        eprintln!("WARNING: SECRET_KEY not set, generating random key. Sessions won't work across API restarts!");
+        let _ = rand_bytes(&mut secret_key);
+    }
 
     if !usr_rep
         .any_user_exists()
@@ -70,6 +79,7 @@ async fn main() {
         .mount("/", routers::get_inventory_routes())
         .mount("/", routers::get_item_preset_routes())
         .mount("/", routers::get_last_changes_routes())
+        .mount("/", routers::get_backup_routes())
         .mount(
             "/",
             SwaggerUi::new("/swagger-ui/<_..>")
@@ -85,7 +95,8 @@ async fn main() {
                 .url(
                     "/api-docs/openapi_last_changes.json",
                     LastChangesApiDoc::openapi(),
-                ),
+                )
+                .url("/api-docs/openapi_backup.json", BackupApiDoc::openapi()),
         );
 
     #[cfg(any(feature = "dev"))]

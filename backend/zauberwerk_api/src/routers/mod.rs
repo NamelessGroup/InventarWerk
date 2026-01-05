@@ -26,8 +26,7 @@ pub fn get_spell_list_routes() -> Vec<Route> {
         create_spelllist,
         delete_spell_list,
         patch_spell_list,
-        add_preset_to_list,
-        delete_spell_list
+        add_preset_to_list
     ]
 }
 
@@ -37,7 +36,6 @@ pub fn get_spell_preset_routes() -> Vec<Route> {
         get_all_spell_presets,
         delete_spell_preset,
         edit_spell_preset,
-        delete_spell_list,
         cast_spell,
         add_extern_spell_preset,
         delete_preset_from_list

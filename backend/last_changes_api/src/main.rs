@@ -102,15 +102,23 @@ async fn main() {
         postgres_listener_task(db_url_clone, tx_clone).await;
     });
 
+    // Use shared secret key from environment variable or generate one
     let mut secret_key = [0u8; 32];
-    let _ = rand_bytes(&mut secret_key);
+    if let Ok(key_str) = env::var("SECRET_KEY") {
+        let key_bytes = key_str.as_bytes();
+        let len = key_bytes.len().min(32);
+        secret_key[..len].copy_from_slice(&key_bytes[..len]);
+    } else {
+        eprintln!("WARNING: SECRET_KEY not set, generating random key. Sessions won't work across API restarts!");
+        let _ = rand_bytes(&mut secret_key);
+    }
 
     let figment = Config::figment().merge(("secret_key", secret_key));
 
     #[cfg(any(feature = "dev"))]
     let figment = figment
         .merge(("address", "127.0.0.1"))
-        .merge(("port", 8001));
+        .merge(("port", 8002));
 
     let config = Config::from(figment);
     #[allow(unused_mut)]
