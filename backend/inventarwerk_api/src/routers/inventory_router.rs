@@ -420,7 +420,7 @@ pub async fn add_share_to_inventory(
     inv_rep: &State<InventoryRepository>,
     usr_rep: &State<UserRepository>,
 ) -> Result<Status> {
-    if user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id)
+    if !user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id)
         .await?
     {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
@@ -482,7 +482,7 @@ pub async fn remove_share_from_inventory(
     let reader = params.reader_uuid;
     let writer = params.writer_uuid;
     let some_own_user = Some(user.user_id.clone());
-    if user_is_creator_of_inventory(
+    if !user_is_creator_of_inventory(
         inv_rep.inner(),
         params.inventory_uuid.clone(),
         user.user_id.clone(),
