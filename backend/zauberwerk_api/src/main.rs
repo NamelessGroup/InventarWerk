@@ -18,9 +18,6 @@ use std::env;
 use repos::DbPool;
 use repos::create_pg_pool;
 
-use utoipa::OpenApi;
-
-use utoipa_swagger_ui::SwaggerUi;
 
 
 /// Main async entry point for the backend server.

@@ -1,5 +1,5 @@
 use repos::{model_zauberwerk::SpellList, repos::{user_repository::UserRepository, zauberwek::spell_list_repository::SpellListRepository}};
-use rocket::{State, futures::stream::All, http::Status, serde::json::Json};
+use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 use utils::{AuthenticatedUser, create_error, user_is_dm};
 use utoipa::ToSchema;
