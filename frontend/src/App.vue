@@ -61,12 +61,24 @@
           <p class="col-span-2 row-start-3 text-red-500">{{ errorContent }}</p>
         </div>
       </PopUp>
+
       <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
-        <InventoryContainer
-          v-for="inventory in inventories"
-          :key="inventory.uuid"
-          :inventory="inventory"
-        />
+        <template v-if="Settings.getInstance().strictInventoryGrid">
+          <InventoryContainer
+            v-for="inventory in inventories"
+            :key="inventory.uuid"
+            :inventory="inventory"
+          />
+        </template>
+        <template v-else>
+          <div v-for="i in 3" :key="i" class="flex flex-col gap-5 md:gap-20">
+            <InventoryContainer
+              v-for="inventory in getNthOf3Inventories(i - 1)"
+              :key="inventory.uuid"
+              :inventory="inventory"
+            />
+          </div>
+        </template>
       </div>
     </div>
     <ErrorDisplay class="absolute bottom-0 z-50 w-screen" />
@@ -133,6 +145,7 @@ import SettingsPopUp from './components/SettingsPopUp.vue'
 import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
 import { version } from './utils/version'
 import type { Inventory } from './model/Inventory'
+import { Settings } from './store/Settings'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
@@ -157,6 +170,10 @@ const inventories = computed(() => {
   const allInventories = store().inventoryUuids.map((uuid) => store().inventories[uuid])
   return allInventories.filter(matchSearchString)
 })
+
+function getNthOf3Inventories(n: number) {
+  return inventories.value.filter((_, idx) => idx % 3 === n)
+}
 
 async function submitAddInventory() {
   if (nameFieldContent.value == '') {
