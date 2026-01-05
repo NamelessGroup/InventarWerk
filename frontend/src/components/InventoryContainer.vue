@@ -211,6 +211,12 @@ async function dropItem(e: DragEvent) {
   const sourceInventory = e.dataTransfer.getData('sourceInventory')
   const preset = e.dataTransfer.getData('preset')
 
+  if (sourceInventory !== props.inventory.uuid && props.inventory.items.some((item) => item.presetReference === preset)) {
+    ghostPosition.value = -1
+    currentlyHovering.value = null
+    throw new Error(`This inventory already contains the target item!`)
+  }
+
   // Figuring out the new sorting value of every item in the inventory
   const sortedItems = [...props.inventory.items]
     .filter((item) => item.presetReference !== preset)
