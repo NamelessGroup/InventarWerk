@@ -122,6 +122,20 @@ export const store = defineStore('store', {
         (item) => item.presetReference === itemUuid
       )!.dmNote = note
       await DatabaseHandler.getInstance().editDmNote(inventoryUuid, itemUuid, note)
+    },
+    async moveItem(sourceInventoryUuid: string, targetInventoryUuid: string, itemUuid: string) {
+      const item = this.inventories[sourceInventoryUuid].items.find(
+        (item) => (item.presetReference = itemUuid)
+      )!
+      this.inventories[targetInventoryUuid].items.push(item)
+      this.inventories[sourceInventoryUuid].items = this.inventories[
+        sourceInventoryUuid
+      ].items.filter((item) => item.presetReference !== itemUuid)
+      await DatabaseHandler.getInstance().moveItem(
+        sourceInventoryUuid,
+        targetInventoryUuid,
+        itemUuid
+      )
     }
   }
 })

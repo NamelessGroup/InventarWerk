@@ -262,6 +262,21 @@ export class DatabaseHandler {
     )
   }
 
+  public async moveItem(
+    sourceInventoryUuid: string,
+    targetInventoryUuid: string,
+    itemUuid: string
+  ) {
+    await this.patch<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'move'],
+      {
+        source_inventory_uuid: sourceInventoryUuid,
+        target_inventory_uuid: targetInventoryUuid,
+        item_preset_uuid: itemUuid
+      }
+    )
+  }
+
   public async getAllPresets() {
     const presets = await this.get<{ item_presets: ItemPreset[] }>([
       DatabaseHandler.ITEM_PRESET_END_POINT,

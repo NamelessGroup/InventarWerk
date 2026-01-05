@@ -295,6 +295,24 @@ impl InventoryRepository {
         Ok(())
     }
 
+    /// Moves an item from one inventory to another
+    pub async fn move_inventory_item(
+        &self,
+        source_inventory_uuid: &str,
+        target_inventory_uuid: &str,
+        item_preset_uuid: &str
+    ) -> Result<()> {
+        sqlx::query!(
+            "UPDATE inventory_item SET inventory_uuid = $1 WHERE inventory_uuid = $2 AND item_preset_uuid = $3",
+            target_inventory_uuid,
+            source_inventory_uuid,
+            item_preset_uuid
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     /// Checks if an item exists in an inventory.
     pub async fn item_exists(&self, inventory_uuid: &str, item_preset_uuid: &str) -> Result<bool> {
         let result = sqlx::query!(

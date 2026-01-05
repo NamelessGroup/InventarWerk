@@ -306,6 +306,56 @@ pub async fn add_note_to_item(
 }
 
 #[derive(FromForm, ToSchema, IntoParams)]
+pub struct ItemMoveParams {
+    source_inventory_uuid: String,
+    target_inventory_uuid: String,
+    item_preset_uuid: String,
+}
+
+#[utoipa::path(
+    patch,
+    path = "/inventory/item/move",
+    summary = "Moves an item from one inventory to another",
+    description = r#"Moves the specified item from one inventory to another.
+Requires authentication and write access on both inventories. Returns an error if access is denied."#,
+    params(ItemMoveParams),
+    responses(
+        (status = 204, description = "Item moved successfully")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Inventories"
+)]
+#[patch("/inventory/item/move?<params..>")]
+pub async fn move_item_between_inventories(
+    params: ItemMoveParams,
+    user: super::AuthenticatedUser,
+    inv_rep: &State<InventoryRepository>,
+) -> Result<Status> {
+    if !user_has_write_access_to_inventory(
+        inv_rep.inner(),
+        params.source_inventory_uuid.clone(),
+        user.user_id.clone(),
+    )
+    .await?
+    {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+    }
+    if !user_has_write_access_to_inventory(
+        inv_rep.inner(),
+        params.target_inventory_uuid.clone(),
+        user.user_id.clone(),
+    )
+    .await?
+    {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+    }
+    inv_rep
+        .move_inventory_item(&params.source_inventory_uuid, &params.target_inventory_uuid, &params.item_preset_uuid)
+        .await?;
+    Ok(Status::NoContent)
+}
+
+#[derive(FromForm, ToSchema, IntoParams)]
 pub struct ItemDeleteParams {
     inventory_uuid: String,
     item_preset_uuid: String,
@@ -548,6 +598,7 @@ pub async fn delete_inventory(
         edit_item,
         add_note_to_item,
         delete_item_from_inventory,
+        move_item_between_inventories,
         edit_inventory,
         add_share_to_inventory,
         remove_share_from_inventory,
@@ -562,6 +613,7 @@ pub async fn delete_inventory(
             ItemEditParams,
             NoteAddParams,
             ItemDeleteParams,
+            ItemMoveParams,
             InventoryEditParams,
             InventoryShareParams,
             GetAllInventoriesReturn,

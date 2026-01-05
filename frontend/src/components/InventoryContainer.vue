@@ -1,5 +1,10 @@
 <template>
-  <div class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2">
+  <div
+    class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2"
+    @drop="dropItem"
+    @dragover.prevent
+    @dragenter.prevent
+  >
     <div class="flex items-center overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
       <div
@@ -155,6 +160,21 @@ function deleteInventory() {
     return
   }
   store().deleteInventory(props.inventory.uuid)
+}
+
+async function dropItem(e: DragEvent) {
+  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
+    return
+  }
+
+  const sourceInventory = e.dataTransfer.getData('sourceInventory')
+  const preset = e.dataTransfer.getData('preset')
+
+  if (sourceInventory === props.inventory.uuid) {
+    return
+  }
+
+  store().moveItem(sourceInventory, props.inventory.uuid, preset)
 }
 
 const moneyFieldValues = ref({
