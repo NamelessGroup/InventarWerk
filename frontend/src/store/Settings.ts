@@ -3,11 +3,13 @@ import { DatabaseHandler } from './DatabaseHandler'
 export interface SettingsState {
   breakDownGold: boolean
   timeBetweenFetches: number
+  strictInventoryGrid: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
-  timeBetweenFetches: 5
+  timeBetweenFetches: 5,
+  strictInventoryGrid: false
 }
 
 export class Settings {
@@ -33,6 +35,10 @@ export class Settings {
     return this.settings.timeBetweenFetches
   }
 
+  public get strictInventoryGrid(): boolean {
+    return this.settings.strictInventoryGrid
+  }
+
   public set breakDownGold(breakDownGold: boolean) {
     this.settings.breakDownGold = breakDownGold
     this.save()
@@ -42,6 +48,11 @@ export class Settings {
     this.settings.timeBetweenFetches = timeBetweenFetches ?? 5
     this.save()
     DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
+  }
+
+  public set strictInventoryGrid(strictInventoryGrid: boolean) {
+    this.settings.strictInventoryGrid = strictInventoryGrid
+    this.save()
   }
 
   private save() {

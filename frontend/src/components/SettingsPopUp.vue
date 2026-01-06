@@ -16,6 +16,10 @@
           class="rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
         />
       </div>
+      <div class="space-x-2 md:col-span-2">
+        <input id="strictInventoryGrid" v-model="strictInventoryGrid" type="checkbox" />
+        <label for="strictInventoryGrid">Strict inventory grid</label>
+      </div>
       <div v-if="store().userIsDm" class="space-x-2 md:col-span-2">
         <input id="serverLock" v-model="serverLock" type="checkbox" />
         <label for="serverLock">Prohibit new users from joining</label>
@@ -54,6 +58,11 @@ const simplifyGold = computed({
 const fetchTime = computed({
   get: () => Settings.getInstance().timeBetweenFetches,
   set: (value: number) => (Settings.getInstance().timeBetweenFetches = value)
+})
+
+const strictInventoryGrid = computed({
+  get: () => Settings.getInstance().strictInventoryGrid,
+  set: (value: boolean) => (Settings.getInstance().strictInventoryGrid = value)
 })
 
 const serverLock = computed({
