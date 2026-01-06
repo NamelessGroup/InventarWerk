@@ -32,6 +32,7 @@
       <div class="flex-1"><!-- Spacer --></div>
       <button class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900">
         <FontAwesomeIcon
+          class="transition"
           :class="{ 'rotate-180': !expanded }"
           :icon="faChevronUp"
           @click="expanded = !expanded"
@@ -48,42 +49,48 @@
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
       </button>
     </div>
-    <div v-show="expanded" class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
-      <NumericInput
-        v-for="[k, i] of moneyOptions"
-        :key="k"
-        v-model="moneyFieldValues[k]"
-        :readonly="!canEdit"
-        class="row-start-1 h-10 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
-        :class="`col-start-${i}`"
-        @update="(v) => updateMoney(v, k)"
-      />
-      <span
-        v-for="[k, i, l] of moneyOptions"
-        :key="k + 'l'"
-        :class="`col-start-${i}`"
-        class="row-start-2 text-center text-sm text-amber-200"
-        >{{ l }}</span
-      >
-    </div>
 
-    <div v-show="expanded" class="space-y-2">
-      <ItemRowDisplay
-        v-for="item in inventory.items"
-        :key="item.presetReference"
-        :can-edit="canEdit"
-        :item="item"
-        :inventory-uuid="inventory.uuid"
-      />
-    </div>
+    <CollapseTransition>
+      <div v-show="expanded" class="space-y-2">
+        <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
+          <NumericInput
+            v-for="[k, i] of moneyOptions"
+            :key="k"
+            v-model="moneyFieldValues[k]"
+            :readonly="!canEdit"
+            class="row-start-1 h-10 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+            :class="`col-start-${i}`"
+            @update="(v) => updateMoney(v, k)"
+          />
+          <span
+            v-for="[k, i, l] of moneyOptions"
+            :key="k + 'l'"
+            :class="`col-start-${i}`"
+            class="row-start-2 text-center text-sm text-amber-200"
+            >{{ l }}</span
+          >
+        </div>
+    
+        <div class="space-y-2">
+          <ItemRowDisplay
+            v-for="item in inventory.items"
+            :key="item.presetReference"
+            :can-edit="canEdit"
+            :item="item"
+            :inventory-uuid="inventory.uuid"
+          />
+        </div>
+    
+        <button
+          v-if="inventory.writer.includes(store().uuid)"
+          class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
+          @click="showAddItemPopup = true"
+        >
+          + Add item
+        </button>
+      </div>
+      </CollapseTransition>
 
-    <button
-      v-if="inventory.writer.includes(store().uuid) && expanded"
-      class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
-      @click="showAddItemPopup = true"
-    >
-      + Add item
-    </button>
   </div>
 
   <EditSharePopUp
@@ -117,6 +124,7 @@ import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
+import CollapseTransition from './CollapseTransition.vue'
 
 const props = defineProps({
   inventory: {
