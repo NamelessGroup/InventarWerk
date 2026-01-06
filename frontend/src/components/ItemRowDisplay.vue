@@ -34,36 +34,38 @@
         <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
       </button>
     </div>
-    <div v-show="expanded">
-      <div class="relative flex min-h-12 flex-col">
-        <p class="text-xs">Price: {{ priceString }}</p>
-        <p class="mb-1 text-xs">Weight: {{ item.weight }} lbs.</p>
-        <p class="markdown mb-1 text-xs" v-html="description"></p>
-        <textarea
-          v-model="itemNote"
-          class="rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-fuchsia-300 outline-hidden"
-          placeholder="Notes"
-          @click="(e) => e.stopPropagation()"
-          @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"
-        ></textarea>
-        <textarea
-          v-if="store().userIsDm"
-          v-model="dmNote"
-          class="mt-1 rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-amber-300 outline-hidden"
-          placeholder="DM Note"
-          @click="(e) => e.stopPropagation()"
-          @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
-        ></textarea>
-
-        <button
-          v-if="store().uuid == item.presetCreator"
-          class="absolute top-2 right-0 h-6 w-6 rounded-sm border border-amber-300 bg-fuchsia-950 text-xs"
-          @click="(e) => openEdit(e)"
-        >
-          <FontAwesomeIcon :icon="faPen" />
-        </button>
+    <CollapseTransition>
+      <div v-show="expanded">
+        <div class="relative flex min-h-12 flex-col">
+          <p class="text-xs">Price: {{ priceString }}</p>
+          <p class="mb-1 text-xs">Weight: {{ item.weight }} lbs.</p>
+          <p class="markdown mb-1 text-xs" v-html="description"></p>
+          <textarea
+            v-model="itemNote"
+            class="rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-fuchsia-300 outline-hidden"
+            placeholder="Notes"
+            @click="(e) => e.stopPropagation()"
+            @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"
+          ></textarea>
+          <textarea
+            v-if="store().userIsDm"
+            v-model="dmNote"
+            class="mt-1 rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-amber-300 outline-hidden"
+            placeholder="DM Note"
+            @click="(e) => e.stopPropagation()"
+            @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
+          ></textarea>
+  
+          <button
+            v-if="store().uuid == item.presetCreator"
+            class="absolute top-2 right-0 h-6 w-6 rounded-sm border border-amber-300 bg-fuchsia-950 text-xs"
+            @click="(e) => openEdit(e)"
+          >
+            <FontAwesomeIcon :icon="faPen" />
+          </button>
+        </div>
       </div>
-    </div>
+    </CollapseTransition>
   </div>
   <EditItemPopUp
     v-if="showItemEdit"
@@ -83,6 +85,7 @@ import { marked } from 'marked'
 import EditItemPopUp from './EditItemPopUp.vue'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
 import NumericInput from './NumericInput.vue'
+import CollapseTransition from './CollapseTransition.vue'
 
 const props = defineProps({
   item: {

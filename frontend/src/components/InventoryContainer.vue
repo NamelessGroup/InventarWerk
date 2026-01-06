@@ -50,7 +50,7 @@
       </button>
     </div>
 
-    <CollapseTransition>
+    <CollapseTransition with-opacity speed="0.5s">
       <div v-show="expanded" class="space-y-2">
         <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
           <NumericInput
