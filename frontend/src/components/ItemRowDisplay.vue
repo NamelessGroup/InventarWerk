@@ -55,7 +55,7 @@
             @click="(e) => e.stopPropagation()"
             @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
           ></textarea>
-  
+
           <button
             v-if="store().uuid == item.presetCreator"
             class="absolute top-2 right-0 h-6 w-6 rounded-sm border border-amber-300 bg-fuchsia-950 text-xs"

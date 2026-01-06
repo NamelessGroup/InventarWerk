@@ -70,7 +70,7 @@
             >{{ l }}</span
           >
         </div>
-    
+
         <div class="space-y-2">
           <ItemRowDisplay
             v-for="item in inventory.items"
@@ -80,7 +80,7 @@
             :inventory-uuid="inventory.uuid"
           />
         </div>
-    
+
         <button
           v-if="inventory.writer.includes(store().uuid)"
           class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
@@ -89,8 +89,7 @@
           + Add item
         </button>
       </div>
-      </CollapseTransition>
-
+    </CollapseTransition>
   </div>
 
   <EditSharePopUp
