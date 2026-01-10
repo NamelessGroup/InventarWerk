@@ -3,15 +3,17 @@ import { DatabaseHandler } from './DatabaseHandler'
 export interface SettingsState {
   breakDownGold: boolean
   timeBetweenFetches: number
+  noDeleteConfirmation: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
-  timeBetweenFetches: 5
+  timeBetweenFetches: 5,
+  noDeleteConfirmation: false
 }
 
 export class Settings {
-  private static INSTACE: Settings | null = null
+  private static INSTANCE: Settings | null = null
   private settings: SettingsState = DEFAULT_SETTINGS
 
   private constructor() {
@@ -19,10 +21,8 @@ export class Settings {
   }
 
   public static getInstance(): Settings {
-    if (Settings.INSTACE === null) {
-      Settings.INSTACE = new Settings()
-    }
-    return Settings.INSTACE
+    Settings.INSTANCE ??= new Settings()
+    return Settings.INSTANCE
   }
 
   public get breakDownGold(): boolean {
@@ -31,6 +31,10 @@ export class Settings {
 
   public get timeBetweenFetches(): number {
     return this.settings.timeBetweenFetches
+  }
+
+  public get noDeleteConfirmation(): boolean {
+    return this.settings.noDeleteConfirmation
   }
 
   public set breakDownGold(breakDownGold: boolean) {
@@ -42,6 +46,11 @@ export class Settings {
     this.settings.timeBetweenFetches = timeBetweenFetches ?? 5
     this.save()
     DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
+  }
+
+  public set noDeleteConfirmation(noDeleteConfirmation: boolean) {
+    this.settings.noDeleteConfirmation = noDeleteConfirmation
+    this.save()
   }
 
   private save() {
