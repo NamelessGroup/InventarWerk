@@ -21,6 +21,12 @@ const props = defineProps({
   showRemainingTime: {
     type: Boolean,
     default: true
+  },
+  skipConfirmation: {
+    type: Function,
+    default() {
+      return false
+    }
   }
 })
 
@@ -31,7 +37,9 @@ const confirmTimer = ref<number | undefined>(undefined)
 
 function click(e: Event) {
   e.stopPropagation()
-  if (confirmTimeRemaining.value < 0) {
+  if (props.skipConfirmation()) {
+    emit('click')
+  } else if (confirmTimeRemaining.value < 0) {
     confirmTimeRemaining.value = props.confirmationTime
     confirmTimer.value = setInterval(timerTick, 1000)
   } else {
