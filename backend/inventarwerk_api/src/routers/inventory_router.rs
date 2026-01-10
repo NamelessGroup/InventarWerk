@@ -331,6 +331,9 @@ pub async fn move_item_between_inventories(
     user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
+    if params.source_inventory_uuid == params.target_inventory_uuid {
+        return Err(create_error("source and target inventory should not be the same"))
+    }
     if !user_has_write_access_to_inventory(
         inv_rep.inner(),
         params.source_inventory_uuid.clone(),
@@ -349,6 +352,13 @@ pub async fn move_item_between_inventories(
     {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
+    if !inv_rep.item_exists(&params.source_inventory_uuid, &params.item_preset_uuid).await? {
+        return Err(create_error("source inventory does not contain the specified item"))
+    }
+    if inv_rep.item_exists(&params.target_inventory_uuid, &params.item_preset_uuid).await? {
+        return Err(create_error("target inventory already contains the specified item"))
+    }
+
     inv_rep
         .move_inventory_item(&params.source_inventory_uuid, &params.target_inventory_uuid, &params.item_preset_uuid)
         .await?;

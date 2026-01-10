@@ -229,12 +229,12 @@ async function dropItem(e: DragEvent) {
   currentlyHovering.value = null
 
   if (sourceInventory !== props.inventory.uuid) {
-    store().moveItem(sourceInventory, props.inventory.uuid, preset)
+    await store().moveItem(sourceInventory, props.inventory.uuid, preset)
   }
 
   for (const item of sortedItems) {
     if (item.oldSorting !== item.sorting) {
-      store().changeItemSorting(props.inventory.uuid, item.item, item.sorting)
+      await store().changeItemSorting(props.inventory.uuid, item.item, item.sorting)
     }
   }
 }

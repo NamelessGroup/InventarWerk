@@ -81,12 +81,12 @@ export const store = defineStore('store', {
       )!.amount = newAmount
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
     },
-    changeItemSorting(inventoryUuid: string, itemUuid: string, newSorting: number) {
+    async changeItemSorting(inventoryUuid: string, itemUuid: string, newSorting: number) {
       this.inventories[inventoryUuid].items.find(
         (item) => item.presetReference === itemUuid
       )!.sorting = newSorting
       this.inventories[inventoryUuid].items.sort((a, b) => a.sorting - b.sorting)
-      DatabaseHandler.getInstance().changeItemSorting(inventoryUuid, itemUuid, newSorting)
+      await DatabaseHandler.getInstance().changeItemSorting(inventoryUuid, itemUuid, newSorting)
     },
     async toggleLock() {
       if ((await DatabaseHandler.getInstance().changeServerLockStatus()) !== undefined) {
