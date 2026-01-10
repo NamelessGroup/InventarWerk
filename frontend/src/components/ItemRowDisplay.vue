@@ -6,6 +6,9 @@
       'border-amber-300': expanded,
       'border-fuchsia-900': !expanded
     }"
+    :draggable="canEdit"
+    @dragstart="startDrag"
+    @dragenter="(e) => $emit('dragenter', e)"
     @click="expanded = !expanded"
   >
     <div class="grid grid-cols-[auto_1fr_auto] overflow-hidden">
@@ -98,6 +101,7 @@ const props = defineProps({
     default: false
   }
 })
+defineEmits(['dragenter'])
 
 const expanded = ref(false)
 const amountValue = ref(props.item.amount)
@@ -133,6 +137,17 @@ function deleteItem() {
 
 function editAmount(value: number) {
   store().changeItemAmount(props.inventoryUuid, props.item.presetReference, value)
+}
+
+function startDrag(e: DragEvent) {
+  if (e.dataTransfer == null) {
+    return
+  }
+  e.dataTransfer.dropEffect = 'move'
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('type', 'item')
+  e.dataTransfer.setData('sourceInventory', props.inventoryUuid)
+  e.dataTransfer.setData('preset', props.item.presetReference)
 }
 
 const showItemEdit = ref(false)
