@@ -1,5 +1,5 @@
 # Build-Stage
-FROM rust:latest as builder
+FROM rust:1-trixie as builder
 WORKDIR /usr/src/app
 
 ARG FEATURES=""
