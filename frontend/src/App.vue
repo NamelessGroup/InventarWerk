@@ -66,6 +66,9 @@
           v-for="inventory in inventories"
           :key="inventory.uuid"
           :inventory="inventory"
+          :show-drop-zone="draggingItem"
+          @start-drag="draggingItem = true"
+          @stop-drag="draggingItem = false"
         />
       </div>
     </div>
@@ -140,6 +143,7 @@ const errorContent = ref('')
 const acceptedCookies = ref(false)
 const showSettings = ref(false)
 const showManagePresets = ref(false)
+const draggingItem = ref(false)
 
 getAcceptedCookies()
 
