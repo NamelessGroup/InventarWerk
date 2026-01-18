@@ -1,17 +1,15 @@
 <template>
-  <button @click="click">
+  <button :class="{ fadeOut: confirmTimeRemaining > 0 }" @click="click">
     <slot v-if="confirmTimeRemaining <= 0" />
     <template v-else>
       <slot name="confirmation" />
-      <template v-if="showRemainingTime">
-        {{ confirmTimeRemaining }}s
-      </template>
+      <template v-if="showRemainingTime"> {{ confirmTimeRemaining }}s </template>
     </template>
   </button>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps({
   confirmationTime: {
@@ -59,7 +57,29 @@ function timerTick() {
   }
 }
 
+const animationTime = computed(() => {
+  return `${props.confirmationTime}s`
+})
+
 onBeforeUnmount(() => {
   clearInterval(confirmTimer.value)
 })
 </script>
+
+<style scoped>
+.fadeOut {
+  border-style: solid;
+  border-width: 2px;
+  border-color: rgba(255, 0, 0, 0);
+  animation: border-fade-out v-bind(animationTime) ease-in;
+}
+
+@keyframes border-fade-out {
+  from {
+    border-color: rgba(255, 0, 0, 1);
+  }
+  to {
+    border-color: rgba(255, 0, 0, 0);
+  }
+}
+</style>
