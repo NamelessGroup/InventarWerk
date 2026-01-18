@@ -26,11 +26,11 @@
         v-if="canEdit"
         class="row-start-1 my-auto h-8 rounded-sm border-none bg-fuchsia-950 px-3 text-red-300"
         :skip-confirmation="() => Settings.getInstance().noDeleteConfirmation"
-        @click="deleteItem()"
+        @confirm="deleteItem()"
       >
         <FontAwesomeIcon :icon="faTrashCan" />
 
-        <template #confirmation> Are you sure? </template>
+        <template #confirmation> Confirm </template>
       </TimedConfirmationButton>
     </div>
     <div v-show="expanded">
