@@ -109,6 +109,7 @@ pub async fn create_inventory(
         inv_rep.add_reader(&inv.uuid, &dm_id).await?;
         inv_rep.add_writer(&inv.uuid, &dm_id).await?;
     }
+    crate::report_change_on_inventory!(&inv.uuid);
     get_specific_inventory(
         InventoryUUIDParams {
             inventory_uuid: inv.uuid,
@@ -164,6 +165,7 @@ pub async fn add_preset_to_inventory(
             "",
         )
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -209,6 +211,7 @@ pub async fn add_new_item_to_inventory(
     inv_rep
         .add_inventory_item(&params.inventory_uuid, &id, "", params.amount, 0, "")
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Json(ipr_rep.get_by_uuid(&id).await?))
 }
 
@@ -259,6 +262,7 @@ pub async fn edit_item(
             params.inventory_item_note.as_deref(),
         )
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -302,6 +306,7 @@ pub async fn add_note_to_item(
             None,
         )
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -340,8 +345,9 @@ pub async fn delete_item_from_inventory(
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
     inv_rep
-        .remove_inventory_item(&params.inventory_uuid, &params.item_preset_uuid)
-        .await?;
+        .remove_inventory_item(&params.inventory_uuid, &params.item_preset_uuid).await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
+        
     Ok(Status::NoContent)
 }
 
@@ -385,8 +391,9 @@ pub async fn edit_inventory(
             &params.inventory_uuid,
             params.amount,
             params.name.as_deref(),
-        )
-        .await?;
+        ).await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
+        
     Ok(Status::NoContent)
 }
 
