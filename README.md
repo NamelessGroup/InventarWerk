@@ -7,11 +7,12 @@
 A tool to manage your inventory in a tabletop roleplaying game. It allows you to create different inventories, share them with your friends and manage the items in them. It also allows you to keep track of the money in the inventory and write notes for the dungeon master.
 
 ## Deployment
-I recommand deploying the Inventarwerk behind a reverse proxy with docker compose:
+
+I recommend deploying InventarWerk behind a reverse proxy with Docker Compose:
 
 ```yaml
 services:
-db_inv:
+  db_inv:
     image: postgres:15
     container_name: inventarwerk_postgres
     environment:
@@ -26,38 +27,43 @@ db_inv:
     image: ghcr.io/namelessgroup/inventarwerk:latest
     networks:
       - default
-      - internalnginx
+      - nginxbridge
     container_name: inventarwerk_nameless
     depends_on:
-      - db_inv_nameless
+      - db_inv
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db_inv:5432/inventarwerk
       - DISCORD_CLIENT_ID=<Your-Client-ID>
       - DISCORD_CLIENT_SECRET=<Your-Client-Secret>
       - DISCORD_REDIRECT_URI=https://<Your-URL>/account/oauth/callback
-
       - ROCKET_ADDRESS=0.0.0.0
       - ROCKET_PORT=8000
     restart: unless-stopped
 
-
 networks:
-  ngninxbridge:
-    name: ngninxbridge
+  nginxbridge:
+    name: nginxbridge
     external: true
 ```
 
 ## Developing
+
 ### Backend 
+
 For building the backend and the sqlx-cli you may need following packages (depending on the operating system):
-- pearl
-- openssl (and the dev version)
+- perl
+- openssl (and the dev version, e.g., `libssl-dev`)
 - pkg-config
 
-First install rust (https://rust-lang.org/learn/get-started/)
-Than install sqlx-cli (`cargo install sqlx-cli`)
-Fill the .env file located in the backend as following:
+First, install Rust: [https://rust-lang.org/learn/get-started/](https://rust-lang.org/learn/get-started/)
+
+Then install sqlx-cli:
+```bash
+cargo install sqlx-cli
 ```
+
+Fill the `.env` file located in the `backend` directory as following:
+```env
 DATABASE_URL=<Your-Postgres-URL>
 DISCORD_CLIENT_ID=<Your-Client-ID>
 DISCORD_CLIENT_SECRET=<Your-Client-Secret>
@@ -66,23 +72,35 @@ ROCKET_ADDRESS=127.0.0.1
 ROCKET_PORT=8000
 ```
 
-Now apply the migrations to the db (run from `backend/repositories`): `sqlx migrate run`
+Now apply the migrations to the DB (run from `backend/repositories`):
+```bash
+sqlx migrate run
+```
 
-Finally run the backend (from the `backend` folder): `cargo run --features=dev`
+Finally, run the backend (from the `backend` folder):
+```bash
+cargo run --features=dev
+```
 
 #### Scripts
-For reseting the DB (you may need to when switching branches with differing migrations) you can use the following script (use with caution):
+For resetting the DB (you may need to when switching branches with differing migrations) you can use the following script (use with caution):
 `backend/reset_db.sh`
 
 ### Frontend
 
 For running the frontend you need `node` and `npm`.
 
-Now switch to the frontend folder.
+Switch to the `frontend` folder.
 
-Install the requirements with: `npm i`
+Install the requirements with:
+```bash
+npm install
+```
 
-And run the development server: `npm run dev`
+And run the development server:
+```bash
+npm run dev
+```
 
 <details>
 <summary><h2>Initial Requirements</h2></summary>
