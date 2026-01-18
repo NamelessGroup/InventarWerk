@@ -7,42 +7,100 @@
 A tool to manage your inventory in a tabletop roleplaying game. It allows you to create different inventories, share them with your friends and manage the items in them. It also allows you to keep track of the money in the inventory and write notes for the dungeon master.
 
 ## Deployment
-I recommand deploying the Inventarwerk with docker simply build the Docker image i.e with the following command:
-```bash
-docker build -t inventarwerk .
-```
-and run it:
-```bash
-docker run -d -p "80:8000" --env-file .env inventarwerk
-```
-I suggest keeping the database persistant by setting the db path to `db/database.db` and mounting the `/app/src/db` directory (but this seems to not function in wsl, i suggest running it in pure linux):
-```bash
-docker run -d -p "80:8000" -v ./db:/app/src/db --env-file .env inventarwerk
-```
-I would also suggest running it behind a reverse proxy that use ssl. My docker compose setup looks like:
+
+I recommend deploying InventarWerk behind a reverse proxy with Docker Compose:
+
 ```yaml
 services:
-  inventarwerk:
-    networks:
-      ngninxbridge:
-        ipv4_address: xxx.xxx.xxx.xxx
+  db_inv:
+    image: postgres:15
+    container_name: inventarwerk_postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=inventarwerk
     volumes:
-      - ./db:/usr/src/app/db
-    container_name: inventarwerk
-    env_file: .env
-    image: inventarwerk
+      - ./postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  inventarwerk:
+    image: ghcr.io/namelessgroup/inventarwerk:latest
+    networks:
+      - default
+      - nginxbridge
+    container_name: inventarwerk_nameless
+    depends_on:
+      - db_inv
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db_inv:5432/inventarwerk
+      - DISCORD_CLIENT_ID=<Your-Client-ID>
+      - DISCORD_CLIENT_SECRET=<Your-Client-Secret>
+      - DISCORD_REDIRECT_URI=https://<Your-URL>/account/oauth/callback
+      - ROCKET_ADDRESS=0.0.0.0
+      - ROCKET_PORT=8000
     restart: unless-stopped
 
 networks:
-  ngninxbridge:
-    name: ngninxbridge
+  nginxbridge:
+    name: nginxbridge
     external: true
 ```
-Nginx runs in another container, that routes the traffic over the nginxbridge to the container.
-## Dockerfile
-The Dockerfile supports build args i.e. "--build-arg FEATURES="--features dev-deploy""
-You should also specify a postgres server, while building "--build-arg POSTGRES_URI="<YOUR_URL>""
 
+## Developing
+
+### Backend 
+
+For building the backend and the sqlx-cli you may need following packages (depending on the operating system):
+- perl
+- openssl (and the dev version, e.g., `libssl-dev`)
+- pkg-config
+
+First, install Rust: [https://rust-lang.org/learn/get-started/](https://rust-lang.org/learn/get-started/)
+
+Then install sqlx-cli:
+```bash
+cargo install sqlx-cli
+```
+
+Fill the `.env` file located in the `backend` directory as following:
+```env
+DATABASE_URL=<Your-Postgres-URL>
+DISCORD_CLIENT_ID=<Your-Client-ID>
+DISCORD_CLIENT_SECRET=<Your-Client-Secret>
+DISCORD_REDIRECT_URI=http://localhost:8000/account/oauth/callback
+ROCKET_ADDRESS=127.0.0.1
+ROCKET_PORT=8000
+```
+
+Now apply the migrations to the DB (run from `backend/repositories`):
+```bash
+sqlx migrate run
+```
+
+Finally, run the backend (from the `backend` folder):
+```bash
+cargo run --features=dev
+```
+
+#### Scripts
+For resetting the DB (you may need to when switching branches with differing migrations) you can use the following script (use with caution):
+`backend/reset_db.sh`
+
+### Frontend
+
+For running the frontend you need `node` and `npm`.
+
+Switch to the `frontend` folder.
+
+Install the requirements with:
+```bash
+npm install
+```
+
+And run the development server:
+```bash
+npm run dev
+```
 
 <details>
 <summary><h2>Initial Requirements</h2></summary>
