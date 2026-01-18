@@ -1,11 +1,5 @@
 <template>
-  <div
-    class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2"
-    @drop="dropItem"
-    @dragover.prevent
-    @dragenter.capture="(e) => dragEnterContainer(e)"
-    @dragleave.self="(e) => dragLeaveContainer(e)"
-  >
+  <div class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2">
     <div class="flex items-center overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
       <div
@@ -67,17 +61,23 @@
     </div>
 
     <div class="space-y-2">
-      <template v-for="(item, idx) in inventory.items" :key="item.presetReference">
-        <GhostItem v-if="ghostPosition === idx" />
+      <Draggable
+        :model-value="localDraggableItems"
+        group="items"
+        item-key="presetReference"
+        @change="updateInventoryList"
+        @start="$emit('startDrag')"
+        @end="$emit('stopDrag')"
+      >
+        <GhostItem v-if="showDropZone && inventory.items.length === 0" />
         <ItemRowDisplay
+          v-for="item in localDraggableItems"
+          :key="item.presetReference"
           :can-edit="canEdit"
           :item="item"
           :inventory-uuid="inventory.uuid"
-          @dragenter="(e) => dragEnterItem(idx, e)"
         />
-      </template>
-
-      <GhostItem v-if="ghostPosition === 0 && inventory.items.length === 0" />
+      </Draggable>
     </div>
 
     <button
@@ -120,20 +120,25 @@ import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
+import { VueDraggableNext as Draggable, type DragChangeEvent } from 'vue-draggable-next'
 import GhostItem from './GhostItem.vue'
+import type { Item } from '@/model/Item'
 
 const props = defineProps({
   inventory: {
     type: Object as PropType<Inventory>,
     required: true
+  },
+  showDropZone: {
+    type: Boolean,
+    default: false
   }
 })
+defineEmits(['startDrag', 'stopDrag'])
 
 const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
-const ghostPosition = ref(-1)
-const currentlyHovering = ref<null | HTMLElement>(null)
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
 const creator = computed(
   () =>
@@ -144,6 +149,14 @@ const creator = computed(
       uuid: ''
     }
 )
+const localDraggableItems = computed(() => {
+  return props.inventory.items.map((item) => {
+    return {
+      ...item,
+      sourceInventory: props.inventory.uuid
+    }
+  })
+})
 
 function editName() {
   if (nameInput.value) {
@@ -170,66 +183,43 @@ function deleteInventory() {
   store().deleteInventory(props.inventory.uuid)
 }
 
-function dragEnterContainer(e: DragEvent) {
-  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
-    return
+async function updateInventoryList(e: DragChangeEvent<Item & { sourceInventory: string }>) {
+  if (e.added) {
+    // Item moved to this inventory
+    await moveItem(e.added.element, e.added.newIndex, true)
   }
 
-  if (ghostPosition.value < 0) {
-    ghostPosition.value = 0
+  if (e.moved) {
+    // Item moved in this inventory
+    await moveItem(e.moved.element, e.moved.newIndex, false)
   }
-  currentlyHovering.value = e.target as HTMLElement
+
+  // We purposefully ignore the `removed` option, since removal will be handled by addition to the new inventory
 }
 
-function dragLeaveContainer(e: DragEvent) {
-  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
-    return
-  }
-
-  if (currentlyHovering.value === e.target) {
-    ghostPosition.value = -1
-    currentlyHovering.value = null
-  }
-}
-
-function dragEnterItem(index: number, e: DragEvent) {
-  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
-    return
-  }
-
-  ghostPosition.value = index
-  currentlyHovering.value = e.target as HTMLElement
-}
-
-async function dropItem(e: DragEvent) {
-  if (e.dataTransfer == null || e.dataTransfer.getData('type') !== 'item') {
-    return
-  }
-
-  const sourceInventory = e.dataTransfer.getData('sourceInventory')
-  const preset = e.dataTransfer.getData('preset')
-
+async function moveItem(
+  item: Item & { sourceInventory: string },
+  newIndex: number,
+  movedHere: boolean
+) {
   if (
-    sourceInventory !== props.inventory.uuid &&
-    props.inventory.items.some((item) => item.presetReference === preset)
+    movedHere &&
+    props.inventory.items.some(
+      (existingItem) => existingItem.presetReference === item.presetReference
+    )
   ) {
-    ghostPosition.value = -1
-    currentlyHovering.value = null
-    throw new Error(`This inventory already contains the target item!`)
+    throw new Error(`This inventory already contains ${item.name}!`)
   }
 
   // Figuring out the new sorting value of every item in the inventory
   const sortedItems = [...props.inventory.items]
-    .filter((item) => item.presetReference !== preset)
+    .filter((existingItem) => existingItem.presetReference !== item.presetReference)
     .map((item) => ({ item: item.presetReference, sorting: -1, oldSorting: item.sorting }))
-  sortedItems.splice(ghostPosition.value, 0, { item: preset, sorting: -1, oldSorting: -1 })
+  sortedItems.splice(newIndex, 0, { item: item.presetReference, sorting: -1, oldSorting: -1 })
   sortedItems.forEach((item, idx) => (item.sorting = idx))
 
-  ghostPosition.value = -1
-  currentlyHovering.value = null
-
-  if (sourceInventory !== props.inventory.uuid) {
-    await store().moveItem(sourceInventory, props.inventory.uuid, preset)
+  if (movedHere) {
+    await store().moveItem(item.sourceInventory, props.inventory.uuid, item.presetReference)
   }
 
   for (const item of sortedItems) {
