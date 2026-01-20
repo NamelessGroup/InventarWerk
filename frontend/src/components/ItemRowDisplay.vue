@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
   <div
-    class="grid rounded-sm border bg-fuchsia-900 p-1"
+    class="my-2 grid rounded-sm border bg-fuchsia-900 p-1"
     :class="{
       'border-amber-300': expanded,
       'border-fuchsia-900': !expanded
@@ -64,13 +64,13 @@
         </button>
       </div>
     </div>
+    <EditItemPopUp
+      v-if="showItemEdit"
+      :item="item"
+      :inventory-uuid="inventoryUuid"
+      @close="showItemEdit = false"
+    />
   </div>
-  <EditItemPopUp
-    v-if="showItemEdit"
-    :item="item"
-    :inventory-uuid="inventoryUuid"
-    @close="showItemEdit = false"
-  />
 </template>
 
 <script setup lang="ts">

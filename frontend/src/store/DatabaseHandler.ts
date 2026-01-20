@@ -231,6 +231,13 @@ export class DatabaseHandler {
     )
   }
 
+  public async changeItemSorting(inventoryUuid: string, itemUuid: string, newSorting: number) {
+    await this.patch<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'edit'],
+      { inventory_uuid: inventoryUuid, item_preset_uuid: itemUuid, sorting: newSorting.toString() }
+    )
+  }
+
   public async addNewItem(inventoryUuid: string, name: string, amount: number) {
     const response = await this.put<ItemPreset>(
       [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'addNew'],
@@ -259,6 +266,21 @@ export class DatabaseHandler {
     await this.delete<unknown>(
       [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'remove'],
       { inventory_uuid: inventoryUuid, item_preset_uuid: itemUuid }
+    )
+  }
+
+  public async moveItem(
+    sourceInventoryUuid: string,
+    targetInventoryUuid: string,
+    itemUuid: string
+  ) {
+    await this.patch<unknown>(
+      [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'move'],
+      {
+        source_inventory_uuid: sourceInventoryUuid,
+        target_inventory_uuid: targetInventoryUuid,
+        item_preset_uuid: itemUuid
+      }
     )
   }
 
