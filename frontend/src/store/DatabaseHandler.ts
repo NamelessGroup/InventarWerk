@@ -317,13 +317,13 @@ export class DatabaseHandler {
   public async addShare(inventoryUuid: string, share: Share) {
     const params = this.buildShareParams(share)
     params['inventory_uuid'] = inventoryUuid
-    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'addShare'], params)
+    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'share'], params)
   }
 
   public async removeShare(inventoryUuid: string, share: Share) {
     const params = this.buildShareParams(share)
     params['inventory_uuid'] = inventoryUuid
-    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'removeShare'], params)
+    await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'share'], params)
   }
 
   public async deleteInventory(inventoryUuid: string) {
@@ -343,12 +343,18 @@ export class DatabaseHandler {
 
   private buildShareParams(share: Share) {
     const params: Record<string, string> = {}
+    
     if (share.reader_uuid) {
-      params['reader_uuid'] = share.reader_uuid
+      params['member_uuid'] = share.reader_uuid
+      params['share_type'] = 'r'
+    } else if (share.writer_uuid) {
+      params['member_uuid'] = share.writer_uuid
+      params['share_type'] = 'w'
+    } else {
+      // Empty share object means "make public" - add all users as readers
+      params['share_type'] = 'r'
     }
-    if (share.writer_uuid) {
-      params['writer_uuid'] = share.writer_uuid
-    }
+    
     return params
   }
 

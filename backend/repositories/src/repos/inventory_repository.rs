@@ -200,7 +200,7 @@ impl InventoryRepository {
     /// Adds a user as a reader to an inventory.
     pub async fn add_reader(&self, inventory_uuid: &str, user_uuid: &str) -> Result<()> {
         sqlx::query!(
-            "INSERT INTO inventory_reader (user_uuid, inventory_uuid) VALUES ($1, $2)",
+            "INSERT INTO inventory_reader (user_uuid, inventory_uuid) VALUES ($1, $2) ON CONFLICT DO NOTHING",
             user_uuid,
             inventory_uuid
         )
@@ -224,7 +224,7 @@ impl InventoryRepository {
     /// Adds a user as a writer to an inventory.
     pub async fn add_writer(&self, inventory_uuid: &str, user_uuid: &str) -> Result<()> {
         sqlx::query!(
-            "INSERT INTO inventory_writer (user_uuid, inventory_uuid) VALUES ($1, $2)",
+            "INSERT INTO inventory_writer (user_uuid, inventory_uuid) VALUES ($1, $2) ON CONFLICT DO NOTHING",
             user_uuid,
             inventory_uuid
         )
