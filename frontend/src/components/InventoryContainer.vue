@@ -33,13 +33,16 @@
       <button class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900">
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
-      <button
+      <TimedConfirmationButton
         v-if="inventory.ownerUuid === store().uuid"
-        class="ml-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
-        @click="deleteInventory"
+        class="ml-2 h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
+        :skip-confirmation="() => Settings.getInstance().noDeleteConfirmation"
+        @confirm="deleteInventory"
       >
-        <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
-      </button>
+        <FontAwesomeIcon :icon="faTrashCan" />
+
+        <template #confirmation> Confirm </template>
+      </TimedConfirmationButton>
     </div>
     <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
       <NumericInput
@@ -110,6 +113,8 @@ import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
+import TimedConfirmationButton from './TimedConfirmationButton.vue'
+import { Settings } from '@/store/Settings'
 
 const props = defineProps({
   inventory: {
@@ -150,10 +155,6 @@ function updateName() {
 }
 
 function deleteInventory() {
-  const result = confirm('This will delete the inventory forever')
-  if (!result) {
-    return
-  }
   store().deleteInventory(props.inventory.uuid)
 }
 
