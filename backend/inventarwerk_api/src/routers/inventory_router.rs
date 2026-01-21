@@ -464,6 +464,8 @@ pub async fn add_share_to_inventory(
     if let Some(writer) = writer {
         inv_rep.add_writer(&params.inventory_uuid, &writer).await?;
     }
+
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -512,6 +514,7 @@ pub async fn remove_share_from_inventory(
             .await?;
     }
 
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -544,6 +547,7 @@ pub async fn delete_inventory(
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
     inv_rep.delete_inventory(&params.inventory_uuid).await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
