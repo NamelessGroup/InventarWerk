@@ -403,51 +403,79 @@ pub async fn edit_inventory(
 #[derive(FromForm, ToSchema, IntoParams)]
 pub struct InventoryShareParams {
     inventory_uuid: String,
-    /// User UUID to add/remove. If None for add, all users will be added as readers.
+    /// User UUID to add/remove/update. If None, all users will be added as readers.
     member_uuid: Option<String>,
-    /// "r" for read, "w" for write (write includes read)
-    share_type: String,
+    /// "r" for read, "w" for write (write includes read), None for remove access.
+    share_type: Option<String>,
 }
 
 #[utoipa::path(
     patch,
     path = "/inventory/share",
-    summary = "Add share permissions to an inventory",
-    description = r#"Adds reader or writer permissions for an inventory.
-share_type "w" (write) includes read access. If member_uuid is not provided, all users will be added.
-Requires authentication and creator privileges."#,
+    summary = "Set share permissions for an inventory",
+    description = r#"Sets the share status for a user or all users.
+- If `member_uuid` is provided:
+  - `share_type` = "w": User gets write and read access.
+  - `share_type` = "r": User gets read access (write removed).
+  - `share_type` = None: User loses all access.
+- If `member_uuid` is NOT provided:
+  - All users get read access.
+Requires creator privileges (except for removing oneself)."#,
     params(InventoryShareParams),
     responses(
-        (status = 204, description = "Share permissions added successfully"),
-        (status = 400, description = "Invalid share_type")
+        (status = 204, description = "Permissions updated successfully"),
+        (status = 400, description = "Invalid parameters")
     ),
     security(("bearer_auth" = [])),
     tag = "Inventories"
 )]
 #[patch("/inventory/share?<params..>")]
-pub async fn add_share_to_inventory(
+pub async fn set_inventory_share_permissions(
     params: InventoryShareParams,
     user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
     usr_rep: &State<UserRepository>,
 ) -> Result<Status> {
-    if !matches!(params.share_type.as_str(), "r" | "w") {
-        return Ok(Status::BadRequest);
-    }
-    if !user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id)
-        .await?
-    {
-        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+    if let Some(ref st) = params.share_type {
+        if !matches!(st.as_str(), "r" | "w") {
+            return Ok(Status::BadRequest);
+        }
     }
 
     match params.member_uuid {
-        Some(uuid) => {
-            inv_rep.add_reader(&params.inventory_uuid, &uuid).await?;
-            if params.share_type == "w" {
-                inv_rep.add_writer(&params.inventory_uuid, &uuid).await?;
+        Some(member_uuid) => {
+            let is_own = member_uuid == user.user_id;
+            let is_creator = user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id).await?;
+            
+            if params.share_type.is_some() && !is_creator {
+                return Err(create_error(ACCESS_DENIAL_MESSAGE));
+            }
+            if params.share_type.is_none() && !is_creator && !is_own {
+                return Err(create_error(ACCESS_DENIAL_MESSAGE));
+            }
+
+
+            match params.share_type.as_deref() {
+                Some("w") => {
+                    inv_rep.add_reader(&params.inventory_uuid, &member_uuid).await?;
+                    inv_rep.add_writer(&params.inventory_uuid, &member_uuid).await?;
+                }
+                Some("r") => {
+                    inv_rep.add_reader(&params.inventory_uuid, &member_uuid).await?;
+                    inv_rep.remove_writer(&params.inventory_uuid, &member_uuid).await?;
+                }
+                None => {
+                    inv_rep.remove_writer(&params.inventory_uuid, &member_uuid).await?;
+                    inv_rep.remove_reader(&params.inventory_uuid, &member_uuid).await?;
+                }
+                _ => return Ok(Status::BadRequest),
             }
         }
         None => {
+            if !user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id).await? {
+                return Err(create_error(ACCESS_DENIAL_MESSAGE));
+            }
+            
             let current = inv_rep.get_readers(&params.inventory_uuid).await?;
             let all_users = usr_rep.get_all_users().await?;
             for user in all_users {
@@ -462,48 +490,7 @@ pub async fn add_share_to_inventory(
     Ok(Status::NoContent)
 }
 
-#[utoipa::path(
-    delete,
-    path = "/inventory/share",
-    summary = "Remove share permissions from an inventory",
-    description = r#"Removes permissions from an inventory.
-share_type "r" removes all access, "w" removes only write access.
-Requires creator privileges, or user can remove their own access."#,
-    params(InventoryShareParams),
-    responses(
-        (status = 204, description = "Share permissions removed successfully")
-    ),
-    security(("bearer_auth" = [])),
-    tag = "Inventories"
-)]
-#[delete("/inventory/share?<params..>")]
-pub async fn remove_share_from_inventory(
-    params: InventoryShareParams,
-    user: super::AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
-) -> Result<Status> {
-    let Some(member_uuid) = params.member_uuid else {
-        return Ok(Status::BadRequest);
-    };
-    if !matches!(params.share_type.as_str(), "r" | "w") {
-        return Ok(Status::BadRequest);
-    }
 
-    let is_own = member_uuid == user.user_id;
-    let is_creator = user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id).await?;
-    if !is_creator && !is_own {
-        return Err(create_error(ACCESS_DENIAL_MESSAGE));
-    }
-
-    if params.share_type == "r" {
-        inv_rep.remove_writer(&params.inventory_uuid, &member_uuid).await?;
-        inv_rep.remove_reader(&params.inventory_uuid, &member_uuid).await?;
-    } else {
-        inv_rep.remove_writer(&params.inventory_uuid, &member_uuid).await?;
-    }
-    crate::report_change_on_inventory!(&params.inventory_uuid);
-    Ok(Status::NoContent)
-}
 
 #[utoipa::path(
     delete,
@@ -550,8 +537,7 @@ pub async fn delete_inventory(
         add_note_to_item,
         delete_item_from_inventory,
         edit_inventory,
-        add_share_to_inventory,
-        remove_share_from_inventory,
+        set_inventory_share_permissions,
         delete_inventory,
     ),
     components(
