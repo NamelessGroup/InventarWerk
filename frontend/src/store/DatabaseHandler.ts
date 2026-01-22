@@ -314,16 +314,19 @@ export class DatabaseHandler {
     })
   }
 
-  public async addShare(inventoryUuid: string, share: Share) {
-    const params = this.buildShareParams(share)
+  public async setShare(inventoryUuid: string, memberUuid?: string, shareType?: 'r' | 'w') {
+    const params: Record<string, string> = {}
     params['inventory_uuid'] = inventoryUuid
-    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'share'], params)
-  }
 
-  public async removeShare(inventoryUuid: string, share: Share) {
-    const params = this.buildShareParams(share)
-    params['inventory_uuid'] = inventoryUuid
-    await this.delete<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'share'], params)
+    if (memberUuid) {
+      params['member_uuid'] = memberUuid
+    }
+
+    if (shareType) {
+      params['share_type'] = shareType
+    }
+
+    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'share'], params)
   }
 
   public async deleteInventory(inventoryUuid: string) {
@@ -339,23 +342,6 @@ export class DatabaseHandler {
 
   public changeServerLockStatus() {
     return this.patch<unknown>([DatabaseHandler.ACCOUNT_END_POINT, 'toggleLock'])
-  }
-
-  private buildShareParams(share: Share) {
-    const params: Record<string, string> = {}
-    
-    if (share.reader_uuid) {
-      params['member_uuid'] = share.reader_uuid
-      params['share_type'] = 'r'
-    } else if (share.writer_uuid) {
-      params['member_uuid'] = share.writer_uuid
-      params['share_type'] = 'w'
-    } else {
-      // Empty share object means "make public" - add all users as readers
-      params['share_type'] = 'r'
-    }
-    
-    return params
   }
 
   private async get<T>(url: URLParts, queryParams?: QueryParameter): Promise<T | undefined> {
@@ -477,8 +463,3 @@ type URLParts = string[]
 type QueryParameter = Record<string, string>
 
 type LastUpdateResponse = Record<string, number>
-
-interface Share {
-  reader_uuid?: string
-  writer_uuid?: string
-}
