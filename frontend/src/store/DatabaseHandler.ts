@@ -314,16 +314,19 @@ export class DatabaseHandler {
     })
   }
 
-  public async addShare(inventoryUuid: string, share: Share) {
-    const params = this.buildShareParams(share)
+  public async setShare(inventoryUuid: string, memberUuid?: string, shareType?: 'r' | 'w') {
+    const params: Record<string, string> = {}
     params['inventory_uuid'] = inventoryUuid
-    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'addShare'], params)
-  }
 
-  public async removeShare(inventoryUuid: string, share: Share) {
-    const params = this.buildShareParams(share)
-    params['inventory_uuid'] = inventoryUuid
-    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'removeShare'], params)
+    if (memberUuid) {
+      params['member_uuid'] = memberUuid
+    }
+
+    if (shareType) {
+      params['share_type'] = shareType
+    }
+
+    await this.patch<undefined>([DatabaseHandler.INVENTORY_END_POINT, 'share'], params)
   }
 
   public async deleteInventory(inventoryUuid: string) {
@@ -339,17 +342,6 @@ export class DatabaseHandler {
 
   public changeServerLockStatus() {
     return this.patch<unknown>([DatabaseHandler.ACCOUNT_END_POINT, 'toggleLock'])
-  }
-
-  private buildShareParams(share: Share) {
-    const params: Record<string, string> = {}
-    if (share.reader_uuid) {
-      params['reader_uuid'] = share.reader_uuid
-    }
-    if (share.writer_uuid) {
-      params['writer_uuid'] = share.writer_uuid
-    }
-    return params
   }
 
   private async get<T>(url: URLParts, queryParams?: QueryParameter): Promise<T | undefined> {
@@ -471,8 +463,3 @@ type URLParts = string[]
 type QueryParameter = Record<string, string>
 
 type LastUpdateResponse = Record<string, number>
-
-interface Share {
-  reader_uuid?: string
-  writer_uuid?: string
-}

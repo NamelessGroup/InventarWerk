@@ -47,10 +47,7 @@ const hasWriteAccess = computed(() => props.inventory.writer.includes(store().uu
 const emit = defineEmits(['close'])
 
 async function leaveInventory() {
-  if (hasWriteAccess.value) {
-    await store().removeWriteShare(props.inventory.uuid, store().uuid)
-  }
-  store().removeReadShare(props.inventory.uuid, store().uuid)
+  await store().removeReadShare(props.inventory.uuid, store().uuid)
 
   store().inventoryUuids = store().inventoryUuids.filter((uuid) => uuid !== props.inventory.uuid)
   delete store().inventories[props.inventory.uuid]
