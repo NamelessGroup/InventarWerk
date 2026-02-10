@@ -81,12 +81,24 @@ export const store = defineStore('store', {
       )!.amount = newAmount
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
     },
-    async changeItemSorting(inventoryUuid: string, itemUuid: string, newSorting: number) {
-      this.inventories[inventoryUuid].items.find(
-        (item) => item.presetReference === itemUuid
-      )!.sorting = newSorting
-      this.inventories[inventoryUuid].items.sort((a, b) => a.sorting - b.sorting)
-      await DatabaseHandler.getInstance().changeItemSorting(inventoryUuid, itemUuid, newSorting)
+    async changeInventorySorting(inventoryUuid: string, newSortings: Record<string, number>) {
+      const items = this.inventories[inventoryUuid].items
+      const promises: Promise<void>[] = []
+      for (const itemToSort in newSortings) {
+        const item = items.find((item) => item.presetReference === itemToSort)
+        if (item != null) {
+          item.sorting = newSortings[itemToSort]
+          promises.push(
+            DatabaseHandler.getInstance().changeItemSorting(
+              inventoryUuid,
+              itemToSort,
+              newSortings[itemToSort]
+            )
+          )
+        }
+      }
+      items.sort((a, b) => a.sorting - b.sorting)
+      await Promise.all(promises)
     },
     async toggleLock() {
       if ((await DatabaseHandler.getInstance().changeServerLockStatus()) !== undefined) {
@@ -130,18 +142,24 @@ export const store = defineStore('store', {
       )!.dmNote = note
       await DatabaseHandler.getInstance().editDmNote(inventoryUuid, itemUuid, note)
     },
-    async moveItem(sourceInventoryUuid: string, targetInventoryUuid: string, itemUuid: string, newSorting: number) {
+    async moveItem(
+      sourceInventoryUuid: string,
+      targetInventoryUuid: string,
+      itemUuid: string,
+      newSorting: number
+    ) {
       const item = this.inventories[sourceInventoryUuid].items.find(
         (item) => item.presetReference === itemUuid
       )!
-      if (newSorting != null) {
-        this.inventories[targetInventoryUuid].items.splice(newSorting, 0, item);
-      } else {
-        this.inventories[targetInventoryUuid].items.push(item)
-      }
       this.inventories[sourceInventoryUuid].items = this.inventories[
         sourceInventoryUuid
       ].items.filter((item) => item.presetReference !== itemUuid)
+      if (newSorting != null) {
+        item.sorting = newSorting
+        this.inventories[targetInventoryUuid].items.splice(newSorting, 0, item)
+      } else {
+        this.inventories[targetInventoryUuid].items.push(item)
+      }
       await DatabaseHandler.getInstance().moveItem(
         sourceInventoryUuid,
         targetInventoryUuid,

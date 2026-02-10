@@ -273,7 +273,7 @@ export class DatabaseHandler {
     sourceInventoryUuid: string,
     targetInventoryUuid: string,
     itemUuid: string,
-    newSorting: number,
+    newSorting: number
   ) {
     await this.patch<unknown>(
       [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'move'],
@@ -281,7 +281,7 @@ export class DatabaseHandler {
         source_inventory_uuid: sourceInventoryUuid,
         target_inventory_uuid: targetInventoryUuid,
         item_preset_uuid: itemUuid,
-        new_sorting: newSorting.toString(),
+        new_sorting: newSorting.toString()
       }
     )
   }

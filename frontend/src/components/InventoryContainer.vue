@@ -209,14 +209,24 @@ async function moveItem(
   sortedItems.splice(newIndex, 0, { item: item.presetReference, sorting: -1, oldSorting: -1 })
   sortedItems.forEach((item, idx) => (item.sorting = idx))
 
-  for (const sortingItem of sortedItems) {
-    if (sortingItem.oldSorting !== sortingItem.sorting && (!movedHere || sortingItem.item !== item.presetReference)) {
-      await store().changeItemSorting(props.inventory.uuid, sortingItem.item, sortingItem.sorting)
-    }
+  if (movedHere) {
+    await store().moveItem(
+      item.sourceInventory,
+      props.inventory.uuid,
+      item.presetReference,
+      newIndex
+    )
   }
 
-  if (movedHere) {
-    await store().moveItem(item.sourceInventory, props.inventory.uuid, item.presetReference, newIndex);
+  for (const sortingItem of sortedItems) {
+    const sortingsToUpdate: Record<string, number> = {}
+    if (
+      sortingItem.oldSorting !== sortingItem.sorting &&
+      (!movedHere || sortingItem.item !== item.presetReference)
+    ) {
+      sortingsToUpdate[sortingItem.item] = sortingItem.sorting
+    }
+    await store().changeInventorySorting(props.inventory.uuid, sortingsToUpdate)
   }
 }
 
