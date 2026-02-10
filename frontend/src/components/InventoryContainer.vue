@@ -66,10 +66,7 @@
         group="items"
         item-key="presetReference"
         @change="updateInventoryList"
-        @start="$emit('startDrag')"
-        @end="$emit('stopDrag')"
       >
-        <GhostItem v-if="showDropZone && inventory.items.length === 0" />
         <ItemRowDisplay
           v-for="item in localDraggableItems"
           :key="item.presetReference"
@@ -121,20 +118,14 @@ import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
 import { VueDraggableNext as Draggable, type DragChangeEvent } from 'vue-draggable-next'
-import GhostItem from './GhostItem.vue'
 import type { Item } from '@/model/Item'
 
 const props = defineProps({
   inventory: {
     type: Object as PropType<Inventory>,
     required: true
-  },
-  showDropZone: {
-    type: Boolean,
-    default: false
   }
 })
-defineEmits(['startDrag', 'stopDrag'])
 
 const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
