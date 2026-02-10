@@ -272,14 +272,16 @@ export class DatabaseHandler {
   public async moveItem(
     sourceInventoryUuid: string,
     targetInventoryUuid: string,
-    itemUuid: string
+    itemUuid: string,
+    newSorting: number,
   ) {
     await this.patch<unknown>(
       [DatabaseHandler.INVENTORY_END_POINT, DatabaseHandler.ITEM_END_POINT, 'move'],
       {
         source_inventory_uuid: sourceInventoryUuid,
         target_inventory_uuid: targetInventoryUuid,
-        item_preset_uuid: itemUuid
+        item_preset_uuid: itemUuid,
+        new_sorting: newSorting.toString(),
       }
     )
   }

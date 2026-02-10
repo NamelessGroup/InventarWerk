@@ -130,18 +130,23 @@ export const store = defineStore('store', {
       )!.dmNote = note
       await DatabaseHandler.getInstance().editDmNote(inventoryUuid, itemUuid, note)
     },
-    async moveItem(sourceInventoryUuid: string, targetInventoryUuid: string, itemUuid: string) {
+    async moveItem(sourceInventoryUuid: string, targetInventoryUuid: string, itemUuid: string, newSorting: number) {
       const item = this.inventories[sourceInventoryUuid].items.find(
         (item) => item.presetReference === itemUuid
       )!
-      this.inventories[targetInventoryUuid].items.push(item)
+      if (newSorting != null) {
+        this.inventories[targetInventoryUuid].items.splice(newSorting, 0, item);
+      } else {
+        this.inventories[targetInventoryUuid].items.push(item)
+      }
       this.inventories[sourceInventoryUuid].items = this.inventories[
         sourceInventoryUuid
       ].items.filter((item) => item.presetReference !== itemUuid)
       await DatabaseHandler.getInstance().moveItem(
         sourceInventoryUuid,
         targetInventoryUuid,
-        itemUuid
+        itemUuid,
+        newSorting
       )
     }
   }

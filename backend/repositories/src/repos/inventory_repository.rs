@@ -300,13 +300,15 @@ impl InventoryRepository {
         &self,
         source_inventory_uuid: &str,
         target_inventory_uuid: &str,
-        item_preset_uuid: &str
+        item_preset_uuid: &str,
+        new_sorting: Option<i32>,
     ) -> Result<()> {
         sqlx::query!(
-            "UPDATE inventory_item SET inventory_uuid = $1 WHERE inventory_uuid = $2 AND item_preset_uuid = $3",
+            "UPDATE inventory_item SET inventory_uuid = $1, sorting = COALESCE($4, sorting) WHERE inventory_uuid = $2 AND item_preset_uuid = $3",
             target_inventory_uuid,
             source_inventory_uuid,
-            item_preset_uuid
+            item_preset_uuid,
+            new_sorting,
         )
         .execute(&self.pool)
         .await?;

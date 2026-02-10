@@ -310,6 +310,7 @@ pub struct ItemMoveParams {
     source_inventory_uuid: String,
     target_inventory_uuid: String,
     item_preset_uuid: String,
+    new_sorting: Option<i32>,
 }
 
 #[utoipa::path(
@@ -360,7 +361,7 @@ pub async fn move_item_between_inventories(
     }
 
     inv_rep
-        .move_inventory_item(&params.source_inventory_uuid, &params.target_inventory_uuid, &params.item_preset_uuid)
+        .move_inventory_item(&params.source_inventory_uuid, &params.target_inventory_uuid, &params.item_preset_uuid, params.new_sorting)
         .await?;
     Ok(Status::NoContent)
 }
