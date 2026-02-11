@@ -61,7 +61,7 @@
     </div>
 
     <div class="space-y-2">
-      <Draggable
+      <DraggableContainer
         :model-value="localDraggableItems"
         group="items"
         item-key="presetReference"
@@ -74,7 +74,7 @@
           :item="item"
           :inventory-uuid="inventory.uuid"
         />
-      </Draggable>
+      </DraggableContainer>
     </div>
 
     <button
@@ -117,7 +117,7 @@ import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
-import { VueDraggableNext as Draggable, type DragChangeEvent } from 'vue-draggable-next'
+import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
 import type { Item } from '@/model/Item'
 
 const props = defineProps({
@@ -203,7 +203,7 @@ async function moveItem(
   }
 
   // Figuring out the new sorting value of every item in the inventory
-  const sortedItems = [...props.inventory.items]
+  const sortedItems = props.inventory.items
     .filter((existingItem) => existingItem.presetReference !== item.presetReference)
     .map((item) => ({ item: item.presetReference, sorting: -1, oldSorting: item.sorting }))
   sortedItems.splice(newIndex, 0, { item: item.presetReference, sorting: -1, oldSorting: -1 })
