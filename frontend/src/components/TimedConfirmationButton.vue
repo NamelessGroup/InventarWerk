@@ -1,13 +1,12 @@
 <template>
   <button ref="root" :class="{ fadeOut: confirmTimeRemaining > 0 }" @click="click">
-      <slot v-if="confirmTimeRemaining <= 0" />
+    <slot v-if="confirmTimeRemaining <= 0" />
     <template v-else>
       <slot name="confirmation" />
       <template v-if="showRemainingTime"> {{ confirmTimeRemaining }}s </template>
     </template>
 
     <div ref="styleHolder"></div>
-
   </button>
 </template>
 
@@ -93,25 +92,25 @@ function setAnimation() {
   for (let i = 1; i < 100; i++) {
     const progress = i / 100
     const length = totalLength * progress
-    let x = -1;
-    let y = -1;
+    let x = -1
+    let y = -1
     if (length < width / 2) {
       x = -length
       y = height / 2
     } else if (length < width / 2 + height) {
-      x = - width / 2
+      x = -width / 2
       y = height / 2 - (length - width / 2)
     } else if (length < 1.5 * width + height) {
-      x = - width / 2 + (length - width / 2 - height)
-      y = - height / 2
+      x = -width / 2 + (length - width / 2 - height)
+      y = -height / 2
     } else if (length < 1.5 * width + 2 * height) {
       x = width / 2
-      y = - height / 2 + (length - 1.5 * width - height)
+      y = -height / 2 + (length - 1.5 * width - height)
     } else {
       x = width / 2 - (length - 1.5 * width - 2 * height)
       y = height / 2
     }
-    angles.push((Math.atan2(x,y) * 180 / Math.PI + 360) % 360)
+    angles.push(((Math.atan2(x, y) * 180) / Math.PI + 360) % 360)
   }
   const keyframes = `
   <style>
@@ -119,9 +118,11 @@ function setAnimation() {
     from {
       --border-progress-fill: 100%;
     }
-    ${angles.map((angle, index) => {
-      return `${index + 1}% { --border-progress-fill: ${angle * 100 / 360}%; }`
-    }).join('\n')}
+    ${angles
+      .map((angle, index) => {
+        return `${index + 1}% { --border-progress-fill: ${(angle * 100) / 360}%; }`
+      })
+      .join('\n')}
     to {
       --border-progress-fill: 0%;
     }
@@ -137,14 +138,18 @@ onBeforeUnmount(() => {
 
 <style scoped>
 @property --border-progress-fill {
-  syntax: "<percentage>";
+  syntax: '<percentage>';
   inherits: false;
   initial-value: 100%;
 }
 
 .fadeOut {
   position: relative;
-  background-image: conic-gradient(var(--color-red-500), var(--color-red-500) var(--border-progress-fill), transparent var(--border-progress-fill));
+  background-image: conic-gradient(
+    var(--color-red-500),
+    var(--color-red-500) var(--border-progress-fill),
+    transparent var(--border-progress-fill)
+  );
   z-index: 0;
   animation: border-progress-bar v-bind(animationTime) linear forwards;
   border: none;
