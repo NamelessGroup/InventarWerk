@@ -70,15 +70,22 @@
             >{{ l }}</span
           >
         </div>
-
+        
         <div class="space-y-2">
-          <ItemRowDisplay
-            v-for="item in inventory.items"
-            :key="item.presetReference"
-            :can-edit="canEdit"
-            :item="item"
-            :inventory-uuid="inventory.uuid"
-          />
+          <DraggableContainer
+            :model-value="localDraggableItems"
+            group="items"
+            item-key="presetReference"
+            @change="updateInventoryList"
+          >
+            <ItemRowDisplay
+              v-for="item in localDraggableItems"
+              :key="item.presetReference"
+              :can-edit="canEdit"
+              :item="item"
+              :inventory-uuid="inventory.uuid"
+            />
+          </DraggableContainer>
         </div>
 
         <button
@@ -124,6 +131,8 @@ import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
 import CollapseTransition from './CollapseTransition.vue'
+import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
+import type { Item } from '@/model/Item'
 
 const props = defineProps({
   inventory: {
@@ -146,6 +155,14 @@ const creator = computed(
       uuid: ''
     }
 )
+const localDraggableItems = computed(() => {
+  return props.inventory.items.map((item) => {
+    return {
+      ...item,
+      sourceInventory: props.inventory.uuid
+    }
+  })
+})
 
 function editName() {
   if (nameInput.value) {
@@ -170,6 +187,62 @@ function deleteInventory() {
     return
   }
   store().deleteInventory(props.inventory.uuid)
+}
+
+async function updateInventoryList(e: DragChangeEvent<Item & { sourceInventory: string }>) {
+  if (e.added) {
+    // Item moved to this inventory
+    await moveItem(e.added.element, e.added.newIndex, true)
+  }
+
+  if (e.moved) {
+    // Item moved in this inventory
+    await moveItem(e.moved.element, e.moved.newIndex, false)
+  }
+
+  // We purposefully ignore the `removed` option, since removal will be handled by addition to the new inventory
+}
+
+async function moveItem(
+  item: Item & { sourceInventory: string },
+  newIndex: number,
+  movedHere: boolean
+) {
+  if (
+    movedHere &&
+    props.inventory.items.some(
+      (existingItem) => existingItem.presetReference === item.presetReference
+    )
+  ) {
+    throw new Error(`This inventory already contains ${item.name}!`)
+  }
+
+  // Figuring out the new sorting value of every item in the inventory
+  const sortedItems = props.inventory.items
+    .filter((existingItem) => existingItem.presetReference !== item.presetReference)
+    .map((item) => ({ item: item.presetReference, sorting: -1, oldSorting: item.sorting }))
+  sortedItems.splice(newIndex, 0, { item: item.presetReference, sorting: -1, oldSorting: -1 })
+  sortedItems.forEach((item, idx) => (item.sorting = idx))
+
+  if (movedHere) {
+    await store().moveItem(
+      item.sourceInventory,
+      props.inventory.uuid,
+      item.presetReference,
+      newIndex
+    )
+  }
+
+  for (const sortingItem of sortedItems) {
+    const sortingsToUpdate: Record<string, number> = {}
+    if (
+      sortingItem.oldSorting !== sortingItem.sorting &&
+      (!movedHere || sortingItem.item !== item.presetReference)
+    ) {
+      sortingsToUpdate[sortingItem.item] = sortingItem.sorting
+    }
+    await store().changeInventorySorting(props.inventory.uuid, sortingsToUpdate)
+  }
 }
 
 const moneyFieldValues = ref({

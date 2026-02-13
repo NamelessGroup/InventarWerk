@@ -106,9 +106,13 @@ pub async fn create_inventory(
         .await?;
     let dms = usr_rep.get_all_dm_ids().await?;
     for dm_id in dms {
+        if dm_id == user.user_id {
+            continue;
+        }
         inv_rep.add_reader(&inv.uuid, &dm_id).await?;
         inv_rep.add_writer(&inv.uuid, &dm_id).await?;
     }
+    crate::report_change_on_inventory!(&inv.uuid);
     get_specific_inventory(
         InventoryUUIDParams {
             inventory_uuid: inv.uuid,
@@ -164,6 +168,7 @@ pub async fn add_preset_to_inventory(
             "",
         )
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -209,6 +214,7 @@ pub async fn add_new_item_to_inventory(
     inv_rep
         .add_inventory_item(&params.inventory_uuid, &id, "", params.amount, 0, "")
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Json(ipr_rep.get_by_uuid(&id).await?))
 }
 
@@ -259,6 +265,7 @@ pub async fn edit_item(
             params.inventory_item_note.as_deref(),
         )
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -302,6 +309,68 @@ pub async fn add_note_to_item(
             None,
         )
         .await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
+    Ok(Status::NoContent)
+}
+
+#[derive(FromForm, ToSchema, IntoParams)]
+pub struct ItemMoveParams {
+    source_inventory_uuid: String,
+    target_inventory_uuid: String,
+    item_preset_uuid: String,
+    new_sorting: Option<i32>,
+}
+
+#[utoipa::path(
+    patch,
+    path = "/inventory/item/move",
+    summary = "Moves an item from one inventory to another",
+    description = r#"Moves the specified item from one inventory to another.
+Requires authentication and write access on both inventories. Returns an error if access is denied."#,
+    params(ItemMoveParams),
+    responses(
+        (status = 204, description = "Item moved successfully")
+    ),
+    security(("bearer_auth" = [])),
+    tag = "Inventories"
+)]
+#[patch("/inventory/item/move?<params..>")]
+pub async fn move_item_between_inventories(
+    params: ItemMoveParams,
+    user: super::AuthenticatedUser,
+    inv_rep: &State<InventoryRepository>,
+) -> Result<Status> {
+    if params.source_inventory_uuid == params.target_inventory_uuid {
+        return Err(create_error("source and target inventory should not be the same"))
+    }
+    if !user_has_write_access_to_inventory(
+        inv_rep.inner(),
+        params.source_inventory_uuid.clone(),
+        user.user_id.clone(),
+    )
+    .await?
+    {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+    }
+    if !user_has_write_access_to_inventory(
+        inv_rep.inner(),
+        params.target_inventory_uuid.clone(),
+        user.user_id.clone(),
+    )
+    .await?
+    {
+        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+    }
+    if !inv_rep.item_exists(&params.source_inventory_uuid, &params.item_preset_uuid).await? {
+        return Err(create_error("source inventory does not contain the specified item"))
+    }
+    if inv_rep.item_exists(&params.target_inventory_uuid, &params.item_preset_uuid).await? {
+        return Err(create_error("target inventory already contains the specified item"))
+    }
+
+    inv_rep
+        .move_inventory_item(&params.source_inventory_uuid, &params.target_inventory_uuid, &params.item_preset_uuid, params.new_sorting)
+        .await?;
     Ok(Status::NoContent)
 }
 
@@ -340,8 +409,9 @@ pub async fn delete_item_from_inventory(
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
     inv_rep
-        .remove_inventory_item(&params.inventory_uuid, &params.item_preset_uuid)
-        .await?;
+        .remove_inventory_item(&params.inventory_uuid, &params.item_preset_uuid).await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
+        
     Ok(Status::NoContent)
 }
 
@@ -385,8 +455,9 @@ pub async fn edit_inventory(
             &params.inventory_uuid,
             params.amount,
             params.name.as_deref(),
-        )
-        .await?;
+        ).await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
+        
     Ok(Status::NoContent)
 }
 
@@ -417,7 +488,7 @@ pub async fn add_share_to_inventory(
     inv_rep: &State<InventoryRepository>,
     usr_rep: &State<UserRepository>,
 ) -> Result<Status> {
-    if user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id)
+    if !user_is_creator_of_inventory(inv_rep.inner(), params.inventory_uuid.clone(), user.user_id)
         .await?
     {
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
@@ -454,6 +525,8 @@ pub async fn add_share_to_inventory(
     if let Some(writer) = writer {
         inv_rep.add_writer(&params.inventory_uuid, &writer).await?;
     }
+
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -479,7 +552,7 @@ pub async fn remove_share_from_inventory(
     let reader = params.reader_uuid;
     let writer = params.writer_uuid;
     let some_own_user = Some(user.user_id.clone());
-    if user_is_creator_of_inventory(
+    if !user_is_creator_of_inventory(
         inv_rep.inner(),
         params.inventory_uuid.clone(),
         user.user_id.clone(),
@@ -502,6 +575,7 @@ pub async fn remove_share_from_inventory(
             .await?;
     }
 
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -524,7 +598,7 @@ pub async fn delete_inventory(
     user: super::AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
-    if user_is_creator_of_inventory(
+    if !user_is_creator_of_inventory(
         inv_rep.inner(),
         params.inventory_uuid.clone(),
         user.user_id.clone(),
@@ -534,6 +608,7 @@ pub async fn delete_inventory(
         return Err(create_error(ACCESS_DENIAL_MESSAGE));
     }
     inv_rep.delete_inventory(&params.inventory_uuid).await?;
+    crate::report_change_on_inventory!(&params.inventory_uuid);
     Ok(Status::NoContent)
 }
 
@@ -548,6 +623,7 @@ pub async fn delete_inventory(
         edit_item,
         add_note_to_item,
         delete_item_from_inventory,
+        move_item_between_inventories,
         edit_inventory,
         add_share_to_inventory,
         remove_share_from_inventory,
@@ -562,6 +638,7 @@ pub async fn delete_inventory(
             ItemEditParams,
             NoteAddParams,
             ItemDeleteParams,
+            ItemMoveParams,
             InventoryEditParams,
             InventoryShareParams,
             GetAllInventoriesReturn,

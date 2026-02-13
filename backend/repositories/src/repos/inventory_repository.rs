@@ -295,6 +295,26 @@ impl InventoryRepository {
         Ok(())
     }
 
+    /// Moves an item from one inventory to another
+    pub async fn move_inventory_item(
+        &self,
+        source_inventory_uuid: &str,
+        target_inventory_uuid: &str,
+        item_preset_uuid: &str,
+        new_sorting: Option<i32>,
+    ) -> Result<()> {
+        sqlx::query!(
+            "UPDATE inventory_item SET inventory_uuid = $1, sorting = COALESCE($4, sorting) WHERE inventory_uuid = $2 AND item_preset_uuid = $3",
+            target_inventory_uuid,
+            source_inventory_uuid,
+            item_preset_uuid,
+            new_sorting,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
     /// Checks if an item exists in an inventory.
     pub async fn item_exists(&self, inventory_uuid: &str, item_preset_uuid: &str) -> Result<bool> {
         let result = sqlx::query!(
@@ -333,7 +353,8 @@ impl InventoryRepository {
                     ip.name, ip.description, ip.price, ip.creator AS preset_creator, ip.weight, ip.item_type
              FROM inventory_item ii
              INNER JOIN item_preset ip ON ii.item_preset_uuid = ip.uuid
-             WHERE ii.inventory_uuid = $1",
+             WHERE ii.inventory_uuid = $1
+             ORDER BY ii.sorting",
             inventory_uuid
         )
         .fetch_all(&self.pool)
