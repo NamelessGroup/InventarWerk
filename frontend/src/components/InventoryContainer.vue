@@ -70,12 +70,18 @@
             >{{ l }}</span
           >
         </div>
-        
+
         <div class="space-y-2">
           <DraggableContainer
             :model-value="localDraggableItems"
             group="items"
             item-key="presetReference"
+            :component-data="{
+              tag: 'div',
+              type: 'transition',
+              name: 'fade'
+            }"
+            :animation="150"
             @change="updateInventoryList"
           >
             <ItemRowDisplay
@@ -287,5 +293,16 @@ input::-webkit-inner-spin-button {
 input[type='number'] {
   appearance: textfield;
   -moz-appearance: textfield;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
 }
 </style>
