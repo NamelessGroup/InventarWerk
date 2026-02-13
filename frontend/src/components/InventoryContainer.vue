@@ -36,7 +36,7 @@
       <TimedConfirmationButton
         v-if="inventory.ownerUuid === store().uuid"
         class="ml-2 h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
-        :skip-confirmation="() => Settings.getInstance().noDeleteConfirmation"
+        :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteInventory"
       >
         <FontAwesomeIcon :icon="faTrashCan" />
