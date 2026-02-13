@@ -81,6 +81,25 @@ export const store = defineStore('store', {
       )!.amount = newAmount
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
     },
+    async changeInventorySorting(inventoryUuid: string, newSortings: Record<string, number>) {
+      const items = this.inventories[inventoryUuid].items
+      const promises: Promise<void>[] = []
+      for (const itemToSort in newSortings) {
+        const item = items.find((item) => item.presetReference === itemToSort)
+        if (item != null) {
+          item.sorting = newSortings[itemToSort]
+          promises.push(
+            DatabaseHandler.getInstance().changeItemSorting(
+              inventoryUuid,
+              itemToSort,
+              newSortings[itemToSort]
+            )
+          )
+        }
+      }
+      items.sort((a, b) => a.sorting - b.sorting)
+      await Promise.all(promises)
+    },
     async toggleLock() {
       if ((await DatabaseHandler.getInstance().changeServerLockStatus()) !== undefined) {
         this.isServerLocked = !this.isServerLocked
@@ -122,6 +141,31 @@ export const store = defineStore('store', {
         (item) => item.presetReference === itemUuid
       )!.dmNote = note
       await DatabaseHandler.getInstance().editDmNote(inventoryUuid, itemUuid, note)
+    },
+    async moveItem(
+      sourceInventoryUuid: string,
+      targetInventoryUuid: string,
+      itemUuid: string,
+      newSorting: number
+    ) {
+      const item = this.inventories[sourceInventoryUuid].items.find(
+        (item) => item.presetReference === itemUuid
+      )!
+      this.inventories[sourceInventoryUuid].items = this.inventories[
+        sourceInventoryUuid
+      ].items.filter((item) => item.presetReference !== itemUuid)
+      if (newSorting != null) {
+        item.sorting = newSorting
+        this.inventories[targetInventoryUuid].items.splice(newSorting, 0, item)
+      } else {
+        this.inventories[targetInventoryUuid].items.push(item)
+      }
+      await DatabaseHandler.getInstance().moveItem(
+        sourceInventoryUuid,
+        targetInventoryUuid,
+        itemUuid,
+        newSorting
+      )
     }
   }
 })

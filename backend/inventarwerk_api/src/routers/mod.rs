@@ -31,6 +31,7 @@ pub fn get_inventory_routes() -> Vec<Route> {
         delete_inventory,
         edit_item,
         delete_item_from_inventory,
+        move_item_between_inventories,
         add_note_to_item
     ]
 }
