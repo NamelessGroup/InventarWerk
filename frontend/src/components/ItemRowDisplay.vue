@@ -25,7 +25,7 @@
       <TimedConfirmationButton
         v-if="canEdit"
         class="row-start-1 my-auto h-8 rounded-sm border-none bg-fuchsia-950 px-3 text-red-300"
-        :skip-confirmation="() => Settings.getInstance().noDeleteConfirmation"
+        :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteItem()"
       >
         <FontAwesomeIcon :icon="faTrashCan" />

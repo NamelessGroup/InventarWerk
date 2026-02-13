@@ -1,4 +1,5 @@
 import { DatabaseHandler } from './DatabaseHandler'
+import { reactive } from 'vue'
 
 export interface SettingsState {
   breakDownGold: boolean
@@ -14,7 +15,7 @@ const DEFAULT_SETTINGS: SettingsState = {
 
 export class Settings {
   private static INSTANCE: Settings | null = null
-  private settings: SettingsState = DEFAULT_SETTINGS
+  private settings: SettingsState = reactive(DEFAULT_SETTINGS)
 
   private constructor() {
     this.load()
