@@ -1,30 +1,31 @@
 import { DatabaseHandler } from './DatabaseHandler'
+import { reactive } from 'vue'
 
 export interface SettingsState {
   breakDownGold: boolean
   timeBetweenFetches: number
   strictInventoryGrid: boolean
+  noDeleteConfirmation: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
   timeBetweenFetches: 5,
-  strictInventoryGrid: false
+  strictInventoryGrid: false,
+  noDeleteConfirmation: false
 }
 
 export class Settings {
-  private static INSTACE: Settings | null = null
-  private settings: SettingsState = DEFAULT_SETTINGS
+  private static INSTANCE: Settings | null = null
+  private settings: SettingsState = reactive(DEFAULT_SETTINGS)
 
   private constructor() {
     this.load()
   }
 
   public static getInstance(): Settings {
-    if (Settings.INSTACE === null) {
-      Settings.INSTACE = new Settings()
-    }
-    return Settings.INSTACE
+    Settings.INSTANCE ??= new Settings()
+    return Settings.INSTANCE
   }
 
   public get breakDownGold(): boolean {
@@ -37,6 +38,10 @@ export class Settings {
 
   public get strictInventoryGrid(): boolean {
     return this.settings.strictInventoryGrid
+  }
+  
+  public get noDeleteConfirmation(): boolean {
+    return this.settings.noDeleteConfirmation
   }
 
   public set breakDownGold(breakDownGold: boolean) {
@@ -52,6 +57,11 @@ export class Settings {
 
   public set strictInventoryGrid(strictInventoryGrid: boolean) {
     this.settings.strictInventoryGrid = strictInventoryGrid
+    this.save()
+  }
+  
+  public set noDeleteConfirmation(noDeleteConfirmation: boolean) {
+    this.settings.noDeleteConfirmation = noDeleteConfirmation
     this.save()
   }
 

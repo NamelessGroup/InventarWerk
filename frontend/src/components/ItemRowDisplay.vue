@@ -21,18 +21,17 @@
         @update="(v) => editAmount(v)"
       />
       <div class="break-wrap row-start-1 flex items-center px-2">{{ item.name }}</div>
-      <button
+
+      <TimedConfirmationButton
         v-if="canEdit"
-        class="row-start-1 my-auto h-8 w-10 rounded-sm border-none bg-fuchsia-950"
-        @click="
-          (e) => {
-            e.stopPropagation()
-            deleteItem()
-          }
-        "
+        class="row-start-1 my-auto h-8 rounded-sm border-none bg-fuchsia-950 px-3 text-red-300"
+        :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
+        @confirm="deleteItem()"
       >
-        <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
-      </button>
+        <FontAwesomeIcon :icon="faTrashCan" />
+
+        <template #confirmation> Confirm </template>
+      </TimedConfirmationButton>
     </div>
     <CollapseTransition>
       <div v-show="expanded">
@@ -86,6 +85,8 @@ import EditItemPopUp from './EditItemPopUp.vue'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
 import NumericInput from './NumericInput.vue'
 import CollapseTransition from './CollapseTransition.vue'
+import TimedConfirmationButton from './TimedConfirmationButton.vue'
+import { Settings } from '@/store/Settings'
 
 const props = defineProps({
   item: {

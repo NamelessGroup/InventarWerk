@@ -46,13 +46,16 @@
       >
         <FontAwesomeIcon :icon="faShare" />
       </button>
-      <button
+      <TimedConfirmationButton
         v-if="inventory.ownerUuid === store().uuid"
-        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
-        @click="deleteInventory"
+        class="w-7 h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
+        :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
+        @confirm="deleteInventory"
       >
-        <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
-      </button>
+        <FontAwesomeIcon :icon="faTrashCan" />
+
+        <template #confirmation> Confirm </template>
+      </TimedConfirmationButton>
     </div>
 
     <CollapseTransition with-opacity speed="0.5s">
@@ -136,7 +139,8 @@ import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
-import CollapseTransition from './CollapseTransition.vue'
+import TimedConfirmationButton from './TimedConfirmationButton.vue'
+import { Settings } from '@/store/Settings'
 import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
 import type { Item } from '@/model/Item'
 
@@ -188,10 +192,6 @@ function updateName() {
 }
 
 function deleteInventory() {
-  const result = confirm('This will delete the inventory forever')
-  if (!result) {
-    return
-  }
   store().deleteInventory(props.inventory.uuid)
 }
 
