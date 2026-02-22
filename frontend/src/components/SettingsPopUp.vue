@@ -20,6 +20,10 @@
         <input id="serverLock" v-model="serverLock" type="checkbox" />
         <label for="serverLock">Prohibit new users from joining</label>
       </div>
+      <div class="space-x-2 md:col-span-2">
+        <input id="noDeleteConfirmation" v-model="noDeleteConfirmation" type="checkbox" />
+        <label for="noDeleteConfirmation">Disable delete confirmation</label>
+      </div>
 
       <div class="flex-1"><!-- Placeholder --></div>
       <div class="ml-auto flex items-center gap-x-1 text-xs text-fuchsia-300">
@@ -59,6 +63,11 @@ const fetchTime = computed({
 const serverLock = computed({
   get: () => store().isServerLocked,
   set: () => store().toggleLock()
+})
+
+const noDeleteConfirmation = computed({
+  get: () => Settings.getInstance().noDeleteConfirmation,
+  set: (value: boolean) => (Settings.getInstance().noDeleteConfirmation = value)
 })
 
 const dmAccount = computed(() => {
