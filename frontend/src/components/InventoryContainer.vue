@@ -48,7 +48,7 @@
       </button>
       <TimedConfirmationButton
         v-if="inventory.ownerUuid === store().uuid"
-        class="w-7 h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
+        class="h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
         :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteInventory"
       >
@@ -142,6 +142,7 @@ import ViewSharePopUp from './share/ViewSharePopUp.vue'
 import TimedConfirmationButton from './TimedConfirmationButton.vue'
 import { Settings } from '@/store/Settings'
 import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
+import CollapseTransition from './CollapseTransition.vue'
 import type { Item } from '@/model/Item'
 
 const props = defineProps({

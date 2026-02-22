@@ -39,7 +39,7 @@ export class Settings {
   public get strictInventoryGrid(): boolean {
     return this.settings.strictInventoryGrid
   }
-  
+
   public get noDeleteConfirmation(): boolean {
     return this.settings.noDeleteConfirmation
   }
@@ -59,7 +59,7 @@ export class Settings {
     this.settings.strictInventoryGrid = strictInventoryGrid
     this.save()
   }
-  
+
   public set noDeleteConfirmation(noDeleteConfirmation: boolean) {
     this.settings.noDeleteConfirmation = noDeleteConfirmation
     this.save()
