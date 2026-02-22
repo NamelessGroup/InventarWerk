@@ -30,16 +30,21 @@
         ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900">
+      <button
+        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        @click="expanded = !expanded"
+      >
         <FontAwesomeIcon
           class="transition"
           :class="{ 'rotate-180': !expanded }"
           :icon="faChevronUp"
-          @click="expanded = !expanded"
         />
       </button>
-      <button class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900">
-        <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
+      <button
+        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        @click="showSharePopup = true"
+      >
+        <FontAwesomeIcon :icon="faShare" />
       </button>
       <button
         v-if="inventory.ownerUuid === store().uuid"
@@ -51,7 +56,7 @@
     </div>
 
     <CollapseTransition with-opacity speed="0.5s">
-      <div v-show="expanded" class="space-y-2">
+      <div v-if="expanded" class="space-y-2">
         <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
           <NumericInput
             v-for="[k, i] of moneyOptions"
@@ -76,11 +81,6 @@
             :model-value="localDraggableItems"
             group="items"
             item-key="presetReference"
-            :component-data="{
-              tag: 'div',
-              type: 'transition',
-              name: 'fade'
-            }"
             :animation="150"
             @change="updateInventoryList"
           >
@@ -239,14 +239,16 @@ async function moveItem(
     )
   }
 
+  const sortingsToUpdate: Record<string, number> = {}
   for (const sortingItem of sortedItems) {
-    const sortingsToUpdate: Record<string, number> = {}
     if (
       sortingItem.oldSorting !== sortingItem.sorting &&
       (!movedHere || sortingItem.item !== item.presetReference)
     ) {
       sortingsToUpdate[sortingItem.item] = sortingItem.sorting
     }
+  }
+  if (Object.keys(sortingsToUpdate).length > 0) {
     await store().changeInventorySorting(props.inventory.uuid, sortingsToUpdate)
   }
 }

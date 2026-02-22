@@ -23,7 +23,7 @@ defineProps({
   }
 })
 
-const fullHeight = ref('100vwh') // We have to guess a sensible initial value here, for the very first animation
+const fullHeight = ref('100vh') // We have to guess a sensible initial value here, for the very first animation
 
 function updateFullHeight(el: Element) {
   fullHeight.value = `${el.scrollHeight}px`
@@ -56,6 +56,6 @@ function updateFullHeight(el: Element) {
 
 .collapse-enter-to.opacity,
 .collapse-leave-from.opacity {
-  opacity: 100;
+  opacity: 1;
 }
 </style>

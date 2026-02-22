@@ -69,7 +69,7 @@ function transitionFinished() {
 
 .popup-enter-to,
 .popup-leave-from {
-  opacity: 100;
+  opacity: 1;
 }
 
 .popup-enter-to .popup-card,

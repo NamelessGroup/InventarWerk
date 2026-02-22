@@ -71,7 +71,7 @@
           />
         </template>
         <template v-else>
-          <div v-for="i in 3" :key="i" class="flex flex-col gap-5 md:gap-20">
+          <div v-for="i in 3" :key="i" class="flex flex-col gap-5">
             <InventoryContainer
               v-for="inventory in getNthOf3Inventories(i - 1)"
               :key="inventory.uuid"
