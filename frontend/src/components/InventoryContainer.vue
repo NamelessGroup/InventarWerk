@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2">
-    <div class="flex items-center overflow-hidden">
+    <div class="flex items-center gap-2 overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
       <div
         ref="nameInput"
-        class="bold break-wrap ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-hidden"
+        class="bold break-wrap min-w-8 border-none bg-transparent pr-5 text-xl outline-hidden"
         :contenteditable="inventory.ownerUuid === store().uuid"
         @blur="updateName()"
         @keydown="
@@ -21,21 +21,34 @@
       </div>
       <button
         v-if="inventory.ownerUuid === store().uuid"
-        class="mr-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
         @click="editName()"
       >
         <FontAwesomeIcon :icon="faPen" />
       </button>
-      <div class="mr-2 shrink-0">
+      <div class="shrink-0">
         ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900">
-        <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
+      <button
+        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        @click="expanded = !expanded"
+      >
+        <FontAwesomeIcon
+          class="transition"
+          :class="{ 'rotate-180': !expanded }"
+          :icon="faChevronUp"
+        />
+      </button>
+      <button
+        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        @click="showSharePopup = true"
+      >
+        <FontAwesomeIcon :icon="faShare" />
       </button>
       <TimedConfirmationButton
         v-if="inventory.ownerUuid === store().uuid"
-        class="ml-2 h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
+        class="h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
         :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteInventory"
       >
@@ -44,49 +57,55 @@
         <template #confirmation> Confirm </template>
       </TimedConfirmationButton>
     </div>
-    <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
-      <NumericInput
-        v-for="[k, i] of moneyOptions"
-        :key="k"
-        v-model="moneyFieldValues[k]"
-        :readonly="!canEdit"
-        class="row-start-1 h-10 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
-        :class="`col-start-${i}`"
-        @update="(v) => updateMoney(v, k)"
-      />
-      <span
-        v-for="[k, i, l] of moneyOptions"
-        :key="k + 'l'"
-        :class="`col-start-${i}`"
-        class="row-start-2 text-center text-sm text-amber-200"
-        >{{ l }}</span
-      >
-    </div>
 
-    <div class="space-y-2">
-      <DraggableContainer
-        :model-value="localDraggableItems"
-        group="items"
-        item-key="presetReference"
-        @change="updateInventoryList"
-      >
-        <ItemRowDisplay
-          v-for="item in localDraggableItems"
-          :key="item.presetReference"
-          :can-edit="canEdit"
-          :item="item"
-          :inventory-uuid="inventory.uuid"
-        />
-      </DraggableContainer>
-    </div>
+    <CollapseTransition with-opacity speed="0.5s">
+      <div v-if="expanded" class="space-y-2">
+        <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
+          <NumericInput
+            v-for="[k, i] of moneyOptions"
+            :key="k"
+            v-model="moneyFieldValues[k]"
+            :readonly="!canEdit"
+            class="row-start-1 h-10 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+            :class="`col-start-${i}`"
+            @update="(v) => updateMoney(v, k)"
+          />
+          <span
+            v-for="[k, i, l] of moneyOptions"
+            :key="k + 'l'"
+            :class="`col-start-${i}`"
+            class="row-start-2 text-center text-sm text-amber-200"
+            >{{ l }}</span
+          >
+        </div>
 
-    <button
-      v-if="inventory.writer.includes(store().uuid)"
-      class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
-      @click="showAddItemPopup = true"
-    >
-      + Add item
-    </button>
+        <div class="space-y-2">
+          <DraggableContainer
+            :model-value="localDraggableItems"
+            group="items"
+            item-key="presetReference"
+            :animation="150"
+            @change="updateInventoryList"
+          >
+            <ItemRowDisplay
+              v-for="item in localDraggableItems"
+              :key="item.presetReference"
+              :can-edit="canEdit"
+              :item="item"
+              :inventory-uuid="inventory.uuid"
+            />
+          </DraggableContainer>
+        </div>
+
+        <button
+          v-if="inventory.writer.includes(store().uuid)"
+          class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
+          @click="showAddItemPopup = true"
+        >
+          + Add item
+        </button>
+      </div>
+    </CollapseTransition>
   </div>
 
   <EditSharePopUp
@@ -114,7 +133,7 @@ import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath'
 import { store } from '@/store'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { faChevronUp, faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import AddItemPopUp from './AddItemPopUp.vue'
 import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
@@ -123,6 +142,7 @@ import ViewSharePopUp from './share/ViewSharePopUp.vue'
 import TimedConfirmationButton from './TimedConfirmationButton.vue'
 import { Settings } from '@/store/Settings'
 import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
+import CollapseTransition from './CollapseTransition.vue'
 import type { Item } from '@/model/Item'
 
 const props = defineProps({
@@ -135,6 +155,7 @@ const props = defineProps({
 const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
+const expanded = ref(true)
 const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
 const creator = computed(
   () =>
@@ -219,14 +240,16 @@ async function moveItem(
     )
   }
 
+  const sortingsToUpdate: Record<string, number> = {}
   for (const sortingItem of sortedItems) {
-    const sortingsToUpdate: Record<string, number> = {}
     if (
       sortingItem.oldSorting !== sortingItem.sorting &&
       (!movedHere || sortingItem.item !== item.presetReference)
     ) {
       sortingsToUpdate[sortingItem.item] = sortingItem.sorting
     }
+  }
+  if (Object.keys(sortingsToUpdate).length > 0) {
     await store().changeInventorySorting(props.inventory.uuid, sortingsToUpdate)
   }
 }
@@ -273,5 +296,16 @@ input::-webkit-inner-spin-button {
 input[type='number'] {
   appearance: textfield;
   -moz-appearance: textfield;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
 }
 </style>
