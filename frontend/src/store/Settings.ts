@@ -1,6 +1,8 @@
 import { DatabaseHandler } from './DatabaseHandler'
 import { reactive } from 'vue'
 
+const LOCAL_STORAGE_KEY = 'invSettings'
+
 export interface SettingsState {
   breakDownGold: boolean
   timeBetweenFetches: number
@@ -55,11 +57,11 @@ export class Settings {
   }
 
   private save() {
-    localStorage.setItem('settings', JSON.stringify(this.settings))
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.settings))
   }
 
   private load() {
-    const settings = localStorage.getItem('settings')
+    const settings = localStorage.getItem(LOCAL_STORAGE_KEY) ?? localStorage.getItem('settings')
     if (settings) {
       const parsedState: Partial<Settings> = JSON.parse(settings)
       this.settings = {
