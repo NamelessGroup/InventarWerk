@@ -8,7 +8,7 @@
         :icon="faTrashCan"
         class="cursor-pointer text-red-300"
         @click="
-          (e) => {
+          (e: Event) => {
             e.stopPropagation()
             deletePreset()
           }

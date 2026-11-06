@@ -92,8 +92,8 @@ function setAnimation() {
   for (let i = 1; i < 100; i++) {
     const progress = i / 100
     const length = totalLength * progress
-    let x = -1
-    let y = -1
+    let x: number
+    let y: number
     if (length < width / 2) {
       x = -length
       y = height / 2
