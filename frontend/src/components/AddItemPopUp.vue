@@ -2,7 +2,7 @@
   <PopUp class="m-0!" @close="emit('close')">
     <div class="grid grid-cols-1 gap-2">
       <button
-        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 outline-hidden"
+        class="border-accent bg-primary-default w-full rounded-sm border p-1 outline-hidden"
         @click="addNewItem"
       >
         Add item
@@ -12,7 +12,7 @@
         id="amount"
         v-model="amountValue"
         :default-value="1"
-        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+        class="border-accent bg-primary-default w-full rounded-sm border px-1 outline-hidden"
       />
       <label for="name">Name:</label>
       <input
@@ -20,9 +20,9 @@
         ref="nameInput"
         v-model="nameValue"
         autocomplete="off"
-        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+        class="border-accent bg-primary-default w-full rounded-sm border px-1 outline-hidden"
       />
-      <div class="text-red-500">{{ errorText }}</div>
+      <div class="text-error-text">{{ errorText }}</div>
     </div>
   </PopUp>
 </template>
@@ -138,13 +138,13 @@ onMounted(() => {
       render: (item: MyCompletionItem, currentValue: string): HTMLDivElement => {
         const div = document.createElement('div')
         const start = item.label.toLowerCase().indexOf(currentValue.toLowerCase())
-        div.innerHTML = `${item.label.slice(0, start)}<span class="text-amber-300">${item.label.slice(start, start + currentValue.length)}</span>${item.label.slice(start + currentValue.length)}`
+        div.innerHTML = `${item.label.slice(0, start)}<span class="text-accent">${item.label.slice(start, start + currentValue.length)}</span>${item.label.slice(start + currentValue.length)}`
         div.classList.add(
-          'bg-fuchsia-900',
+          'bg-primary-default',
           'px-1',
           'cursor-pointer',
           'pl-3',
-          'text-white',
+          'text-text',
           'autocomplete-item'
         )
         return div
@@ -152,7 +152,7 @@ onMounted(() => {
       renderGroup: (name: string): HTMLDivElement => {
         const div = document.createElement('div')
         div.textContent = name
-        div.classList.add('bg-fuchsia-900', 'p-1', 'text-white')
+        div.classList.add('bg-primary-default', 'p-1', 'text-text')
         return div
       }
     })
@@ -170,11 +170,11 @@ interface MyCompletionItem extends AutocompleteItem {
 @reference "../style.css";
 
 .selected.autocomplete-item {
-  @apply bg-fuchsia-950;
+  @apply bg-primary-dark;
 }
 
 .autocomplete-item:hover {
-  @apply bg-fuchsia-700;
+  @apply bg-primary-light;
 }
 
 .autocomplete {

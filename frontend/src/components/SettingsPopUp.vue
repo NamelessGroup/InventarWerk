@@ -13,7 +13,7 @@
           id="fetchTime"
           v-model="fetchTime"
           type="number"
-          class="rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+          class="border-accent bg-primary-default rounded-sm border px-1 outline-hidden"
         />
       </div>
       <div v-if="store().userIsDm" class="space-x-2 md:col-span-2">
@@ -24,9 +24,21 @@
         <input id="noDeleteConfirmation" v-model="noDeleteConfirmation" type="checkbox" />
         <label for="noDeleteConfirmation">Disable delete confirmation</label>
       </div>
+      <div class="space-x-2 md:col-span-2">
+        <label>Theme:</label>
+        <select
+          v-model="theme"
+          class="border-accent bg-primary-default rounded-sm border px-1 outline-hidden"
+        >
+          <option :value="undefined">Default</option>
+          <option value="contrastLight">High Contrast Light</option>
+          <option value="contrastDark">High Contrast Dark</option>
+          <option value="inventar">Inventarwerk</option>
+        </select>
+      </div>
 
       <div class="flex-1"><!-- Placeholder --></div>
-      <div class="ml-auto flex items-center gap-x-1 text-xs text-fuchsia-300">
+      <div class="text-primary-text ml-auto flex items-center gap-x-1 text-xs">
         DM:
         <DiscordImage class="h-6" :user="dmAccount" />
         Hosted commit:
@@ -47,6 +59,8 @@ import { Settings } from '@/store/Settings'
 import { store } from '@/store'
 import { version } from '@/utils/version'
 import DiscordImage from './DiscordImage.vue'
+import { ThemeManager } from '@/theme/ThemeManager.ts'
+import type { ThemeOptions } from '@/theme/ThemeDicitionary.ts'
 
 const emit = defineEmits(['close'])
 
@@ -68,6 +82,11 @@ const serverLock = computed({
 const noDeleteConfirmation = computed({
   get: () => Settings.getInstance().noDeleteConfirmation,
   set: (value: boolean) => (Settings.getInstance().noDeleteConfirmation = value)
+})
+
+const theme = computed({
+  get: () => ThemeManager.getInstance().overwriteTheme,
+  set: (v: ThemeOptions | undefined) => (ThemeManager.getInstance().overwriteTheme = v)
 })
 
 const dmAccount = computed(() => {
