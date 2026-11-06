@@ -4,12 +4,14 @@ import { reactive } from 'vue'
 export interface SettingsState {
   breakDownGold: boolean
   timeBetweenFetches: number
+  strictInventoryGrid: boolean
   noDeleteConfirmation: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
   timeBetweenFetches: 5,
+  strictInventoryGrid: false,
   noDeleteConfirmation: false
 }
 
@@ -34,6 +36,10 @@ export class Settings {
     return this.settings.timeBetweenFetches
   }
 
+  public get strictInventoryGrid(): boolean {
+    return this.settings.strictInventoryGrid
+  }
+
   public get noDeleteConfirmation(): boolean {
     return this.settings.noDeleteConfirmation
   }
@@ -47,6 +53,11 @@ export class Settings {
     this.settings.timeBetweenFetches = timeBetweenFetches ?? 5
     this.save()
     DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
+  }
+
+  public set strictInventoryGrid(strictInventoryGrid: boolean) {
+    this.settings.strictInventoryGrid = strictInventoryGrid
+    this.save()
   }
 
   public set noDeleteConfirmation(noDeleteConfirmation: boolean) {
