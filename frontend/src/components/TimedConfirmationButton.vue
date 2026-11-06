@@ -146,8 +146,8 @@ onBeforeUnmount(() => {
 .fadeOut {
   position: relative;
   background-image: conic-gradient(
-    var(--color-red-500),
-    var(--color-red-500) var(--border-progress-fill),
+    var(--color-error-text),
+    var(--color-error-text) var(--border-progress-fill),
     transparent var(--border-progress-fill)
   );
   z-index: 0;

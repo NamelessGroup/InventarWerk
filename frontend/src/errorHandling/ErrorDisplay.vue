@@ -1,14 +1,17 @@
 <template>
-  <div class="space-y-2 p-2 text-white" :class="errorList.length > 0 ? 'block' : 'hidden'">
+  <div
+    class="text-error-popup-text space-y-2 p-2"
+    :class="errorList.length > 0 ? 'block' : 'hidden'"
+  >
     <div
       v-for="error in errorList"
       :key="error.message"
-      class="rounded-sm bg-red-800"
+      class="bg-error-popup-bg rounded-sm"
       @click="error.timeToLive = 0"
     >
       <p class="p-1"><FontAwesomeIcon :icon="faCircleXmark" /> {{ error.message }}</p>
       <div
-        class="h-1 rounded-bl bg-red-400"
+        class="bg-error-popup-bar h-1 rounded-bl"
         :style="{ width: getBarFillPercentage(error.timeToLive) }"
       ></div>
     </div>
