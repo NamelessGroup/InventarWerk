@@ -37,29 +37,29 @@ export const store = defineStore('store', {
     },
     async addReadShare(inventoryUuid: string, newShare: string) {
       this.inventories[inventoryUuid].reader.push(newShare)
-      await DatabaseHandler.getInstance().addShare(inventoryUuid, { reader_uuid: newShare })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, newShare, 'r')
     },
     async removeReadShare(inventoryUuid: string, shareToRemove: string) {
       this.inventories[inventoryUuid].reader = this.inventories[inventoryUuid].reader.filter(
         (share) => share !== shareToRemove
       )
-      await DatabaseHandler.getInstance().removeShare(inventoryUuid, { reader_uuid: shareToRemove })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, shareToRemove)
     },
     async addWriteShare(inventoryUuid: string, newShare: string) {
       this.inventories[inventoryUuid].writer.push(newShare)
-      await DatabaseHandler.getInstance().addShare(inventoryUuid, { writer_uuid: newShare })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, newShare, 'w')
     },
     async removeWriteShare(inventoryUuid: string, shareToRemove: string) {
       this.inventories[inventoryUuid].writer = this.inventories[inventoryUuid].writer.filter(
         (share) => share !== shareToRemove
       )
-      await DatabaseHandler.getInstance().removeShare(inventoryUuid, { writer_uuid: shareToRemove })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, shareToRemove, 'r')
     },
     makePublic(inventoryUuid: string, allAccounts?: string[]) {
       if (allAccounts) {
         this.inventories[inventoryUuid].reader = allAccounts
       }
-      return DatabaseHandler.getInstance().addShare(inventoryUuid, {})
+      return DatabaseHandler.getInstance().setShare(inventoryUuid)
     },
     deleteInventory(inventoryUuid: string) {
       this.inventoryUuids = this.inventoryUuids.filter((uuid) => uuid !== inventoryUuid)
@@ -80,6 +80,25 @@ export const store = defineStore('store', {
         (item) => item.presetReference === itemUuid
       )!.amount = newAmount
       DatabaseHandler.getInstance().changeItemAmount(inventoryUuid, itemUuid, newAmount)
+    },
+    async changeInventorySorting(inventoryUuid: string, newSortings: Record<string, number>) {
+      const items = this.inventories[inventoryUuid].items
+      const promises: Promise<void>[] = []
+      for (const itemToSort in newSortings) {
+        const item = items.find((item) => item.presetReference === itemToSort)
+        if (item != null) {
+          item.sorting = newSortings[itemToSort]
+          promises.push(
+            DatabaseHandler.getInstance().changeItemSorting(
+              inventoryUuid,
+              itemToSort,
+              newSortings[itemToSort]
+            )
+          )
+        }
+      }
+      items.sort((a, b) => a.sorting - b.sorting)
+      await Promise.all(promises)
     },
     async toggleLock() {
       if ((await DatabaseHandler.getInstance().changeServerLockStatus()) !== undefined) {
@@ -122,6 +141,31 @@ export const store = defineStore('store', {
         (item) => item.presetReference === itemUuid
       )!.dmNote = note
       await DatabaseHandler.getInstance().editDmNote(inventoryUuid, itemUuid, note)
+    },
+    async moveItem(
+      sourceInventoryUuid: string,
+      targetInventoryUuid: string,
+      itemUuid: string,
+      newSorting: number
+    ) {
+      const item = this.inventories[sourceInventoryUuid].items.find(
+        (item) => item.presetReference === itemUuid
+      )!
+      this.inventories[sourceInventoryUuid].items = this.inventories[
+        sourceInventoryUuid
+      ].items.filter((item) => item.presetReference !== itemUuid)
+      if (newSorting != null) {
+        item.sorting = newSorting
+        this.inventories[targetInventoryUuid].items.splice(newSorting, 0, item)
+      } else {
+        this.inventories[targetInventoryUuid].items.push(item)
+      }
+      await DatabaseHandler.getInstance().moveItem(
+        sourceInventoryUuid,
+        targetInventoryUuid,
+        itemUuid,
+        newSorting
+      )
     }
   }
 })

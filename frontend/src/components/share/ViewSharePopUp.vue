@@ -9,7 +9,7 @@
       </p>
       <p v-else>Read access: You can view items and money from this inventory, but not edit it.</p>
       <button
-        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 outline-hidden"
+        class="border-accent bg-primary-default w-full rounded-sm border p-1 outline-hidden"
         @click="leaveInventory()"
       >
         Leave inventory
@@ -47,10 +47,7 @@ const hasWriteAccess = computed(() => props.inventory.writer.includes(store().uu
 const emit = defineEmits(['close'])
 
 async function leaveInventory() {
-  if (hasWriteAccess.value) {
-    await store().removeWriteShare(props.inventory.uuid, store().uuid)
-  }
-  store().removeReadShare(props.inventory.uuid, store().uuid)
+  await store().removeReadShare(props.inventory.uuid, store().uuid)
 
   store().inventoryUuids = store().inventoryUuids.filter((uuid) => uuid !== props.inventory.uuid)
   delete store().inventories[props.inventory.uuid]

@@ -3,7 +3,7 @@
     <div class="space-y-2">
       <h2 class="bold text-xl">Share Inventory</h2>
       <button
-        class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 outline-hidden"
+        class="border-accent bg-primary-default w-full rounded-sm border p-1 outline-hidden"
         @click="makePublic"
       >
         Make public

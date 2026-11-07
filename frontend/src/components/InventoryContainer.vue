@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2">
+  <div class="border-accent bg-primary-dark space-y-2 overflow-hidden rounded-sm border-2 p-2">
     <div class="flex items-center overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
       <div
@@ -21,7 +21,7 @@
       </div>
       <button
         v-if="inventory.ownerUuid === store().uuid"
-        class="mr-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        class="border-accent bg-primary-default mr-2 h-7 w-7 shrink-0 rounded-sm border"
         @click="editName()"
       >
         <FontAwesomeIcon :icon="faPen" />
@@ -30,16 +30,19 @@
         ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
       <div class="flex-1"><!-- Spacer --></div>
-      <button class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900">
+      <button class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border">
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
-      <button
+      <TimedConfirmationButton
         v-if="inventory.ownerUuid === store().uuid"
-        class="ml-2 h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
-        @click="deleteInventory"
+        class="border-accent bg-primary-default text-delete ml-2 h-7 shrink-0 rounded-sm border px-1.5"
+        :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
+        @confirm="deleteInventory"
       >
-        <FontAwesomeIcon :icon="faTrashCan" class="text-red-300" />
-      </button>
+        <FontAwesomeIcon :icon="faTrashCan" />
+
+        <template #confirmation> Confirm </template>
+      </TimedConfirmationButton>
     </div>
     <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
       <NumericInput
@@ -47,7 +50,7 @@
         :key="k"
         v-model="moneyFieldValues[k]"
         :readonly="!canEdit"
-        class="row-start-1 h-10 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+        class="border-accent bg-primary-default row-start-1 h-10 rounded-sm border px-1 outline-hidden"
         :class="`col-start-${i}`"
         @update="(v) => updateMoney(v, k)"
       />
@@ -55,24 +58,31 @@
         v-for="[k, i, l] of moneyOptions"
         :key="k + 'l'"
         :class="`col-start-${i}`"
-        class="row-start-2 text-center text-sm text-amber-200"
+        class="text-accent row-start-2 text-center text-sm"
         >{{ l }}</span
       >
     </div>
 
     <div class="space-y-2">
-      <ItemRowDisplay
-        v-for="item in inventory.items"
-        :key="item.presetReference"
-        :can-edit="canEdit"
-        :item="item"
-        :inventory-uuid="inventory.uuid"
-      />
+      <DraggableContainer
+        :model-value="localDraggableItems"
+        group="items"
+        item-key="presetReference"
+        @change="updateInventoryList"
+      >
+        <ItemRowDisplay
+          v-for="item in localDraggableItems"
+          :key="item.presetReference"
+          :can-edit="canEdit"
+          :item="item"
+          :inventory-uuid="inventory.uuid"
+        />
+      </DraggableContainer>
     </div>
 
     <button
       v-if="inventory.writer.includes(store().uuid)"
-      class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
+      class="bg-primary-default h-10 w-full rounded-sm text-center"
       @click="showAddItemPopup = true"
     >
       + Add item
@@ -110,6 +120,10 @@ import EditSharePopUp from './share/EditSharePopUp.vue'
 import NumericInput from './NumericInput.vue'
 import DiscordImage from './DiscordImage.vue'
 import ViewSharePopUp from './share/ViewSharePopUp.vue'
+import TimedConfirmationButton from './TimedConfirmationButton.vue'
+import { Settings } from '@/store/Settings'
+import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
+import type { Item } from '@/model/Item'
 
 const props = defineProps({
   inventory: {
@@ -131,6 +145,14 @@ const creator = computed(
       uuid: ''
     }
 )
+const localDraggableItems = computed(() => {
+  return props.inventory.items.map((item) => {
+    return {
+      ...item,
+      sourceInventory: props.inventory.uuid
+    }
+  })
+})
 
 function editName() {
   if (nameInput.value) {
@@ -150,11 +172,63 @@ function updateName() {
 }
 
 function deleteInventory() {
-  const result = confirm('This will delete the inventory forever')
-  if (!result) {
-    return
-  }
   store().deleteInventory(props.inventory.uuid)
+}
+
+async function updateInventoryList(e: DragChangeEvent<Item & { sourceInventory: string }>) {
+  if (e.added) {
+    // Item moved to this inventory
+    await moveItem(e.added.element, e.added.newIndex, true)
+  }
+
+  if (e.moved) {
+    // Item moved in this inventory
+    await moveItem(e.moved.element, e.moved.newIndex, false)
+  }
+
+  // We purposefully ignore the `removed` option, since removal will be handled by addition to the new inventory
+}
+
+async function moveItem(
+  item: Item & { sourceInventory: string },
+  newIndex: number,
+  movedHere: boolean
+) {
+  if (
+    movedHere &&
+    props.inventory.items.some(
+      (existingItem) => existingItem.presetReference === item.presetReference
+    )
+  ) {
+    throw new Error(`This inventory already contains ${item.name}!`)
+  }
+
+  // Figuring out the new sorting value of every item in the inventory
+  const sortedItems = props.inventory.items
+    .filter((existingItem) => existingItem.presetReference !== item.presetReference)
+    .map((item) => ({ item: item.presetReference, sorting: -1, oldSorting: item.sorting }))
+  sortedItems.splice(newIndex, 0, { item: item.presetReference, sorting: -1, oldSorting: -1 })
+  sortedItems.forEach((item, idx) => (item.sorting = idx))
+
+  if (movedHere) {
+    await store().moveItem(
+      item.sourceInventory,
+      props.inventory.uuid,
+      item.presetReference,
+      newIndex
+    )
+  }
+
+  for (const sortingItem of sortedItems) {
+    const sortingsToUpdate: Record<string, number> = {}
+    if (
+      sortingItem.oldSorting !== sortingItem.sorting &&
+      (!movedHere || sortingItem.item !== item.presetReference)
+    ) {
+      sortingsToUpdate[sortingItem.item] = sortingItem.sorting
+    }
+    await store().changeInventorySorting(props.inventory.uuid, sortingsToUpdate)
+  }
 }
 
 const moneyFieldValues = ref({

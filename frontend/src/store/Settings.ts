@@ -1,28 +1,31 @@
 import { DatabaseHandler } from './DatabaseHandler'
+import { reactive } from 'vue'
+
+const LOCAL_STORAGE_KEY = 'invSettings'
 
 export interface SettingsState {
   breakDownGold: boolean
   timeBetweenFetches: number
+  noDeleteConfirmation: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
-  timeBetweenFetches: 5
+  timeBetweenFetches: 5,
+  noDeleteConfirmation: false
 }
 
 export class Settings {
-  private static INSTACE: Settings | null = null
-  private settings: SettingsState = DEFAULT_SETTINGS
+  private static INSTANCE: Settings | null = null
+  private settings: SettingsState = reactive(DEFAULT_SETTINGS)
 
   private constructor() {
     this.load()
   }
 
   public static getInstance(): Settings {
-    if (Settings.INSTACE === null) {
-      Settings.INSTACE = new Settings()
-    }
-    return Settings.INSTACE
+    Settings.INSTANCE ??= new Settings()
+    return Settings.INSTANCE
   }
 
   public get breakDownGold(): boolean {
@@ -31,6 +34,10 @@ export class Settings {
 
   public get timeBetweenFetches(): number {
     return this.settings.timeBetweenFetches
+  }
+
+  public get noDeleteConfirmation(): boolean {
+    return this.settings.noDeleteConfirmation
   }
 
   public set breakDownGold(breakDownGold: boolean) {
@@ -44,12 +51,17 @@ export class Settings {
     DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
   }
 
+  public set noDeleteConfirmation(noDeleteConfirmation: boolean) {
+    this.settings.noDeleteConfirmation = noDeleteConfirmation
+    this.save()
+  }
+
   private save() {
-    localStorage.setItem('settings', JSON.stringify(this.settings))
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.settings))
   }
 
   private load() {
-    const settings = localStorage.getItem('settings')
+    const settings = localStorage.getItem(LOCAL_STORAGE_KEY) ?? localStorage.getItem('settings')
     if (settings) {
       const parsedState: Partial<Settings> = JSON.parse(settings)
       this.settings = {

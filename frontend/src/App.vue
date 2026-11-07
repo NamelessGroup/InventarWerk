@@ -1,11 +1,11 @@
 <template>
-  <div class="w-screen bg-slate-950 text-white">
-    <div v-if="isLoggedIn" class="w-full bg-slate-950">
-      <div class="flex h-12 w-full items-center space-x-5 bg-fuchsia-950 px-2 md:fixed md:top-0">
-        <img src="./assets/logo.png" class="h-10" />
+  <div class="bg-background text-text w-screen">
+    <div v-if="isLoggedIn" class="bg-background w-full">
+      <div class="bg-primary-dark flex h-12 w-full items-center space-x-5 px-2 md:fixed md:top-0">
+        <InvLogo class="h-10" />
         <div class="flex-1"></div>
         <div
-          class="hidden max-w-96 flex-1 items-center justify-center gap-x-2 rounded border border-amber-300 bg-fuchsia-900 px-1 py-1 md:flex"
+          class="border-accent bg-primary-default hidden max-w-96 flex-1 items-center justify-center gap-x-2 rounded border px-1 py-1 md:flex"
         >
           <FontAwesomeIcon :icon="faSearch" />
           <input
@@ -18,25 +18,25 @@
         <div class="flex flex-1 items-center justify-end space-x-5 md:flex-initial">
           <button
             v-if="store().userIsDm"
-            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+            class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
             @click="loadItemFile"
           >
             <FontAwesomeIcon :icon="faUpload" />
           </button>
           <button
-            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+            class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
             @click="showManagePresets = true"
           >
             <FontAwesomeIcon :icon="faList" />
           </button>
           <button
-            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+            class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
             @click="showSettings = true"
           >
             <FontAwesomeIcon :icon="faGears" />
           </button>
           <button
-            class="h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+            class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
             @click="logOut"
           >
             <FontAwesomeIcon :icon="faRightFromBracket" />
@@ -50,15 +50,15 @@
             id="name"
             v-model="nameFieldContent"
             type="text"
-            class="row-start-1 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+            class="border-accent bg-primary-default row-start-1 rounded-sm border px-1 outline-hidden"
           />
           <button
-            class="col-span-2 row-start-2 rounded-sm border border-amber-300 bg-fuchsia-900 p-1"
+            class="border-accent bg-primary-default col-span-2 row-start-2 rounded-sm border p-1"
             @click="submitAddInventory"
           >
             Submit
           </button>
-          <p class="col-span-2 row-start-3 text-red-500">{{ errorContent }}</p>
+          <p class="text-error-text col-span-2 row-start-3">{{ errorContent }}</p>
         </div>
       </PopUp>
       <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
@@ -78,31 +78,31 @@
 
     <button
       v-if="isLoggedIn"
-      class="fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border border-amber-300 bg-fuchsia-900"
+      class="border-accent bg-primary-default fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border"
       @click="showCreation = true"
     >
       <FontAwesomeIcon :icon="faPlus" />
     </button>
     <a
       :href="`https://github.com/NamelessGroup/InventarWerk/tree/${version}`"
-      class="text-opacity-30 fixed bottom-1 left-1 hidden text-xs text-fuchsia-300 underline md:block"
+      class="text-opacity-30 text-primary-text fixed bottom-1 left-1 hidden text-xs underline md:block"
       >{{ version }}</a
     >
 
     <div
       v-if="!acceptedCookies"
-      class="absolute top-0 right-0 bottom-0 left-0 z-40 bg-slate-900 p-10"
+      class="bg-popup-background absolute top-0 right-0 bottom-0 left-0 z-40 p-10"
     >
       <div class="flex flex-col items-center space-y-2">
         <p>This website uses cookies.<br />No you can not reject.</p>
         <button
-          class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
+          class="border-accent bg-primary-default w-full rounded-sm border p-1 md:w-48"
           @click="acceptCookies"
         >
           Accept Cookies
         </button>
         <button
-          class="w-full rounded-sm border border-amber-300 bg-fuchsia-900 p-1 md:w-48"
+          class="border-accent bg-primary-default w-full rounded-sm border p-1 md:w-48"
           @click="acceptCookies"
         >
           Also Accept Cookies
@@ -133,6 +133,8 @@ import SettingsPopUp from './components/SettingsPopUp.vue'
 import ManagePresetsPopUp from './components/presetEditor/ManagePresetsPopUp.vue'
 import { version } from './utils/version'
 import type { Inventory } from './model/Inventory'
+import { ThemeManager } from './theme/ThemeManager.ts'
+import InvLogo from './components/InvLogo.vue'
 
 const showCreation = ref(false)
 const nameFieldContent = ref('')
@@ -141,6 +143,7 @@ const acceptedCookies = ref(false)
 const showSettings = ref(false)
 const showManagePresets = ref(false)
 
+ThemeManager.getInstance().pageTheme = 'inventar'
 getAcceptedCookies()
 
 const searchString = ref('')

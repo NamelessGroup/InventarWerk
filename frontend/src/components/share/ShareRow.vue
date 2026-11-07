@@ -4,7 +4,7 @@
     <span>{{ account.name }}</span>
     <select
       v-model="val"
-      class="flex-1 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+      class="border-accent bg-primary-default flex-1 rounded-sm border px-1 outline-hidden"
       @change="emit('update', val)"
     >
       <option value="none">No access</option>
