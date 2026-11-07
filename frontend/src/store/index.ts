@@ -14,6 +14,7 @@ export const store = defineStore('store', {
       accounts: [],
       itemPresets: [],
       userIsDm: false,
+      isLoggedIn: false,
       isServerLocked: false
     }) as State,
   getters: {
@@ -177,6 +178,7 @@ interface State {
   accounts: Account[]
   itemPresets: ItemPreset[]
   userIsDm: boolean
+  isLoggedIn: boolean
   isServerLocked: boolean
 }
 

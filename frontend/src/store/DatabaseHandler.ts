@@ -49,6 +49,7 @@ export class DatabaseHandler {
   }
 
   public async fetchUpdates() {
+    if (!store().isLoggedIn) return
     // Time is stored here, so data that gets input between the request going out from the server and reaching the client is not lost
     const time = new Date().getTime()
 
