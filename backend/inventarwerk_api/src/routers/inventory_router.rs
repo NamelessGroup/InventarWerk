@@ -341,7 +341,7 @@ Requires authentication and write access on both inventories. Returns an error i
 #[patch("/inventory/item/move?<params..>")]
 pub async fn move_item_between_inventories(
     params: ItemMoveParams,
-    user: super::AuthenticatedUser,
+    user: AuthenticatedUser,
     inv_rep: &State<InventoryRepository>,
 ) -> Result<Status> {
     if params.source_inventory_uuid == params.target_inventory_uuid {
