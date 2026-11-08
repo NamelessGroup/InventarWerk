@@ -18,6 +18,13 @@ use std::env;
 use repos::DbPool;
 use repos::create_pg_pool;
 
+use routers::concentration_router::ConcentrationApiDoc;
+use routers::spell_list_router::SpellListApiDoc;
+use routers::spell_preset_router::SpellPresetApiDoc;
+use routers::spell_slot_router::SpellSlotApiDoc;
+
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 
 /// Main async entry point for the backend server.
@@ -69,7 +76,15 @@ async fn main() {
         .mount("/", routers::get_spell_list_routes())
         .mount("/", routers::get_concentration_routes())
         .mount("/", routers::get_spell_preset_routes())
-        .mount("/", routers::get_spell_slot_routes());
+        .mount("/", routers::get_spell_slot_routes())
+        .mount(
+            "/",
+            SwaggerUi::new("/swagger-ui/<_..>")
+                .url("/api-docs/openapi_spell_list.json", SpellListApiDoc::openapi())
+                .url("/api-docs/openapi_spell_preset.json", SpellPresetApiDoc::openapi())
+                .url("/api-docs/openapi_spell_slot.json", SpellSlotApiDoc::openapi())
+                .url("/api-docs/openapi_concentration.json", ConcentrationApiDoc::openapi()),
+        );
 
     #[cfg(any(feature = "dev"))]
     {

@@ -1,9 +1,9 @@
 use rocket::Route;
 
-mod concentration_router;
-mod spell_list_router;
-mod spell_preset_router;
-mod spell_slot_router;
+pub mod concentration_router;
+pub mod spell_list_router;
+pub mod spell_preset_router;
+pub mod spell_slot_router;
 
 use concentration_router::*;
 use spell_list_router::*;
