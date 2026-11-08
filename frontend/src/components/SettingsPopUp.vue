@@ -33,7 +33,9 @@
           <option :value="undefined">Default</option>
           <option value="contrastLight">High Contrast Light</option>
           <option value="contrastDark">High Contrast Dark</option>
-          <option value="inventar">Inventarwerk</option>
+          <option value="inventar">InventarWerk</option>
+          <option value="zauber">ZauberWerk</option>
+          <option value="home">Home</option>
         </select>
       </div>
 
