@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageBase class="h-full w-full" type="inventar">
+    <PageBase class="h-full w-full" type="zauber">
       <template #header>
         <div class="flex-1"></div>
       </template>

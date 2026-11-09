@@ -5,10 +5,13 @@
       <DynamicLogo logo="zauber" />
 
       <button
-        class="border-accent bg-primary-default col-span-2 row-start-2 h-12 cursor-pointer rounded-sm border"
+        class="border-accent bg-primary-default col-span-2 row-start-2 flex h-12 cursor-pointer items-center justify-center rounded-sm border text-2xl"
         @click="logIn()"
       >
-        Login
+        <div class="text-accent flex items-center gap-2">
+          <FontAwesomeIcon :icon="faDiscord" />
+          <span>Login</span>
+        </div>
       </button>
       <p class="text-accent/50 col-span-2 row-start-3 text-center">
         This website uses cookies. No you can not reject.
@@ -37,13 +40,22 @@
       </RouterLink>
 
       <button
-        class="border-accent bg-primary-default col-span-2 row-start-2 flex w-fit items-center gap-2 rounded-sm border px-5 py-2 text-xl"
+        class="border-accent bg-primary-default col-span-2 row-start-2 flex w-40 cursor-pointer items-center gap-2 rounded-sm border px-5 py-2 text-xl"
         @click="logOut()"
       >
         <FontAwesomeIcon :icon="faRightFromBracket" />
-        <span>LogOut</span>
+        <span>Logout</span>
+      </button>
+
+      <button
+        class="border-accent bg-primary-default col-span-2 row-start-2 flex w-40 cursor-pointer items-center gap-2 rounded-sm border px-5 py-2 text-xl"
+        @click="showSettings = true"
+      >
+        <FontAwesomeIcon :icon="faGears" />
+        <span>Settings</span>
       </button>
     </div>
+    <SettingsPopUp v-if="showSettings" @close="showSettings = false"></SettingsPopUp>
   </div>
 </template>
 
@@ -52,10 +64,15 @@ import DynamicLogo from '@/components/DynamicLogo.vue'
 import { store } from '@/store'
 import { DatabaseHandler } from '@/store/DatabaseHandler'
 import { ThemeManager } from '@/theme/ThemeManager'
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
+import { faDiscord } from '@fortawesome/free-brands-svg-icons'
+import { faGears, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { ref } from 'vue'
+import SettingsPopUp from '@/components/SettingsPopUp.vue'
 
 ThemeManager.getInstance().pageTheme = 'home'
+
+const showSettings = ref(false)
 
 function logIn() {
   window.location.href = DatabaseHandler.getInstance().getLogInUrl()

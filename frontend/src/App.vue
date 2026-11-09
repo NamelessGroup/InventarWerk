@@ -17,6 +17,7 @@ import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
 import { DatabaseHandler } from './store/DatabaseHandler'
 import { version } from './utils/version'
 import { RouterView } from 'vue-router'
+import { router } from './router.ts'
 
 checkLogIn()
 
@@ -27,6 +28,8 @@ function checkLogIn() {
       store().isLoggedIn = res
       if (res) {
         DatabaseHandler.getInstance().initialize()
+      } else if (router.currentRoute.value.name !== 'Home') {
+        router.push('/')
       }
     })
 }
