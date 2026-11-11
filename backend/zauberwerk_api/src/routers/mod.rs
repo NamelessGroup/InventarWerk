@@ -1,4 +1,15 @@
 use rocket::Route;
+use utoipa::IntoParams;
+
+/// Documentation of the optional `owner_uuid` query parameter that is evaluated by the
+/// `utils::TargetUser` guard. Only used for the OpenAPI docs, not for parsing.
+#[derive(IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct OwnerUUID {
+    /// UUID of the user to act on. If omitted or equal to the requesting user, the requesting user is used. Acting on another user requires DM privileges.
+    #[allow(dead_code)]
+    owner_uuid: Option<String>,
+}
 
 pub mod concentration_router;
 pub mod spell_cast_router;

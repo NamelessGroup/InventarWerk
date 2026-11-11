@@ -53,6 +53,48 @@ impl<'r> FromRequest<'r> for DmUser {
     }
 }
 
+/// Extractor for the user a request acts on.
+///
+/// Reads the optional `owner_uuid` query parameter:
+/// - omitted or equal to the requesting user: acts on the requesting user
+/// - another user: requires DM privileges, otherwise responds with `403 Forbidden`
+///
+/// Responds with `401 Unauthorized` if the user is not logged in. Requires a managed `UserRepository`.
+pub struct TargetUser {
+    /// The user id of the authenticated user who sent the request
+    pub requester_uuid: String,
+    /// The user id of the user the request acts on
+    pub owner_uuid: String,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for TargetUser {
+    type Error = ();
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let user = try_outcome!(request.guard::<AuthenticatedUser>().await);
+        let requested = request
+            .query_value::<String>("owner_uuid")
+            .and_then(|value| value.ok());
+
+        let owner_uuid = match requested {
+            Some(owner) if owner != user.user_id => {
+                let usr_rep = try_outcome!(request.guard::<&State<UserRepository>>().await);
+                match user_is_dm(usr_rep, user.user_id.clone()).await {
+                    Ok(true) => owner,
+                    Ok(false) => return Outcome::Error((Status::Forbidden, ())),
+                    Err(_) => return Outcome::Error((Status::InternalServerError, ())),
+                }
+            }
+            _ => user.user_id.clone(),
+        };
+
+        Outcome::Success(TargetUser {
+            requester_uuid: user.user_id,
+            owner_uuid,
+        })
+    }
+}
+
 /// Checks if a user is a Dungeon Master (DM).
 ///
 /// # Arguments
