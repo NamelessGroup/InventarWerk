@@ -4,7 +4,7 @@ use std::time::Duration;
 use repos::{
     model_inventarwerk::ItemPreset,
     repos::{
-        inventory_repository::InventoryRepository, item_preset_repository::ItemPresetRepository, user_repository::UserRepository,
+        inventory_repository::InventoryRepository, item_preset_repository::ItemPresetRepository,
     },
 };
 use rocket::{form::FromForm, http::Status, serde::json::Json, State};
@@ -15,7 +15,7 @@ use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
-use utils::{user_is_dm, create_error};
+use utils::{create_error, DmUser};
 
 use utils::AuthenticatedUser;
 
@@ -198,10 +198,11 @@ pub struct ExternPresetDataList {
     summary = "Import external item presets",
     description = r#"Imports external item presets from the provided JSON list.
 
-Requires authentication. Retries up to 5 times on creation errors, then skips the preset."#,
+Requires DM privileges. Retries up to 5 times on creation errors, then skips the preset."#,
     request_body = ExternPresetDataList,
     responses(
-        (status = 204, description = "External item presets successfully imported")
+        (status = 204, description = "External item presets successfully imported"),
+        (status = 403, description = "Forbidden - user is not a DM")
     ),
     security(("bearer_auth" = [])),
     tag = "Item Presets"
@@ -209,13 +210,9 @@ Requires authentication. Retries up to 5 times on creation errors, then skips th
 #[put("/itemPreset/addExtern", data = "<json_data>")]
 pub async fn add_extern(
     json_data: Json<ExternPresetDataList>,
-    user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    _dm: DmUser,
     ipr_rep: &State<ItemPresetRepository>,
 ) -> Result<Status> {
-    if !user_is_dm(usr_rep, user.user_id).await? {
-        return Ok(Status::Forbidden);
-    }
     for x in &json_data.presets {
         let mut i = 0;
         loop {

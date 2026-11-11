@@ -1,4 +1,4 @@
-use rocket::{State, tokio};
+use rocket::tokio;
 use rocket::response::stream::ByteStream;
 use rocket_errors::anyhow::Result;
 use utoipa::OpenApi;
@@ -6,8 +6,7 @@ use std::env;
 use std::process::{Command, Stdio};
 use tokio::io::{AsyncReadExt, BufReader};
 
-use repos::repos::user_repository::UserRepository;
-use utils::{create_error, user_is_dm, AuthenticatedUser};
+use utils::{create_error, DmUser};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -31,13 +30,8 @@ pub struct BackupApiDoc;
 )]
 #[get("/backup/database")]
 pub async fn create_database_backup(
-    user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    _dm: DmUser,
 ) -> Result<ByteStream![Vec<u8>]> {
-    // Check if user is DM
-    if !user_is_dm(usr_rep, user.user_id).await? {
-        return Err(create_error("Forbidden: Only DMs can create backups"));
-    }
 
     // Get database URL from environment
     let database_url = env::var("DATABASE_URL")

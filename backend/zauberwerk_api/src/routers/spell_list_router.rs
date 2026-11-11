@@ -1,7 +1,7 @@
 use repos::{model_zauberwerk::SpellList, repos::{user_repository::UserRepository, zauberwek::spell_list_repository::SpellListRepository}};
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
-use utils::{AuthenticatedUser, user_is_dm};
+use utils::{AuthenticatedUser, DmUser, user_is_dm};
 use utoipa::{IntoParams, OpenApi, ToSchema};
 use::rocket_errors::anyhow::Result;
 
@@ -63,9 +63,9 @@ pub struct SpellListNameParam {
 pub async fn create_spelllist(
     user: AuthenticatedUser,
     sli_rep: &State<SpellListRepository>,
-    params: SpellListNameParam) -> Result<Status>{
-    sli_rep.create_spell_list(&user.user_id, &params.spell_list_name).await?;
-    Ok(Status::NoContent)
+    params: SpellListNameParam) -> Result<Json<SpellList>>{
+    let spell_list_uuid: String = sli_rep.create_spell_list(&user.user_id, &params.spell_list_name).await?;
+    Ok(Json(sli_rep.get_spell_list(&spell_list_uuid).await?))
 }
 
 
@@ -91,14 +91,10 @@ Only accessible for DMs."#,
 )]
 #[get("/spellList/all")]
 pub async fn get_all_spell_list(
-    user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
-    usr_rep: &State<UserRepository>) -> Result<Result<Json<AllSpellListResponse>, Status>> {
-    if !user_is_dm(usr_rep, user.user_id).await? {
-        return Ok(Err(Status::Forbidden));
-    }
+    _dm: DmUser,
+    sli_rep: &State<SpellListRepository>) -> Result<Json<AllSpellListResponse>> {
     let lists = sli_rep.get_all_spell_lists().await?;
-    Ok(Ok(Json(AllSpellListResponse { spell_lists: lists })))
+    Ok(Json(AllSpellListResponse { spell_lists: lists }))
 }
 
 #[utoipa::path(

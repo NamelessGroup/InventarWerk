@@ -1,6 +1,6 @@
-use repos::{model_zauberwerk::SpellPreset, repos::{user_repository::UserRepository, zauberwek::spell_preset_repository::SpellPresetRepository}};
+use repos::{model_zauberwerk::SpellPreset, repos::zauberwek::spell_preset_repository::SpellPresetRepository};
 use rocket::{State, http::Status};
-use utils::{AuthenticatedUser, user_is_dm};
+use utils::{AuthenticatedUser, DmUser};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, OpenApi, ToSchema};
 use rocket_errors::anyhow::Result;
@@ -79,13 +79,9 @@ Only accessible for DMs."#,
 )]
 #[delete("/spellPreset/delete?<params..>")]
 pub async fn delete_spell_preset(
-    user: AuthenticatedUser,
+    _dm: DmUser,
     params: SpellPresetUUID,
-    usr_rep: &State<UserRepository>,
     spp_rep: &State<SpellPresetRepository>) -> Result<Status> {
-    if !user_is_dm(usr_rep, user.user_id).await? {
-        return Ok(Status::Forbidden);
-    }
     spp_rep.delete_spell_preset(&params.spell_preset_uuid).await?;
     Ok(Status::NoContent)
 }
@@ -108,13 +104,9 @@ Only accessible for DMs."#,
 )]
 #[patch("/spellPreset/modify", data = "<json_data>")]
 pub async fn edit_spell_preset(
-    user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    _dm: DmUser,
     spp_rep: &State<SpellPresetRepository>,
     json_data: Json<SpellPreset>) -> Result<Status> {
-    if !user_is_dm(usr_rep, user.user_id).await? {
-        return Ok(Status::Forbidden);
-    }
     spp_rep.modify_spell_preset(json_data.into_inner()).await?;
     Ok(Status::NoContent)
 }
@@ -144,13 +136,9 @@ Only accessible for DMs."#,
 )]
 #[put("/spellPreset/addExtern", data = "<json_data>")]
 pub async fn add_extern_spell_preset(
-    user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    _dm: DmUser,
     spp_rep: &State<SpellPresetRepository>,
     json_data: Json<ExternSpellPreset>) -> Result<Status> {
-    if !user_is_dm(usr_rep, user.user_id).await? {
-        return Ok(Status::Forbidden);
-    }
 
     for spell in &json_data.spell_presets {
         let mut i = 0;

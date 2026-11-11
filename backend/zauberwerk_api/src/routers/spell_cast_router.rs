@@ -15,7 +15,9 @@ use rocket::tokio::sync::broadcast::{error::RecvError, Sender};
 use rocket::{http::Status, serde::json::Json, Shutdown, State};
 use rocket_errors::anyhow::Result;
 use serde::{Deserialize, Serialize};
-use utils::{user_is_dm, AuthenticatedUser};
+use utils::{AuthenticatedUser, TargetUser};
+
+use super::OwnerUUID;
 use utoipa::{IntoParams, OpenApi, ToSchema};
 
 /// Highest spell slot level.
@@ -55,8 +57,6 @@ pub struct CastSpellParams {
     spell_preset_uuid: String,
     /// Level to cast the spell at. Defaults to the base level of the spell. Must be between the base level and 9. Cantrips can only be cast at level 0.
     level: Option<i32>,
-    /// UUID of the user who casts the spell. If omitted, the requesting user casts. Casting for another user requires DM privileges.
-    owner_uuid: Option<String>,
 }
 
 #[utoipa::path(
@@ -70,7 +70,7 @@ The spell must be contained in at least one spell list of the caster. In a singl
 - if the spell requires concentration, the caster's concentration is set to this spell, replacing any previous concentration.
 
 On success a `SpellCastEvent` with all information about the cast is returned and broadcast to all clients of `GET /spellPreset/cast/stream`. The changes to spell slots and concentration are additionally reported via the regular last-changes stream."#,
-    params(CastSpellParams),
+    params(OwnerUUID, CastSpellParams),
     responses(
         (status = 200, description = "Spell was cast", body = SpellCastEvent),
         (status = 400, description = "Invalid cast level"),
@@ -83,7 +83,7 @@ On success a `SpellCastEvent` with all information about the cast is returned an
 )]
 #[put("/spellPreset/cast?<params..>")]
 pub async fn cast_spell(
-    user: AuthenticatedUser,
+    target: TargetUser,
     params: CastSpellParams,
     usr_rep: &State<UserRepository>,
     spp_rep: &State<SpellPresetRepository>,
@@ -91,15 +91,7 @@ pub async fn cast_spell(
     cast_rep: &State<SpellCastRepository>,
     queue: &State<Sender<SpellCastEvent>>,
 ) -> Result<Result<Json<SpellCastEvent>, Status>> {
-    let caster_uuid = match params.owner_uuid {
-        Some(owner) if owner != user.user_id => {
-            if !user_is_dm(usr_rep, user.user_id.clone()).await? {
-                return Ok(Err(Status::Forbidden));
-            }
-            owner
-        }
-        _ => user.user_id.clone(),
-    };
+    let TargetUser { requester_uuid, owner_uuid: caster_uuid } = target;
 
     let spell = spp_rep.get_spell_preset(&params.spell_preset_uuid).await?;
 
@@ -137,7 +129,7 @@ pub async fn cast_spell(
     let event = SpellCastEvent {
         caster_uuid,
         caster_name: caster.name,
-        triggered_by_uuid: user.user_id,
+        triggered_by_uuid: requester_uuid,
         upcast: cast_level > spell.level,
         concentration: spell.concentration,
         spell,
