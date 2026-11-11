@@ -30,7 +30,7 @@
       </template>
 
       <template #default>
-        <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-5 overflow-auto md:grid-cols-2 lg:grid-cols-3">
           <InventoryContainer v-for="inv in inventories" :key="inv.uuid" :inventory="inv" />
         </div>
       </template>
@@ -61,7 +61,6 @@
     </PopUp>
 
     <button
-      v-if="accountData().isLoggedIn"
       class="border-accent bg-primary-default fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border"
       @click="showCreation = true"
     >

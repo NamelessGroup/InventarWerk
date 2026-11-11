@@ -8,8 +8,8 @@ export class LastChangesDB extends BaseDatabaseHandler {
   }
 
   public async initialize() {
-    this.changesEvent = new EventSource(BaseDatabaseHandler.getBaseURL(8002) + 'lastChanges/')
-    window.onbeforeunload = () => this.changesEvent?.close()
+    //this.changesEvent = new EventSource(BaseDatabaseHandler.getBaseURL(8002) + 'lastChanges/')
+    //window.onbeforeunload = () => this.changesEvent?.close()
     //this.changesEvent.onmessage
   }
   /*

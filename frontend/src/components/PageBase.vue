@@ -19,14 +19,14 @@
         <FontAwesomeIcon :icon="faRightFromBracket" />
       </button>
     </div>
-    <div>
+    <div class="p-5 md:mt-12">
       <slot />
     </div>
     <SettingsPopUp v-if="showSettings" @close="showSettings = false"></SettingsPopUp>
 
     <div
       v-if="showLinks"
-      class="border-accent bg- text-accent absolute top-12 left-0 flex w-screen flex-col gap-5 border-b p-5 pl-2 text-xl md:h-fit md:w-fit md:rounded-br md:border-0"
+      class="border-accent bg-primary-dark text-accent absolute top-12 left-0 flex w-screen flex-col gap-5 border-b p-5 pl-2 text-xl md:h-fit md:w-fit md:rounded-br md:border-0"
     >
       <RouterLink to="/">
         <div class="flex items-center gap-2">

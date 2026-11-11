@@ -129,4 +129,4 @@ export abstract class BaseDatabaseHandler {
 
 type URLParts = string[]
 
-type QueryParameter = Record<string, string>
+export type QueryParameter = Record<string, string>
