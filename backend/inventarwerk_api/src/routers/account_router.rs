@@ -17,7 +17,7 @@ use repos::repos::user_repository::UserRepository;
 
 use rocket_errors::anyhow::Result;
 
-use utils::{user_is_dm, create_error};
+use utils::{create_error, DmUser};
 use crate::{lock_toggle, locked_status};
 
 
@@ -323,22 +323,18 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
     patch,
     path = "/account/toggleLock",
     summary = "Toggle the lock status of the system",
-    description = r#"Only a DM can toggle the system lock. Returns an error if the user is not a DM."#,
+    description = r#"Only a DM can toggle the system lock."#,
     responses(
         (status = 204, description = "System lock toggled successfully"),
-        (status = 418, description = "User is not a Dungeon Master")
+        (status = 403, description = "Forbidden - user is not a DM")
     ),
     security(("bearer_auth" = [])),
     tag = "Accounts"
 )]
 #[patch("/account/toggleLock")]
 pub async fn toggle_lock(
-    user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    _dm: DmUser,
 ) -> Result<Status> {
-    if !user_is_dm(usr_rep.inner(), user.user_id).await? {
-        return Ok(Status::ImATeapot);
-    }
     lock_toggle!();
     Ok(Status::NoContent)
 }

@@ -1,7 +1,7 @@
 
 use rocket::http::Status;
 use rocket::request::Outcome;
-use rocket::Request;
+use rocket::{outcome::try_outcome, Request, State};
 use rocket::{request::FromRequest, Route};
 use repos::repos::user_repository::UserRepository;
 use anyhow::Result;
@@ -25,6 +25,30 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
             Outcome::Success(AuthenticatedUser { user_id })
         } else {
             Outcome::Error((Status::Unauthorized, ()))
+        }
+    }
+}
+
+/// Extractor for authenticated users that are Dungeon Masters (DM).
+///
+/// Responds with `401 Unauthorized` if the user is not logged in and with
+/// `403 Forbidden` if the user is not a DM. Requires a managed `UserRepository`.
+pub struct DmUser {
+    /// The user id of the authenticated DM
+    pub user_id: String,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for DmUser {
+    type Error = ();
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let user = try_outcome!(request.guard::<AuthenticatedUser>().await);
+        let usr_rep = try_outcome!(request.guard::<&State<UserRepository>>().await);
+
+        match user_is_dm(usr_rep, user.user_id.clone()).await {
+            Ok(true) => Outcome::Success(DmUser { user_id: user.user_id }),
+            Ok(false) => Outcome::Error((Status::Forbidden, ())),
+            Err(_) => Outcome::Error((Status::InternalServerError, ())),
         }
     }
 }

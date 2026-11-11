@@ -14,7 +14,7 @@ use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
-use utils::{user_is_dm, create_error};
+use utils::{create_error, DmUser};
 
 use super::router_utility::{
     user_has_read_access_to_inventory, user_has_write_access_to_inventory,
@@ -285,10 +285,11 @@ pub struct NoteAddParams {
     path = "/inventory/item/addNote",
     summary = "Add a DM note to an item",
     description = r#"Adds a DM-only note to the specified inventory item.
-Requires authentication and DM privileges. Returns an error if user is not a DM."#,
+Requires authentication and DM privileges."#,
     params(NoteAddParams),
     responses(
-        (status = 204, description = "DM note successfully added")
+        (status = 204, description = "DM note successfully added"),
+        (status = 403, description = "Forbidden - user is not a DM")
     ),
     security(("bearer_auth" = [])),
     tag = "Inventories"
@@ -296,13 +297,9 @@ Requires authentication and DM privileges. Returns an error if user is not a DM.
 #[patch("/inventory/item/addNote?<params..>")]
 pub async fn add_note_to_item(
     params: NoteAddParams,
-    user: AuthenticatedUser,
+    _dm: DmUser,
     inv_rep: &State<InventoryRepository>,
-    usr_rep: &State<UserRepository>,
 ) -> Result<Status> {
-    if !user_is_dm(usr_rep.inner(), user.user_id.clone()).await? {
-        return Err(create_error(ACCESS_DENIAL_MESSAGE));
-    }
     inv_rep
         .update_inventory_item(
             &params.inventory_uuid,

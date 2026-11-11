@@ -1,7 +1,7 @@
 use repos::{model_zauberwerk::Concentration, repos::{user_repository::UserRepository, zauberwek::concentration_repository::ConcentrationRepository}};
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
-use utils::{AuthenticatedUser, user_is_dm};
+use utils::{AuthenticatedUser, DmUser, user_is_dm};
 use rocket_errors::anyhow::Result;
 use utoipa::{IntoParams, OpenApi, ToSchema};
 
@@ -67,15 +67,11 @@ Only accessible for DMs."#,
 )]
 #[get("/concentration/all")]
 pub async fn get_all_concentrations(
-    user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
-    con_rep: &State<ConcentrationRepository>) -> Result<Result<Json<ConcentrationReturnList>, Status>> {
-    if !user_is_dm(usr_rep, user.user_id).await? {
-        return Ok(Err(Status::Forbidden));
-    }
+    _dm: DmUser,
+    con_rep: &State<ConcentrationRepository>) -> Result<Json<ConcentrationReturnList>> {
     let cons = con_rep.get_all_concentrations().await?;
 
-    Ok(Ok(Json(ConcentrationReturnList { concentrations: cons })))
+    Ok(Json(ConcentrationReturnList { concentrations: cons }))
 
 }
 
