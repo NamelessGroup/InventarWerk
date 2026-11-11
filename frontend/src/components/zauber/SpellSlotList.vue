@@ -2,7 +2,7 @@
   <div
     class="border-accent bg-primary-dark flex flex-col gap-2 overflow-hidden rounded-sm border-2 p-2"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 text-lg">
       <DiscordImage :user="owner" class="h-6" />
       <span v-if="accountData().userIsDm">{{ owner.name }}</span>
       <span>Spell Slots</span>
@@ -30,6 +30,14 @@
       </div>
     </div>
 
+    <div v-if="concentrationSpell" class="text-lg">
+      Concentrating on <span class="italic bold text-accent">{{ concentrationSpell }}</span>
+      <button class="border-accent bg-primary-default mr-2 flex h-7 shrink-0 items-center w-fit gap-2 rounded-sm border">
+        <FontAwesomeIcon :icon="faX" />
+        <span>Cancel Concentration</span>
+      </button>
+    </div>
+
     <ManageSlotMaximaPopUp
       v-if="showManageMaxima"
       :spell-slots="spellSlots"
@@ -42,7 +50,7 @@
 <script setup lang="ts">
 import type { SpellSlots } from '@/model/SpellSlots'
 import { accountData, zauberData } from '@/store'
-import { faGears, faRotateLeft } from '@fortawesome/free-solid-svg-icons'
+import { faGears, faRotateLeft, faX } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, ref, type PropType } from 'vue'
 import DiscordImage from '../DiscordImage.vue'
@@ -59,6 +67,11 @@ const props = defineProps({
   user: {
     type: String,
     required: true
+  },
+  concentrationSpell: {
+    type: String,
+    required: false,
+    default: undefined
   }
 })
 

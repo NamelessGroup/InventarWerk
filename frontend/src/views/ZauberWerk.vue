@@ -17,12 +17,15 @@
       </template>
 
       <template #default>
-        <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-5 overflow-auto md:overflow-clip">
           <SpellSlotList
             v-if="zauberData().spellSlots[accountData().uuid] !== undefined"
             :spell-slots="zauberData().spellSlots[accountData().uuid]"
             :user="accountData().uuid"
+            :concentration-spell="zauberData().concentrationSpell[accountData().uuid]"
           />
+
+          <div class="md:flex-1 md:overflow-auto min-h-[3000px]"></div>
         </div>
       </template>
     </PageBase>
@@ -65,6 +68,7 @@ import { faPlus, faSearch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, ref } from 'vue'
 import PopUp from '@/components/PopUp.vue'
+import { DB } from '@/store/db'
 
 ThemeManager.getInstance().pageTheme = 'zauber'
 
@@ -81,5 +85,20 @@ function matchSearchString(inventory: SpellList) {
     return true
   }
   return false
+}
+
+async function submitAddSpellList() {
+  if (nameFieldContent.value == '') {
+    errorContent.value = 'Name cannot be empty'
+    return
+  }
+  const result = await DB.inventory.createInventory(nameFieldContent.value)
+  if (result) {
+    nameFieldContent.value = ''
+    errorContent.value = ''
+    showCreation.value = false
+  } else {
+    errorContent.value = 'Error creating inventory'
+  }
 }
 </script>

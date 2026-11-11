@@ -6,6 +6,8 @@ import { generateSlotArray } from '@/utils/spellSlots'
 
 export class ZauberDB extends BaseDatabaseHandler {
   private static SPELL_SLOT_END_POINT = 'spellSlot'
+  private static CONCENTRATION_END_POINT = 'concentration'
+  private static SPELL_LIST_END_POINT = 'spellList'
 
   public constructor() {
     super(BaseDatabaseHandler.getBaseURL(8001))
@@ -13,6 +15,7 @@ export class ZauberDB extends BaseDatabaseHandler {
 
   public async initialize(): Promise<void> {
     zauberData().spellSlots[accountData().uuid] = (await this.getSpellSlots()) ?? {}
+    zauberData().concentrationSpell[accountData().uuid] = await this.getConcentrationSpell()
   }
 
   public async getSpellSlots(uuid?: string): Promise<SpellSlots | undefined> {
@@ -55,6 +58,21 @@ export class ZauberDB extends BaseDatabaseHandler {
       uuid ? { owner_uuid: uuid } : undefined
     )
     return result !== undefined
+  }
+
+  public async getConcentrationSpell(uuid?: string) {
+    const result = await this.get<{spellPresetUuid: string}>([ZauberDB.CONCENTRATION_END_POINT], uuid ? {uuid} : {})
+    if (result) return result.spellPresetUuid
+    return undefined
+  }
+
+  public async removeConcentration(uuid?: string) {
+    const result = await this.delete<unknown>([ZauberDB.CONCENTRATION_END_POINT], uuid ? {uuid} : {})
+    return result !== undefined
+  }
+
+  public async createSpellList() {
+    
   }
 }
 
