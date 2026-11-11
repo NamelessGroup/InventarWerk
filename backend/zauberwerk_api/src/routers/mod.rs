@@ -1,11 +1,13 @@
 use rocket::Route;
 
 pub mod concentration_router;
+pub mod spell_cast_router;
 pub mod spell_list_router;
 pub mod spell_preset_router;
 pub mod spell_slot_router;
 
 use concentration_router::*;
+use spell_cast_router::*;
 use spell_list_router::*;
 use spell_preset_router::*;
 use spell_slot_router::*;
@@ -15,7 +17,8 @@ pub fn get_concentration_routes() -> Vec<Route> {
     routes![
         get_concentration,
         get_all_concentrations,
-        modify_concentration
+        modify_concentration,
+        remove_concentration
     ]
 }
 
@@ -36,9 +39,15 @@ pub fn get_spell_preset_routes() -> Vec<Route> {
         get_all_spell_presets,
         delete_spell_preset,
         edit_spell_preset,
-        cast_spell,
         add_extern_spell_preset,
         delete_preset_from_list
+    ]
+}
+
+pub fn get_spell_cast_routes() -> Vec<Route> {
+    routes![
+        cast_spell,
+        spell_cast_stream
     ]
 }
 

@@ -11,6 +11,8 @@ use repos::repos::zauberwek::spell_list_repository::SpellListRepository;
 use repos::repos::zauberwek::spell_preset_repository::SpellPresetRepository;
 use repos::repos::user_repository::UserRepository;
 use repos::repos::zauberwek::spell_slot_repository::SpellSlotRepository;
+use repos::repos::zauberwek::spell_cast_repository::SpellCastRepository;
+use rocket::tokio::sync::broadcast::channel;
 use rocket::config::Config;
 use rocket::fs::FileServer;
 use std::env;
@@ -22,6 +24,7 @@ use routers::concentration_router::ConcentrationApiDoc;
 use routers::spell_list_router::SpellListApiDoc;
 use routers::spell_preset_router::SpellPresetApiDoc;
 use routers::spell_slot_router::SpellSlotApiDoc;
+use routers::spell_cast_router::{SpellCastApiDoc, SpellCastEvent};
 
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -53,6 +56,10 @@ async fn main() {
     let con_rep = ConcentrationRepository::new(dbconn.clone());
     let ssl_rep = SpellSlotRepository::new(dbconn.clone());
     let sli_rep = SpellListRepository::new(dbconn.clone());
+    let cast_rep = SpellCastRepository::new(dbconn.clone());
+
+    // Broadcast channel for the spell cast SSE stream
+    let (cast_tx, _cast_rx) = channel::<SpellCastEvent>(1024);
 
 
     let mut figment = Config::figment().merge(("secret_key", secret_key));
@@ -72,18 +79,22 @@ async fn main() {
         .manage(con_rep)
         .manage(ssl_rep)
         .manage(sli_rep)
+        .manage(cast_rep)
+        .manage(cast_tx)
         .mount("/", FileServer::from("./static"))
         .mount("/", routers::get_spell_list_routes())
         .mount("/", routers::get_concentration_routes())
         .mount("/", routers::get_spell_preset_routes())
         .mount("/", routers::get_spell_slot_routes())
+        .mount("/", routers::get_spell_cast_routes())
         .mount(
             "/",
             SwaggerUi::new("/swagger-ui/<_..>")
                 .url("/api-docs/openapi_spell_list.json", SpellListApiDoc::openapi())
                 .url("/api-docs/openapi_spell_preset.json", SpellPresetApiDoc::openapi())
                 .url("/api-docs/openapi_spell_slot.json", SpellSlotApiDoc::openapi())
-                .url("/api-docs/openapi_concentration.json", ConcentrationApiDoc::openapi()),
+                .url("/api-docs/openapi_concentration.json", ConcentrationApiDoc::openapi())
+                .url("/api-docs/openapi_spell_cast.json", SpellCastApiDoc::openapi()),
         );
 
     #[cfg(any(feature = "dev"))]

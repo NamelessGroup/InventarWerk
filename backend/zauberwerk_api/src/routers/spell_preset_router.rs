@@ -120,23 +120,6 @@ pub async fn edit_spell_preset(
 }
 
 
-#[utoipa::path(
-    put,
-    path = "/spellPreset/cast",
-    summary = "Cast a spell (not implemented)",
-    description = "Placeholder for casting a spell. Not implemented yet; the endpoint currently does nothing and always returns 200 with an empty body.",
-    responses(
-        (status = 200, description = "Nothing happened (not implemented yet)")
-    ),
-    security(("bearer_auth" = [])),
-    tag = "Spell Presets"
-)]
-#[put("/spellPreset/cast")]
-pub async fn cast_spell(_user: AuthenticatedUser) {
-    //TODO: Implement SSE
-}
-
-
 #[derive(Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ExternSpellPreset {
     spell_presets: Vec<SpellPreset>
@@ -214,7 +197,6 @@ pub async fn add_extern_spell_preset(
         get_all_spell_presets,
         delete_spell_preset,
         edit_spell_preset,
-        cast_spell,
         add_extern_spell_preset
     ),
     components(

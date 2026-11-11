@@ -54,6 +54,23 @@ impl SpellListRepository {
         Ok(spell_lists)
     }
 
+    /// Checks whether the spell preset is contained in at least one spell list of the owner.
+    pub async fn owner_has_spell(&self, owner_uuid: &str, spell_preset_uuid: &str) -> Result<bool, Error> {
+        let exists = sqlx::query_scalar!(
+            r#"SELECT EXISTS(
+                SELECT 1 FROM spell_list_entry e
+                JOIN spell_list l ON l.uuid = e.spell_list_uuid
+                WHERE l.owner_uuid = $1 AND e.spell_preset_uuid = $2
+            ) AS "exists!""#,
+            owner_uuid,
+            spell_preset_uuid
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(exists)
+    }
+
     /// Retrieves a specific spell list by UUID.
     pub async fn get_spell_list(&self, spell_list_uuid: &str) -> Result<SpellList, Error> {
         let list = sqlx::query!(

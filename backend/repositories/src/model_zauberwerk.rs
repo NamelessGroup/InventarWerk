@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SpellPreset {
     pub uuid: String,
@@ -21,7 +21,7 @@ pub struct SpellPreset {
     pub feats: Vec<String>
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SpellList {
     pub uuid: String,
@@ -30,7 +30,7 @@ pub struct SpellList {
     pub spell_uuids: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SpellSlot {
     pub owner_uuid: String,
@@ -39,9 +39,10 @@ pub struct SpellSlot {
     pub spell_slot_available: i32,
 }
 
-#[derive(Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Concentration {
     pub owner_uuid: String,
-    pub concentration: i32,
+    /// UUID of the spell preset the user is concentrating on, or `null` if the user is not concentrating.
+    pub spell_preset_uuid: Option<String>,
 }

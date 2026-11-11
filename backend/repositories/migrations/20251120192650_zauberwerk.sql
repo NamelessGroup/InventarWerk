@@ -76,10 +76,13 @@ CREATE TABLE spell_slots (
     PRIMARY KEY(owner_uuid, spell_slot_level)
 );
 
+-- One row per user that is currently concentrating on a spell.
+-- No row means the user is not concentrating.
 CREATE TABLE concentration (
     owner_uuid TEXT NOT NULL,
-    concentration INT NOT NULL,
+    spell_preset_uuid TEXT NOT NULL,
     FOREIGN KEY(owner_uuid) REFERENCES "user"(uuid),
+    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE,
     PRIMARY KEY(owner_uuid)
 );
 
