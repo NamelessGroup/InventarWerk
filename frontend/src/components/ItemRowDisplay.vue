@@ -43,19 +43,19 @@
           class="border-accent bg-primary-default text-primary-text rounded-sm border text-xs outline-hidden"
           placeholder="Notes"
           @click="(e) => e.stopPropagation()"
-          @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"
+          @blur="inventoryData().editItemNote(inventoryUuid, item.presetReference, itemNote)"
         ></textarea>
         <textarea
-          v-if="store().userIsDm"
+          v-if="accountData().userIsDm"
           v-model="dmNote"
           class="border-accent bg-primary-default text-accent mt-1 rounded-sm border text-xs outline-hidden"
           placeholder="DM Note"
           @click="(e) => e.stopPropagation()"
-          @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
+          @blur="inventoryData().editDmNote(inventoryUuid, item.presetReference, dmNote)"
         ></textarea>
 
         <button
-          v-if="store().uuid == item.presetCreator"
+          v-if="accountData().uuid == item.presetCreator"
           class="border-accent bg-primary-dark absolute top-2 right-0 h-6 w-6 rounded-sm border text-xs"
           @click="(e) => openEdit(e)"
         >
@@ -77,7 +77,7 @@ import type { Item } from '@/model/Item'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref, type PropType, watch, computed } from 'vue'
 import { faPen, faTrashCan } from '@fortawesome/free-solid-svg-icons'
-import { store } from '@/store'
+import { accountData, inventoryData } from '@/store'
 import { marked } from 'marked'
 import EditItemPopUp from './EditItemPopUp.vue'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
@@ -129,11 +129,11 @@ const priceString = computed(() => {
 })
 
 function deleteItem() {
-  store().removeItem(props.inventoryUuid, props.item.presetReference)
+  inventoryData().removeItem(props.inventoryUuid, props.item.presetReference)
 }
 
 function editAmount(value: number) {
-  store().changeItemAmount(props.inventoryUuid, props.item.presetReference, value)
+  inventoryData().changeItemAmount(props.inventoryUuid, props.item.presetReference, value)
 }
 
 const showItemEdit = ref(false)

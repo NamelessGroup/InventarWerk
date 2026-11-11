@@ -31,9 +31,9 @@
 import { computed, onMounted, ref } from 'vue'
 import PopUp from './PopUp.vue'
 import autocomplete, { type AutocompleteItem } from 'autocompleter'
-import { store } from '@/store'
-import { DatabaseHandler } from '@/store/DatabaseHandler'
+import { inventoryData } from '@/store'
 import NumericInput from './NumericInput.vue'
+import { DB } from '@/store/db/index.ts'
 
 const props = defineProps({
   inventoryUuid: {
@@ -50,10 +50,10 @@ const amountValue = ref(1)
 const errorText = ref('')
 
 const completionItems = computed(() => {
-  const itemsInInventory = store().inventories[props.inventoryUuid].items.map(
+  const itemsInInventory = inventoryData().inventories[props.inventoryUuid].items.map(
     (item) => item.presetReference
   )
-  return store()
+  return inventoryData()
     .itemPresets.map((item) => {
       let group = item.itemType ?? 'Other'
       if (group === '') {
@@ -85,7 +85,7 @@ async function addNewItem() {
     errorText.value = 'Name cannot be empty'
     return
   }
-  const success = await DatabaseHandler.getInstance().addNewItem(
+  const success = await DB.inventory.addNewItem(
     props.inventoryUuid,
     nameValue.value,
     amountValue.value
@@ -103,7 +103,7 @@ async function addNewItem() {
 async function addItemByPreset(item: MyCompletionItem) {
   nameValue.value = item.label
 
-  const success = await DatabaseHandler.getInstance().addItemByPreset(
+  const success = await DB.inventory.addItemByPreset(
     props.inventoryUuid,
     item.uuid,
     amountValue.value

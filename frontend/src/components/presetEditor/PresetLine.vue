@@ -4,7 +4,7 @@
     <div class="flex items-center">
       <h3 class="flex-1" @click="showDetails = !showDetails">{{ preset.name }}</h3>
       <FontAwesomeIcon
-        v-if="preset.creator == store().uuid"
+        v-if="preset.creator == accountData().uuid"
         :icon="faTrashCan"
         class="text-delete cursor-pointer"
         @click="
@@ -25,8 +25,8 @@
 
 <script setup lang="ts">
 import type { ItemPreset } from '@/model/ItemPreset'
-import { store } from '@/store'
-import { DatabaseHandler } from '@/store/DatabaseHandler'
+import { accountData, inventoryData } from '@/store'
+import { DB } from '@/store/db'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
 import { faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -68,10 +68,12 @@ const priceString = computed(() => {
 })
 
 async function deletePreset() {
-  const result = await DatabaseHandler.getInstance().deletePreset(props.preset.uuid)
+  const result = await DB.inventory.deletePreset(props.preset.uuid)
   if (!result) {
     return
   }
-  store().itemPresets = store().itemPresets.filter((p) => p.uuid != props.preset.uuid)
+  inventoryData().itemPresets = inventoryData().itemPresets.filter(
+    (p) => p.uuid != props.preset.uuid
+  )
 }
 </script>

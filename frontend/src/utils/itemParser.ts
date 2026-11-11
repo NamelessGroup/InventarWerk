@@ -1,6 +1,6 @@
 import { ErrorHandler } from '@/errorHandling/ErrorHandler'
 import type { ItemPreset } from '@/model/ItemPreset'
-import { DatabaseHandler } from '@/store/DatabaseHandler'
+import { BaseDatabaseHandler } from '@/store/db/base'
 import axios from 'axios'
 
 interface ItemJSON {
@@ -380,9 +380,13 @@ interface PresetList {
 
 async function pushPresetListToServer(presetList: PresetList) {
   const response = await axios
-    .put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(presetList), {
-      withCredentials: true
-    })
+    .put<unknown>(
+      BaseDatabaseHandler.getBaseURL(8000) + 'itemPreset/addExtern',
+      JSON.stringify(presetList),
+      {
+        withCredentials: true
+      }
+    )
     .then((response) => response)
     .catch((error) => error.response)
   if (response && response.status >= 200 && response.status < 300) {
@@ -403,9 +407,13 @@ async function pushPresetToServer(itemPreset: ItemPreset) {
     presets: [itemPreset]
   }
   const response = await axios
-    .put<unknown>(DatabaseHandler.BASE_URL + 'itemPreset/addExtern', JSON.stringify(plist), {
-      withCredentials: true
-    })
+    .put<unknown>(
+      BaseDatabaseHandler.getBaseURL(8000) + 'itemPreset/addExtern',
+      JSON.stringify(plist),
+      {
+        withCredentials: true
+      }
+    )
     .then((response) => response)
     .catch((error) => error.response)
   if (response && response.status == 500) {

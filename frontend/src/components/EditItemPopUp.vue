@@ -32,7 +32,7 @@
 import { ref, type PropType } from 'vue'
 import PopUp from './PopUp.vue'
 import type { Item } from '@/model/Item'
-import { store } from '@/store'
+import { inventoryData } from '@/store'
 import NumericInput from './NumericInput.vue'
 
 const props = defineProps({
@@ -57,7 +57,7 @@ const emit = defineEmits(['close'])
 const errorText = ref('')
 
 async function saveItem() {
-  const result = await store().editItem(props.inventoryUuid, props.item.presetReference, {
+  const result = await inventoryData().editItem(props.inventoryUuid, props.item.presetReference, {
     name: nameRef.value,
     itemType: typeRef.value,
     price: priceRef.value,

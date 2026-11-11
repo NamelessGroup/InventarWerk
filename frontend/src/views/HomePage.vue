@@ -1,6 +1,6 @@
 <template>
   <div class="mt-40 flex h-full w-full items-start justify-center gap-5">
-    <div v-if="!store().isLoggedIn" class="grid max-w-[80vw] grid-cols-2 gap-5">
+    <div v-if="!accountData().isLoggedIn" class="grid max-w-[80vw] grid-cols-2 gap-5">
       <DynamicLogo logo="inventar" />
       <DynamicLogo logo="zauber" />
 
@@ -61,28 +61,26 @@
 
 <script setup lang="ts">
 import DynamicLogo from '@/components/DynamicLogo.vue'
-import { store } from '@/store'
-import { DatabaseHandler } from '@/store/DatabaseHandler'
+import { accountData } from '@/store'
 import { ThemeManager } from '@/theme/ThemeManager'
 import { faDiscord } from '@fortawesome/free-brands-svg-icons'
 import { faGears, faRightFromBracket } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref } from 'vue'
 import SettingsPopUp from '@/components/SettingsPopUp.vue'
+import { DB } from '@/store/db'
 
 ThemeManager.getInstance().pageTheme = 'home'
 
 const showSettings = ref(false)
 
 function logIn() {
-  window.location.href = DatabaseHandler.getInstance().getLogInUrl()
+  window.location.href = DB.account.getLogInUrl()
 }
 
 function logOut() {
-  DatabaseHandler.getInstance()
-    .logOut()
-    .then(() => {
-      window.location.reload()
-    })
+  DB.account.logOut().then(() => {
+    window.location.reload()
+  })
 }
 </script>

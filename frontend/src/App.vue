@@ -12,25 +12,23 @@
 </template>
 
 <script setup lang="ts">
-import { store } from './store'
+import { accountData } from './store'
 import ErrorDisplay from './errorHandling/ErrorDisplay.vue'
-import { DatabaseHandler } from './store/DatabaseHandler'
 import { version } from './utils/version'
 import { RouterView } from 'vue-router'
 import { router } from './router.ts'
+import { DB } from './store/db/index.ts'
 
 checkLogIn()
 
 function checkLogIn() {
-  DatabaseHandler.getInstance()
-    .isLoggedIn()
-    .then((res) => {
-      store().isLoggedIn = res
-      if (res) {
-        DatabaseHandler.getInstance().initialize()
-      } else if (router.currentRoute.value.name !== 'Home') {
-        router.push('/')
-      }
-    })
+  DB.account.isLoggedIn().then((res) => {
+    accountData().isLoggedIn = res
+    if (res) {
+      DB.initialize()
+    } else if (router.currentRoute.value.name !== 'Home') {
+      router.push('/')
+    }
+  })
 }
 </script>

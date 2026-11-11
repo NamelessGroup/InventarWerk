@@ -5,7 +5,7 @@
       <div
         ref="nameInput"
         class="bold break-wrap ml-2 min-w-8 border-none bg-transparent pr-5 text-xl outline-hidden"
-        :contenteditable="inventory.ownerUuid === store().uuid"
+        :contenteditable="inventory.ownerUuid === accountData().uuid"
         @blur="updateName()"
         @keydown="
           (e) => {
@@ -20,7 +20,7 @@
         {{ inventory.name }}
       </div>
       <button
-        v-if="inventory.ownerUuid === store().uuid"
+        v-if="inventory.ownerUuid === accountData().uuid"
         class="border-accent bg-primary-default mr-2 h-7 w-7 shrink-0 rounded-sm border"
         @click="editName()"
       >
@@ -34,7 +34,7 @@
         <FontAwesomeIcon :icon="faShare" @click="showSharePopup = true" />
       </button>
       <TimedConfirmationButton
-        v-if="inventory.ownerUuid === store().uuid"
+        v-if="inventory.ownerUuid === accountData().uuid"
         class="border-accent bg-primary-default text-delete ml-2 h-7 shrink-0 rounded-sm border px-1.5"
         :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteInventory"
@@ -81,7 +81,7 @@
     </div>
 
     <button
-      v-if="inventory.writer.includes(store().uuid)"
+      v-if="inventory.writer.includes(accountData().uuid)"
       class="bg-primary-default h-10 w-full rounded-sm text-center"
       @click="showAddItemPopup = true"
     >
@@ -90,12 +90,12 @@
   </div>
 
   <EditSharePopUp
-    v-if="showSharePopup && store().uuid === inventory.ownerUuid"
+    v-if="showSharePopup && accountData().uuid === inventory.ownerUuid"
     :inventory="inventory"
     @close="showSharePopup = false"
   />
   <ViewSharePopUp
-    v-if="showSharePopup && store().uuid !== inventory.ownerUuid"
+    v-if="showSharePopup && accountData().uuid !== inventory.ownerUuid"
     :inventory="inventory"
     @close="showSharePopup = false"
   />
@@ -112,7 +112,7 @@ import { computed, ref, watch, type PropType } from 'vue'
 import type { Inventory } from '../model/Inventory'
 import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath'
-import { store } from '@/store'
+import { accountData, inventoryData } from '@/store'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import AddItemPopUp from './AddItemPopUp.vue'
@@ -135,10 +135,10 @@ const props = defineProps({
 const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
-const canEdit = computed(() => props.inventory.writer.includes(store().uuid))
+const canEdit = computed(() => props.inventory.writer.includes(accountData().uuid))
 const creator = computed(
   () =>
-    store().accounts.filter((account) => account.uuid === props.inventory.ownerUuid)[0] ?? {
+    accountData().accounts.filter((account) => account.uuid === props.inventory.ownerUuid)[0] ?? {
       name: 'Unknown',
       avatar: null,
       dm: false,
@@ -168,11 +168,11 @@ function updateName() {
   if (newName == props.inventory.name) {
     return
   }
-  store().editInventoryName(props.inventory.uuid, newName)
+  inventoryData().editInventoryName(props.inventory.uuid, newName)
 }
 
 function deleteInventory() {
-  store().deleteInventory(props.inventory.uuid)
+  inventoryData().deleteInventory(props.inventory.uuid)
 }
 
 async function updateInventoryList(e: DragChangeEvent<Item & { sourceInventory: string }>) {
@@ -211,7 +211,7 @@ async function moveItem(
   sortedItems.forEach((item, idx) => (item.sorting = idx))
 
   if (movedHere) {
-    await store().moveItem(
+    await inventoryData().moveItem(
       item.sourceInventory,
       props.inventory.uuid,
       item.presetReference,
@@ -227,7 +227,7 @@ async function moveItem(
     ) {
       sortingsToUpdate[sortingItem.item] = sortingItem.sorting
     }
-    await store().changeInventorySorting(props.inventory.uuid, sortingsToUpdate)
+    await inventoryData().changeInventorySorting(props.inventory.uuid, sortingsToUpdate)
   }
 }
 
@@ -238,7 +238,7 @@ const moneyFieldValues = ref({
   copper: props.inventory.money.copper
 })
 function updateMoney(content: number, field: MoneyFields) {
-  store().updateMoney(props.inventory.uuid, content, field)
+  inventoryData().updateMoney(props.inventory.uuid, content, field)
 }
 
 watch(

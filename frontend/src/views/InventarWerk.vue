@@ -15,7 +15,7 @@
         </div>
         <div class="flex-1"></div>
         <button
-          v-if="store().userIsDm"
+          v-if="accountData().userIsDm"
           class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
           @click="loadItemFile"
         >
@@ -31,11 +31,7 @@
 
       <template #default>
         <div class="grid gap-5 overflow-auto p-5 md:mt-12 md:grid-cols-2 lg:grid-cols-3">
-          <InventoryContainer
-            v-for="inventory in inventories"
-            :key="inventory.uuid"
-            :inventory="inventory"
-          />
+          <InventoryContainer v-for="inv in inventories" :key="inv.uuid" :inventory="inv" />
         </div>
       </template>
     </PageBase>
@@ -65,7 +61,7 @@
     </PopUp>
 
     <button
-      v-if="store().isLoggedIn"
+      v-if="accountData().isLoggedIn"
       class="border-accent bg-primary-default fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border"
       @click="showCreation = true"
     >
@@ -77,7 +73,7 @@
 <script setup lang="ts">
 import PageBase from '@/components/PageBase.vue'
 import { ThemeManager } from '@/theme/ThemeManager'
-import { store } from '@/store'
+import { accountData, inventoryData } from '@/store'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faList, faPlus, faSearch, faUpload } from '@fortawesome/free-solid-svg-icons'
 import InventoryContainer from '@/components/InventoryContainer.vue'
@@ -86,7 +82,7 @@ import ManagePresetsPopUp from '@/components/presetEditor/ManagePresetsPopUp.vue
 import { computed, ref } from 'vue'
 import type { Inventory } from '@/model/Inventory'
 import { parseItems } from '@/utils/itemParser'
-import { DatabaseHandler } from '@/store/DatabaseHandler'
+import { DB } from '@/store/db'
 
 ThemeManager.getInstance().pageTheme = 'inventar'
 
@@ -106,7 +102,9 @@ function matchSearchString(inventory: Inventory) {
 }
 
 const inventories = computed(() => {
-  const allInventories = store().inventoryUuids.map((uuid) => store().inventories[uuid])
+  const allInventories = inventoryData().inventoryUuids.map(
+    (uuid) => inventoryData().inventories[uuid]
+  )
   return allInventories.filter(matchSearchString)
 })
 
@@ -115,7 +113,7 @@ async function submitAddInventory() {
     errorContent.value = 'Name cannot be empty'
     return
   }
-  const result = await DatabaseHandler.getInstance().createInventory(nameFieldContent.value)
+  const result = await DB.inventory.createInventory(nameFieldContent.value)
   if (result) {
     nameFieldContent.value = ''
     errorContent.value = ''

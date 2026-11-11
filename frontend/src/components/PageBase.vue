@@ -56,9 +56,9 @@ import DynamicLogo from './DynamicLogo.vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import SettingsPopUp from '@/components/SettingsPopUp.vue'
 import { ref, type PropType } from 'vue'
-import { DatabaseHandler } from '@/store/DatabaseHandler.ts'
 import { RouterLink } from 'vue-router'
 import { faHouse } from '@fortawesome/free-regular-svg-icons'
+import { DB } from '@/store/db/index.ts'
 
 defineProps({
   type: {
@@ -71,10 +71,8 @@ const showSettings = ref(false)
 const showLinks = ref(false)
 
 function logOut() {
-  DatabaseHandler.getInstance()
-    .logOut()
-    .then(() => {
-      window.location.reload()
-    })
+  DB.account.logOut().then(() => {
+    window.location.reload()
+  })
 }
 </script>
