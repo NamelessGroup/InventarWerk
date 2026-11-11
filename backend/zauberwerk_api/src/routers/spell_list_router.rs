@@ -63,9 +63,9 @@ pub struct SpellListNameParam {
 pub async fn create_spelllist(
     user: AuthenticatedUser,
     sli_rep: &State<SpellListRepository>,
-    params: SpellListNameParam) -> Result<Status>{
-    sli_rep.create_spell_list(&user.user_id, &params.spell_list_name).await?;
-    Ok(Status::NoContent)
+    params: SpellListNameParam) -> Result<Json<SpellList>>{
+    let spell_list_uuid: String = sli_rep.create_spell_list(&user.user_id, &params.spell_list_name).await?;
+    Ok(Json(sli_rep.get_spell_list(&spell_list_uuid).await?))
 }
 
 
