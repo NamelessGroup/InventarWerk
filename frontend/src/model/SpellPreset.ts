@@ -7,8 +7,8 @@ export interface SpellPreset {
   feats: string[]
   level: number
   name: string
-  range: string[]
-  school: string[]
+  range: string
+  school: string
   species: string[]
   subClass: string[]
   time: string
@@ -18,7 +18,7 @@ export interface SpellPreset {
   affectsCreatureType: string
   damageInflict: string
   spellAttack: string
-  ritual: string
+  ritual: boolean
   damageImmune: string
   abilityCheck: string
   damageResist: string

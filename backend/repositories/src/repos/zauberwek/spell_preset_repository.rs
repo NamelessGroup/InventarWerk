@@ -18,16 +18,14 @@ impl SpellPresetRepository {
             r#"
             SELECT 
                 sp.uuid, sp.name, sp.level, sp.description, sp.time, 
-                sp.concentration, sp.duration, sp.range, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
+                sp.concentration, sp.duration, sp.range, sp.school, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
                 COALESCE(array_agg(DISTINCT spc.component_name) FILTER (WHERE spc.component_name IS NOT NULL), '{}') as "components!",
-                COALESCE(array_agg(DISTINCT sps.spell_preset_school) FILTER (WHERE sps.spell_preset_school IS NOT NULL), '{}') as "school!",
                 COALESCE(array_agg(DISTINCT spclass.spell_preset_class) FILTER (WHERE spclass.spell_preset_class IS NOT NULL), '{}') as "class!",
                 COALESCE(array_agg(DISTINCT spsc.spell_preset_subclass) FILTER (WHERE spsc.spell_preset_subclass IS NOT NULL), '{}') as "sub_class!",
                 COALESCE(array_agg(DISTINCT spsp.spell_preset_species) FILTER (WHERE spsp.spell_preset_species IS NOT NULL), '{}') as "species!",
                 COALESCE(array_agg(DISTINCT spf.spell_preset_feats) FILTER (WHERE spf.spell_preset_feats IS NOT NULL), '{}') as "feats!"
             FROM spell_preset sp
             LEFT JOIN spell_preset_component spc ON sp.uuid = spc.spell_preset_uuid
-            LEFT JOIN spell_preset_school sps ON sp.uuid = sps.spell_preset_uuid
             LEFT JOIN spell_preset_class spclass ON sp.uuid = spclass.spell_preset_uuid
             LEFT JOIN spell_preset_subclass spsc ON sp.uuid = spsc.spell_preset_uuid
             LEFT JOIN spell_preset_species spsp ON sp.uuid = spsp.spell_preset_uuid
@@ -47,10 +45,10 @@ impl SpellPresetRepository {
             description: result.description,
             time: result.time,
             components: result.components,
-            concentration: result.concentration != 0,
+            concentration: result.concentration,
             duration: result.duration,
             school: result.school,
-            range: vec![result.range],
+            range: result.range,
             class: result.class,
             sub_class: result.sub_class,
             species: result.species,
@@ -78,20 +76,19 @@ impl SpellPresetRepository {
         };
 
         // Insert the main spell preset
-        let range_value = spell_preset.range.first().cloned().unwrap_or_else(String::new);
-
         sqlx::query!(
-            "INSERT INTO spell_preset (uuid, name, level, description, time, concentration, duration, range,
+            "INSERT INTO spell_preset (uuid, name, level, description, time, concentration, duration, range, school,
                  condition_inflict, saving_throw, affects_creature_type, damage_inflict, spell_attack, ritual, damage_immune, ability_check, damage_resist, condition_immune, higher_level)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)",
             id,
             spell_preset.name,
             spell_preset.level,
             spell_preset.description,
             spell_preset.time,
-            if spell_preset.concentration { 1 } else { 0 },
+            spell_preset.concentration,
             spell_preset.duration,
-            range_value,
+            spell_preset.range,
+            spell_preset.school,
             spell_preset.condition_inflict,
             spell_preset.saving_throw,
             spell_preset.affects_creature_type,
@@ -112,16 +109,6 @@ impl SpellPresetRepository {
             sqlx::query!(
                 "INSERT INTO spell_preset_component (spell_preset_uuid, component_name) VALUES ($1, $2)",
                 id, component
-            )
-            .execute(&self.pool)
-            .await?;
-        }
-
-        // Insert schools
-        for school_item in &spell_preset.school {
-            sqlx::query!(
-                "INSERT INTO spell_preset_school (spell_preset_uuid, spell_preset_school) VALUES ($1, $2)",
-                id, school_item
             )
             .execute(&self.pool)
             .await?;
@@ -192,16 +179,14 @@ impl SpellPresetRepository {
             r#"
             SELECT 
                 sp.uuid, sp.name, sp.level, sp.description, sp.time, 
-                sp.concentration, sp.duration, sp.range, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
+                sp.concentration, sp.duration, sp.range, sp.school, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
                 COALESCE(array_agg(DISTINCT spc.component_name) FILTER (WHERE spc.component_name IS NOT NULL), '{}') as "components!",
-                COALESCE(array_agg(DISTINCT sps.spell_preset_school) FILTER (WHERE sps.spell_preset_school IS NOT NULL), '{}') as "school!",
                 COALESCE(array_agg(DISTINCT spclass.spell_preset_class) FILTER (WHERE spclass.spell_preset_class IS NOT NULL), '{}') as "class!",
                 COALESCE(array_agg(DISTINCT spsc.spell_preset_subclass) FILTER (WHERE spsc.spell_preset_subclass IS NOT NULL), '{}') as "sub_class!",
                 COALESCE(array_agg(DISTINCT spsp.spell_preset_species) FILTER (WHERE spsp.spell_preset_species IS NOT NULL), '{}') as "species!",
                 COALESCE(array_agg(DISTINCT spf.spell_preset_feats) FILTER (WHERE spf.spell_preset_feats IS NOT NULL), '{}') as "feats!"
             FROM spell_preset sp
             LEFT JOIN spell_preset_component spc ON sp.uuid = spc.spell_preset_uuid
-            LEFT JOIN spell_preset_school sps ON sp.uuid = sps.spell_preset_uuid
             LEFT JOIN spell_preset_class spclass ON sp.uuid = spclass.spell_preset_uuid
             LEFT JOIN spell_preset_subclass spsc ON sp.uuid = spsc.spell_preset_uuid
             LEFT JOIN spell_preset_species spsp ON sp.uuid = spsp.spell_preset_uuid
@@ -221,10 +206,10 @@ impl SpellPresetRepository {
                 description: result.description,
                 time: result.time,
                 components: result.components,
-                concentration: result.concentration != 0,
+                concentration: result.concentration,
                 duration: result.duration,
                 school: result.school,
-                range: vec![result.range],
+                range: result.range,
                 class: result.class,
                 sub_class: result.sub_class,
                 species: result.species,

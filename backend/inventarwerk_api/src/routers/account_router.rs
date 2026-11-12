@@ -80,7 +80,7 @@ pub async fn is_account_dm(
 ) -> Result<Json<DMResponse>> {
     let user = usr_rep.get_user(&params.account_uuid).await?;
     Ok(Json(DMResponse {
-        isDm: (user.dm == 1),
+        isDm: user.dm,
     }))
 }
 

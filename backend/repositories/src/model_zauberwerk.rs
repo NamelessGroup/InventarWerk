@@ -13,8 +13,8 @@ pub struct SpellPreset {
     pub components: Vec<String>,
     pub concentration: bool,
     pub duration: String,
-    pub school: Vec<String>,
-    pub range: Vec<String>,
+    pub school: String,
+    pub range: String,
     pub class: Vec<String>,
     pub sub_class: Vec<String>,
     pub species: Vec<String>,
@@ -24,7 +24,7 @@ pub struct SpellPreset {
     pub affects_creature_type: String,
     pub damage_inflict: String,
     pub spell_attack: String,
-    pub ritual: String,
+    pub ritual: bool,
     pub damage_immune: String,
     pub ability_check: String,
     pub damage_resist: String,
@@ -56,4 +56,12 @@ pub struct Concentration {
     pub owner_uuid: String,
     /// UUID of the spell preset the user is concentrating on, or `null` if the user is not concentrating.
     pub spell_preset_uuid: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellAttackModifier {
+    pub owner_uuid: String,
+    /// The spell attack modifier of the user, or `null` if none was set yet.
+    pub modifier: Option<i32>,
 }

@@ -7,6 +7,7 @@ use dotenvy::dotenv;
 use openssl::rand::rand_bytes;
 
 use repos::repos::zauberwek::concentration_repository::ConcentrationRepository;
+use repos::repos::zauberwek::spell_attack_modifier_repository::SpellAttackModifierRepository;
 use repos::repos::zauberwek::spell_list_repository::SpellListRepository;
 use repos::repos::zauberwek::spell_preset_repository::SpellPresetRepository;
 use repos::repos::user_repository::UserRepository;
@@ -21,6 +22,7 @@ use repos::DbPool;
 use repos::create_pg_pool;
 
 use routers::concentration_router::ConcentrationApiDoc;
+use routers::spell_attack_modifier_router::SpellAttackModifierApiDoc;
 use routers::spell_list_router::SpellListApiDoc;
 use routers::spell_preset_router::SpellPresetApiDoc;
 use routers::spell_slot_router::SpellSlotApiDoc;
@@ -54,6 +56,7 @@ async fn main() {
     let spp_rep = SpellPresetRepository::new(dbconn.clone());
     let usr_rep = UserRepository::new(dbconn.clone());
     let con_rep = ConcentrationRepository::new(dbconn.clone());
+    let sam_rep = SpellAttackModifierRepository::new(dbconn.clone());
     let ssl_rep = SpellSlotRepository::new(dbconn.clone());
     let sli_rep = SpellListRepository::new(dbconn.clone());
     let cast_rep = SpellCastRepository::new(dbconn.clone());
@@ -77,6 +80,7 @@ async fn main() {
         .manage(spp_rep)
         .manage(usr_rep)
         .manage(con_rep)
+        .manage(sam_rep)
         .manage(ssl_rep)
         .manage(sli_rep)
         .manage(cast_rep)
@@ -84,6 +88,7 @@ async fn main() {
         .mount("/", FileServer::from("./static"))
         .mount("/", routers::get_spell_list_routes())
         .mount("/", routers::get_concentration_routes())
+        .mount("/", routers::get_spell_attack_modifier_routes())
         .mount("/", routers::get_spell_preset_routes())
         .mount("/", routers::get_spell_slot_routes())
         .mount("/", routers::get_spell_cast_routes())
@@ -94,6 +99,7 @@ async fn main() {
                 .url("/api-docs/openapi_spell_preset.json", SpellPresetApiDoc::openapi())
                 .url("/api-docs/openapi_spell_slot.json", SpellSlotApiDoc::openapi())
                 .url("/api-docs/openapi_concentration.json", ConcentrationApiDoc::openapi())
+                .url("/api-docs/openapi_spell_attack_modifier.json", SpellAttackModifierApiDoc::openapi())
                 .url("/api-docs/openapi_spell_cast.json", SpellCastApiDoc::openapi()),
         );
 
