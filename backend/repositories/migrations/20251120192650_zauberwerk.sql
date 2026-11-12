@@ -6,15 +6,16 @@ CREATE TABLE spell_preset (
     level INTEGER NOT NULL,
     description TEXT NOT NULL,
     time TEXT NOT NULL,
-    concentration INTEGER NOT NULL,
+    concentration BOOLEAN NOT NULL,
     duration TEXT NOT NULL,
     range TEXT NOT NULL,
+    school TEXT NOT NULL,
     condition_inflict TEXT NOT NULL,
     saving_throw TEXT NOT NULL,
     affects_creature_type TEXT NOT NULL,
     damage_inflict TEXT NOT NULL,
     spell_attack TEXT NOT NULL,
-    ritual TEXT NOT NULL,
+    ritual BOOLEAN NOT NULL,
     damage_immune TEXT NOT NULL,
     ability_check TEXT NOT NULL,
     damage_resist TEXT NOT NULL,
@@ -27,13 +28,6 @@ CREATE TABLE spell_preset_component (
     component_name TEXT NOT NULL,
     PRIMARY KEY(spell_preset_uuid, component_name),
     FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE
-);
-
-CREATE TABLE spell_preset_school (
-    spell_preset_uuid TEXT NOT NULL,
-    spell_preset_school TEXT NULL,
-    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid),
-    PRIMARY KEY(spell_preset_uuid, spell_preset_school)
 );
 
 CREATE TABLE spell_preset_class (
@@ -122,8 +116,6 @@ BEGIN
             uuid := COALESCE(NEW.uuid, OLD.uuid);
         WHEN 'spell_preset_component' THEN
             uuid := COALESCE(NEW.spell_preset_uuid, OLD.spell_preset_uuid);
-        WHEN 'spell_preset_school' THEN
-            uuid := COALESCE(NEW.spell_preset_uuid, OLD.spell_preset_uuid);
         WHEN 'spell_preset_class' THEN
             uuid := COALESCE(NEW.spell_preset_uuid, OLD.spell_preset_uuid);
         WHEN 'spell_preset_subclass' THEN
@@ -193,11 +185,6 @@ CREATE OR REPLACE TRIGGER spell_preset_component_change_trigger
 AFTER INSERT OR UPDATE OR DELETE ON spell_preset_component
 FOR EACH ROW EXECUTE FUNCTION notify_inventory_change_generic();
 
--- Trigger for spell_preset_school table
-CREATE OR REPLACE TRIGGER spell_preset_school_change_trigger
-AFTER INSERT OR UPDATE OR DELETE ON spell_preset_school
-FOR EACH ROW EXECUTE FUNCTION notify_inventory_change_generic();
-
 -- Trigger for spell_preset_class table
 CREATE OR REPLACE TRIGGER spell_preset_class_change_trigger
 AFTER INSERT OR UPDATE OR DELETE ON spell_preset_class
@@ -237,3 +224,6 @@ FOR EACH ROW EXECUTE FUNCTION notify_inventory_change_generic();
 CREATE OR REPLACE TRIGGER concentration_change_trigger
 AFTER INSERT OR UPDATE OR DELETE ON concentration
 FOR EACH ROW EXECUTE FUNCTION notify_inventory_change_generic();
+
+-- user.dm was an INTEGER (0/1) flag in the init migration
+ALTER TABLE "user" ALTER COLUMN dm TYPE BOOLEAN USING dm = 1;

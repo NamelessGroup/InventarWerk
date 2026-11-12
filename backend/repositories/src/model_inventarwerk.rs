@@ -7,7 +7,7 @@ pub struct User {
     pub uuid: String,
     pub name: String,
     pub avatar: String,
-    pub dm: i32,
+    pub dm: bool,
     #[schema(value_type = String, format = "date-time")]
     pub creation: Option<PrimitiveDateTime>,
 }

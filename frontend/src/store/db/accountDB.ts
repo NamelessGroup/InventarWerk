@@ -1,4 +1,4 @@
-import type { DBAccount } from '@/model/Account'
+import type { Account } from '@/model/Account'
 import { accountData } from '..'
 import { BaseDatabaseHandler } from './base'
 
@@ -39,13 +39,7 @@ export class AccountDB extends BaseDatabaseHandler {
   }
 
   public async getAllAccounts() {
-    const accounts =
-      (await this.get<{ accounts: DBAccount[] }>(['get']).then((r) => r?.accounts)) ?? []
-
-    return accounts.map((account) => ({
-      ...account,
-      dm: account.dm == 1
-    }))
+    return (await this.get<{ accounts: Account[] }>(['get']).then((r) => r?.accounts)) ?? []
   }
 
   private async getOwnUUID() {

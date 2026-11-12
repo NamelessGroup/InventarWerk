@@ -104,7 +104,7 @@ impl<'r> FromRequest<'r> for TargetUser {
 /// # Returns
 /// `true` if the user is a DM, otherwise `false`.
 pub async fn user_is_dm(usr_rep: &UserRepository, user_id: String) -> Result<bool> {
-    Ok(usr_rep.get_user(&user_id).await?.dm == 1)
+    Ok(usr_rep.get_user(&user_id).await?.dm)
 }
 
 
