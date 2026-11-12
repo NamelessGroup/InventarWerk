@@ -1,14 +1,14 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <div class="bg-fuchsia-900 px-1">
+  <div class="bg-primary-default px-1">
     <div class="flex items-center">
       <h3 class="flex-1" @click="showDetails = !showDetails">{{ preset.name }}</h3>
       <FontAwesomeIcon
         v-if="preset.creator == store().uuid"
         :icon="faTrashCan"
-        class="cursor-pointer text-red-300"
+        class="text-delete cursor-pointer"
         @click="
-          (e) => {
+          (e: Event) => {
             e.stopPropagation()
             deletePreset()
           }

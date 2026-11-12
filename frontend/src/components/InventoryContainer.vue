@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 overflow-hidden rounded-sm border-2 border-amber-300 bg-fuchsia-950 p-2">
+  <div class="border-accent bg-primary-dark space-y-2 overflow-hidden rounded-sm border-2 p-2">
     <div class="flex items-center gap-2 overflow-hidden">
       <DiscordImage :user="creator" class="h-6" />
       <div
@@ -21,7 +21,7 @@
       </div>
       <button
         v-if="inventory.ownerUuid === store().uuid"
-        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
         @click="editName()"
       >
         <FontAwesomeIcon :icon="faPen" />
@@ -31,7 +31,7 @@
       </div>
       <div class="flex-1"><!-- Spacer --></div>
       <button
-        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
         @click="expanded = !expanded"
       >
         <FontAwesomeIcon
@@ -48,7 +48,7 @@
       </button>
       <TimedConfirmationButton
         v-if="inventory.ownerUuid === store().uuid"
-        class="h-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900 px-1.5 text-red-300"
+        class="border-accent bg-primary-default text-delete h-7 shrink-0 rounded-sm border px-1.5"
         :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteInventory"
       >
@@ -66,7 +66,7 @@
             :key="k"
             v-model="moneyFieldValues[k]"
             :readonly="!canEdit"
-            class="row-start-1 h-10 rounded-sm border border-amber-300 bg-fuchsia-900 px-1 outline-hidden"
+            class="border-accent bg-primary-default row-start-1 h-10 rounded-sm border px-1 outline-hidden"
             :class="`col-start-${i}`"
             @update="(v) => updateMoney(v, k)"
           />
@@ -74,7 +74,7 @@
             v-for="[k, i, l] of moneyOptions"
             :key="k + 'l'"
             :class="`col-start-${i}`"
-            class="row-start-2 text-center text-sm text-amber-200"
+            class="text-accent row-start-2 text-center text-sm"
             >{{ l }}</span
           >
         </div>
@@ -99,7 +99,7 @@
 
         <button
           v-if="inventory.writer.includes(store().uuid)"
-          class="h-10 w-full rounded-sm bg-fuchsia-900 text-center"
+          class="bg-primary-default h-10 w-full rounded-sm text-center"
           @click="showAddItemPopup = true"
         >
           + Add item

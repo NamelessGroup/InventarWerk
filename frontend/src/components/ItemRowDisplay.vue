@@ -1,10 +1,10 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
   <div
-    class="my-2 grid rounded-sm border bg-fuchsia-900 p-1"
+    class="bg-primary-default my-2 grid rounded-sm border p-1"
     :class="{
-      'border-amber-300': expanded,
-      'border-fuchsia-900': !expanded
+      'border-accent': expanded,
+      'border-primary-default': !expanded
     }"
     @click="expanded = !expanded"
   >
@@ -12,7 +12,7 @@
       <NumericInput
         v-model="amountValue"
         :readonly="!canEdit"
-        class="row-start-1 my-auto h-8 w-10 rounded-sm border-none bg-fuchsia-950 px-1 text-right outline-hidden"
+        class="bg-primary-dark row-start-1 my-auto h-8 w-10 rounded-sm border-none px-1 text-right outline-hidden"
         @click="
           (e: Event) => {
             e.stopPropagation()
@@ -24,7 +24,7 @@
 
       <TimedConfirmationButton
         v-if="canEdit"
-        class="row-start-1 my-auto h-8 rounded-sm border-none bg-fuchsia-950 px-3 text-red-300"
+        class="bg-primary-dark text-delete row-start-1 my-auto h-8 rounded-sm border-none px-3"
         :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteItem()"
       >
@@ -41,7 +41,7 @@
           <p class="markdown mb-1 text-xs" v-html="description"></p>
           <textarea
             v-model="itemNote"
-            class="rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-fuchsia-300 outline-hidden"
+            class="border-accent bg-primary-default text-primary-text rounded-sm border text-xs outline-hidden"
             placeholder="Notes"
             @click="(e) => e.stopPropagation()"
             @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"
@@ -49,7 +49,7 @@
           <textarea
             v-if="store().userIsDm"
             v-model="dmNote"
-            class="mt-1 rounded-sm border border-amber-300 bg-fuchsia-900 text-xs text-amber-300 outline-hidden"
+            class="border-accent bg-primary-default text-accent mt-1 rounded-sm border text-xs outline-hidden"
             placeholder="DM Note"
             @click="(e) => e.stopPropagation()"
             @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
@@ -57,7 +57,7 @@
 
           <button
             v-if="store().uuid == item.presetCreator"
-            class="absolute top-2 right-0 h-6 w-6 rounded-sm border border-amber-300 bg-fuchsia-950 text-xs"
+            class="border-accent bg-primary-dark absolute top-2 right-0 h-6 w-6 rounded-sm border text-xs"
             @click="(e) => openEdit(e)"
           >
             <FontAwesomeIcon :icon="faPen" />

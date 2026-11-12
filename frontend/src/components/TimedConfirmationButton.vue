@@ -92,8 +92,8 @@ function setAnimation() {
   for (let i = 1; i < 100; i++) {
     const progress = i / 100
     const length = totalLength * progress
-    let x = -1
-    let y = -1
+    let x: number
+    let y: number
     if (length < width / 2) {
       x = -length
       y = height / 2
@@ -146,8 +146,8 @@ onBeforeUnmount(() => {
 .fadeOut {
   position: relative;
   background-image: conic-gradient(
-    var(--color-red-500),
-    var(--color-red-500) var(--border-progress-fill),
+    var(--color-error-text),
+    var(--color-error-text) var(--border-progress-fill),
     transparent var(--border-progress-fill)
   );
   z-index: 0;

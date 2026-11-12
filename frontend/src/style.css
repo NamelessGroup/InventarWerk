@@ -1,27 +1,7 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:is(.dark *));
-
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
-}
-
 body {
-  @apply bg-slate-950;
+  @apply bg-background;
 }
 
 .break-wrap {
@@ -60,4 +40,21 @@ body {
 .markdown li > ol,
 .markdown li > ul {
   @apply ml-4;
+}
+
+@theme {
+  --color-background: var(--colBackground);
+  --color-popup-background: var(--colPopUpBackground);
+  --color-text: var(--colFont);
+  --color-error-popup-text: var(--colErrorFont);
+  --color-error-popup-bg: var(--colErrorBackground);
+  --color-error-popup-bar: var(--colErrorBar);
+  --color-error-text: var(--colErrorFont);
+  --color-accent: var(--colAccent);
+  --color-delete: var(--colDelete);
+
+  --color-primary-text: var(--colPrimaryFont);
+  --color-primary-dark: var(--colPrimaryDark);
+  --color-primary-default: var(--colPrimaryDefault);
+  --color-primary-light: var(--colPrimaryLight);
 }

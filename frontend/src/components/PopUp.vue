@@ -11,12 +11,12 @@
       "
     >
       <div
-        class="popup-card blur-0 relative z-40 h-full w-full overflow-visible rounded-sm border border-amber-300 bg-slate-900 p-5 md:h-[60vh] md:w-[80vw]"
+        class="popup-card blur-0 border-accent bg-popup-background relative z-40 h-full w-full overflow-visible rounded-sm border p-5 md:h-[60vh] md:w-[80vw]"
         :class="popupClass"
         @click="($event) => $event.stopPropagation()"
       >
         <button
-          class="absolute -top-2 -right-2 z-50 flex h-7 w-7 items-center rounded-full border border-amber-300 bg-slate-900 text-center text-xl"
+          class="border-accent bg-popup-background absolute -top-2 -right-2 z-50 flex h-7 w-7 items-center rounded-full border text-center text-xl"
           @click="close()"
         >
           <p class="w-full text-center">

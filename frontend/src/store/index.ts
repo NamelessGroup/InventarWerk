@@ -37,29 +37,29 @@ export const store = defineStore('store', {
     },
     async addReadShare(inventoryUuid: string, newShare: string) {
       this.inventories[inventoryUuid].reader.push(newShare)
-      await DatabaseHandler.getInstance().addShare(inventoryUuid, { reader_uuid: newShare })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, newShare, 'r')
     },
     async removeReadShare(inventoryUuid: string, shareToRemove: string) {
       this.inventories[inventoryUuid].reader = this.inventories[inventoryUuid].reader.filter(
         (share) => share !== shareToRemove
       )
-      await DatabaseHandler.getInstance().removeShare(inventoryUuid, { reader_uuid: shareToRemove })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, shareToRemove)
     },
     async addWriteShare(inventoryUuid: string, newShare: string) {
       this.inventories[inventoryUuid].writer.push(newShare)
-      await DatabaseHandler.getInstance().addShare(inventoryUuid, { writer_uuid: newShare })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, newShare, 'w')
     },
     async removeWriteShare(inventoryUuid: string, shareToRemove: string) {
       this.inventories[inventoryUuid].writer = this.inventories[inventoryUuid].writer.filter(
         (share) => share !== shareToRemove
       )
-      await DatabaseHandler.getInstance().removeShare(inventoryUuid, { writer_uuid: shareToRemove })
+      await DatabaseHandler.getInstance().setShare(inventoryUuid, shareToRemove, 'r')
     },
     makePublic(inventoryUuid: string, allAccounts?: string[]) {
       if (allAccounts) {
         this.inventories[inventoryUuid].reader = allAccounts
       }
-      return DatabaseHandler.getInstance().addShare(inventoryUuid, {})
+      return DatabaseHandler.getInstance().setShare(inventoryUuid)
     },
     deleteInventory(inventoryUuid: string) {
       this.inventoryUuids = this.inventoryUuids.filter((uuid) => uuid !== inventoryUuid)
