@@ -24,7 +24,7 @@ defineProps({
   }
 })
 
-const collapseTransition = ref<HTMLElement>();
+const collapseTransition = ref<HTMLElement>()
 const fullHeight = ref('100vh') // We have to guess a sensible initial value here, for the very first animation
 
 function updateFullHeight(el: Element) {
@@ -33,9 +33,9 @@ function updateFullHeight(el: Element) {
 
 onMounted(() => {
   if (collapseTransition.value) {
-    fullHeight.value = collapseTransition.value.scrollHeight + "px";
+    fullHeight.value = collapseTransition.value.scrollHeight + 'px'
   }
-});
+})
 </script>
 
 <style scoped>
