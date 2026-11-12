@@ -10,6 +10,14 @@ export interface ComplexEntry {
   items?: string[]
 }
 
+export function parse(entry: Entry): string {
+  if (typeof entry === 'string') {
+    return entry
+  } else {
+    return descriptionTranslator[entry.type](entry)
+  }
+}
+
 const descriptionTranslator: Record<LineType, (entry: ComplexEntry, section?: boolean) => string> =
   {
     entries: entryParser, //"Ythryn Mythallar",
@@ -20,86 +28,85 @@ const descriptionTranslator: Record<LineType, (entry: ComplexEntry, section?: bo
     quote: quoteParser //Iggwilv's Cauldron
   }
 
-
-  function quoteParser(entry: ComplexEntry) {
-    const lines: Array<string> = []
-    for (const line of entry.entries ?? '') {
-      if (typeof line === 'string') {
-        lines.push(line)
-      } else {
-        const complexEntry: ComplexEntry = line
-        lines.push(descriptionTranslator[line.type](complexEntry))
-      }
-    }
-    lines[0] = `*"${lines[0]}`
-    lines[lines.length - 1] = `${lines[lines.length - 1]}"*`
-    return lines.join('\n')
-  }
-
-  function entryParser(entry: ComplexEntry, section?: boolean) {
-    const lines: Array<string> = []
-    //Should at least have one string line
-    for (const line of entry.entries ?? '') {
-      if (typeof line === 'string') {
-        lines.push(line)
-      } else {
-        const complexEntry: ComplexEntry = line
-        lines.push(descriptionTranslator[line.type](complexEntry))
-      }
-    }
-    if (lines.length == 0) lines.push('')
-    if ((section ?? false) == true && entry.name) {
-      lines.unshift(`## ${entry.name}`)
+function quoteParser(entry: ComplexEntry) {
+  const lines: Array<string> = []
+  for (const line of entry.entries ?? '') {
+    if (typeof line === 'string') {
+      lines.push(line)
     } else {
-      lines[0] = `${entry.name ? '**' + entry.name + '**. ' : ''}${lines[0]}`
+      const complexEntry: ComplexEntry = line
+      lines.push(descriptionTranslator[line.type](complexEntry))
     }
-    return lines.join('\n\n')
   }
+  lines[0] = `*"${lines[0]}`
+  lines[lines.length - 1] = `${lines[lines.length - 1]}"*`
+  return lines.join('\n')
+}
 
-  function insetParser(entry: ComplexEntry) {
-    const lines: Array<string> = ['---', `**${entry.name ?? ''}**`]
-    for (const line of entry.entries ?? '') {
-      if (typeof line === 'string') {
-        lines.push(line)
-      } else {
-        const complexEntry: ComplexEntry = line
-        lines.push(descriptionTranslator[line.type](complexEntry))
-      }
+function entryParser(entry: ComplexEntry, section?: boolean) {
+  const lines: Array<string> = []
+  //Should at least have one string line
+  for (const line of entry.entries ?? '') {
+    if (typeof line === 'string') {
+      lines.push(line)
+    } else {
+      const complexEntry: ComplexEntry = line
+      lines.push(descriptionTranslator[line.type](complexEntry))
     }
-    lines.push('---')
-    return lines.join('\n\n')
   }
+  if (lines.length == 0) lines.push('')
+  if ((section ?? false) == true && entry.name) {
+    lines.unshift(`## ${entry.name}`)
+  } else {
+    lines[0] = `${entry.name ? '**' + entry.name + '**. ' : ''}${lines[0]}`
+  }
+  return lines.join('\n\n')
+}
 
-  function listParser(entry: ComplexEntry) {
-    const lines: Array<string> = []
-    for (const line of entry.items ?? '') {
-      lines.push(`- ${line}`)
+function insetParser(entry: ComplexEntry) {
+  const lines: Array<string> = ['---', `**${entry.name ?? ''}**`]
+  for (const line of entry.entries ?? '') {
+    if (typeof line === 'string') {
+      lines.push(line)
+    } else {
+      const complexEntry: ComplexEntry = line
+      lines.push(descriptionTranslator[line.type](complexEntry))
     }
-    return lines.join('\n')
   }
+  lines.push('---')
+  return lines.join('\n\n')
+}
 
-  function sectionParser(entry: ComplexEntry) {
-    const lines: Array<string> = []
-    for (const line of entry.entries ?? '') {
-      if (typeof line === 'string') {
-        lines.push(line)
-      } else {
-        const complexEntry: ComplexEntry = line
-        if (line.type == 'entries') lines.push(descriptionTranslator[line.type](complexEntry, true))
-        else lines.push(descriptionTranslator[line.type](complexEntry))
-      }
-    }
-    return lines.join('\n\n')
+function listParser(entry: ComplexEntry) {
+  const lines: Array<string> = []
+  for (const line of entry.items ?? '') {
+    lines.push(`- ${line}`)
   }
+  return lines.join('\n')
+}
 
-  function tableParser(entry: ComplexEntry) {
-    const lines: Array<string> = [
-      ` *${entry.caption ?? ''}*`,
-      `|${entry.colLabels?.join('|')}|`,
-      `|${entry.colLabels?.map(() => '---').join('|')}|`
-    ]
-    for (const row of entry.rows ?? []) {
-      lines.push(`|${row.join('|')}|`)
+function sectionParser(entry: ComplexEntry) {
+  const lines: Array<string> = []
+  for (const line of entry.entries ?? '') {
+    if (typeof line === 'string') {
+      lines.push(line)
+    } else {
+      const complexEntry: ComplexEntry = line
+      if (line.type == 'entries') lines.push(descriptionTranslator[line.type](complexEntry, true))
+      else lines.push(descriptionTranslator[line.type](complexEntry))
     }
-    return lines.join('\n')
   }
+  return lines.join('\n\n')
+}
+
+function tableParser(entry: ComplexEntry) {
+  const lines: Array<string> = [
+    ` *${entry.caption ?? ''}*`,
+    `|${entry.colLabels?.join('|')}|`,
+    `|${entry.colLabels?.map(() => '---').join('|')}|`
+  ]
+  for (const row of entry.rows ?? []) {
+    lines.push(`|${row.join('|')}|`)
+  }
+  return lines.join('\n')
+}

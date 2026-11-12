@@ -25,7 +25,7 @@
             :concentration-spell="zauberData().concentrationSpell[accountData().uuid]"
           />
 
-          <div class="md:flex-1 md:overflow-auto min-h-[3000px]"></div>
+          <div class="min-h-[3000px] md:flex-1 md:overflow-auto"></div>
         </div>
       </template>
     </PageBase>

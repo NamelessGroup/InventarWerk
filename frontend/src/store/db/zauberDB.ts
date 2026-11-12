@@ -61,19 +61,23 @@ export class ZauberDB extends BaseDatabaseHandler {
   }
 
   public async getConcentrationSpell(uuid?: string) {
-    const result = await this.get<{spellPresetUuid: string}>([ZauberDB.CONCENTRATION_END_POINT], uuid ? {uuid} : {})
+    const result = await this.get<{ spellPresetUuid: string }>(
+      [ZauberDB.CONCENTRATION_END_POINT],
+      uuid ? { uuid } : {}
+    )
     if (result) return result.spellPresetUuid
     return undefined
   }
 
   public async removeConcentration(uuid?: string) {
-    const result = await this.delete<unknown>([ZauberDB.CONCENTRATION_END_POINT], uuid ? {uuid} : {})
+    const result = await this.delete<unknown>(
+      [ZauberDB.CONCENTRATION_END_POINT],
+      uuid ? { uuid } : {}
+    )
     return result !== undefined
   }
 
-  public async createSpellList() {
-    
-  }
+  public async createSpellList() {}
 }
 
 interface SpellSlotResult {

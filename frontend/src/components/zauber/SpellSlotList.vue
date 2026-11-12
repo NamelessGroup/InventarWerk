@@ -31,8 +31,10 @@
     </div>
 
     <div v-if="concentrationSpell" class="text-lg">
-      Concentrating on <span class="italic bold text-accent">{{ concentrationSpell }}</span>
-      <button class="border-accent bg-primary-default mr-2 flex h-7 shrink-0 items-center w-fit gap-2 rounded-sm border">
+      Concentrating on <span class="bold text-accent italic">{{ concentrationSpell }}</span>
+      <button
+        class="border-accent bg-primary-default mr-2 flex h-7 w-fit shrink-0 items-center gap-2 rounded-sm border"
+      >
         <FontAwesomeIcon :icon="faX" />
         <span>Cancel Concentration</span>
       </button>

@@ -1,8 +1,7 @@
-import { ErrorHandler } from '@/errorHandling/ErrorHandler'
 import type { ItemPreset } from '@/model/ItemPreset'
+import { parse, type Entry } from './Entry'
+import { processList } from './DB'
 import { BaseDatabaseHandler } from '@/store/db/base'
-import axios from 'axios'
-import type { ComplexEntry, LineType } from './shared'
 
 interface ItemJSON {
   name: string
@@ -165,15 +164,8 @@ export async function parseItems(itemList: ItemListJSON) {
         console.info(`Missing Type: ${x.type} on item ${x.name}`)
         return 'Other'
       })()
-    const lines: Array<string> = []
-    for (const line of x.entries ?? '') {
-      if (typeof line === 'string') {
-        lines.push(line)
-      } else {
-        const complexEntry: ComplexEntry = line
-        lines.push(descriptionTranslator[line.type](complexEntry))
-      }
-    }
+    const lines: Array<string> = x.entries.map(parse)
+
     if (x.reqAttune) {
       if (x.reqAttune === true) parsedItem.description = `*Requires Attunement*\n\n`
       else parsedItem.description = `*Requires Attunement ${x.reqAttune}*\n\n`
@@ -238,8 +230,5 @@ export async function parseItems(itemList: ItemListJSON) {
     parsedItemList.push(parsedItem)
   }
 
-  processList(parsedItemList)
-
+  processList(parsedItemList, BaseDatabaseHandler.getBaseURL(8000) + 'TODO', 'TODO')
 }
-
-

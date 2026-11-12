@@ -12,7 +12,7 @@ export const zauberData = defineStore('zauber', () => {
   const spellLists = ref<Record<string, SpellList>>({})
   const spellPresets = ref<SpellPreset[]>([])
   const spellSlots = ref<Record<string, SpellSlots>>({})
-  const concentrationSpell = ref<Record<string,string|undefined>>({})
+  const concentrationSpell = ref<Record<string, string | undefined>>({})
 
   function setAvailableSlots(level: number, amount: number, uuid?: string) {
     if (!uuid) uuid = accountData().uuid
@@ -37,9 +37,7 @@ export const zauberData = defineStore('zauber', () => {
     DB.zauber.resetSpellSlots(uuid)
   }
 
-  async function createSpellList(name: string) {
-    
-  }
+  async function createSpellList(name: string) {}
 
   return {
     spellListUuids,
