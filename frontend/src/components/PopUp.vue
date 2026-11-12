@@ -56,7 +56,7 @@ function transitionFinished() {
 }
 </script>
 
-<style>
+<style scoped>
 .popup-enter-from,
 .popup-leave-to {
   opacity: 0;

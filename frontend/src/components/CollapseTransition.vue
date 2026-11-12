@@ -1,5 +1,6 @@
 <template>
   <Transition
+    ref="collapseTransition"
     name="collapse"
     :class="{ opacity: withOpacity }"
     @enter="updateFullHeight"
@@ -10,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 defineProps({
   withOpacity: {
@@ -23,14 +24,21 @@ defineProps({
   }
 })
 
+const collapseTransition = ref<HTMLElement>();
 const fullHeight = ref('100vh') // We have to guess a sensible initial value here, for the very first animation
 
 function updateFullHeight(el: Element) {
   fullHeight.value = `${el.scrollHeight}px`
 }
+
+onMounted(() => {
+  if (collapseTransition.value) {
+    fullHeight.value = collapseTransition.value.scrollHeight + "px";
+  }
+});
 </script>
 
-<style>
+<style scoped>
 .collapse-enter-from,
 .collapse-leave-to {
   max-height: 0px;
