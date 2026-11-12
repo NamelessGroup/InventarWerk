@@ -80,7 +80,7 @@ import PopUp from '@/components/PopUp.vue'
 import ManagePresetsPopUp from '@/components/presetEditor/ManagePresetsPopUp.vue'
 import { computed, ref } from 'vue'
 import type { Inventory } from '@/model/Inventory'
-import { parseItems } from '@/utils/itemParser'
+import { parseItems } from '@/parser/itemParser'
 import { DB } from '@/store/db'
 
 ThemeManager.getInstance().pageTheme = 'inventar'
