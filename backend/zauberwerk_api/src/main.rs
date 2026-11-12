@@ -26,7 +26,7 @@ use routers::spell_attack_modifier_router::SpellAttackModifierApiDoc;
 use routers::spell_list_router::SpellListApiDoc;
 use routers::spell_preset_router::SpellPresetApiDoc;
 use routers::spell_slot_router::SpellSlotApiDoc;
-use routers::spell_cast_router::{SpellCastApiDoc, SpellCastEvent};
+use routers::spell_cast_router::{SpellCastApiDoc, SpellEvent};
 
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -62,7 +62,7 @@ async fn main() {
     let cast_rep = SpellCastRepository::new(dbconn.clone());
 
     // Broadcast channel for the spell cast SSE stream
-    let (cast_tx, _cast_rx) = channel::<SpellCastEvent>(1024);
+    let (cast_tx, _cast_rx) = channel::<SpellEvent>(1024);
 
 
     let mut figment = Config::figment().merge(("secret_key", secret_key));

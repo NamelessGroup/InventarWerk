@@ -26,30 +26,18 @@ impl ConcentrationRepository {
         })
     }
 
-    /// Sets the spell the owner is concentrating on, replacing any previous concentration.
-    pub async fn set_concentration(&self, owner_uuid: &str, spell_preset_uuid: &str) -> Result<(), Error> {
-        sqlx::query!(
-            "INSERT INTO concentration (owner_uuid, spell_preset_uuid)
-             VALUES ($1, $2)
-             ON CONFLICT (owner_uuid)
-             DO UPDATE SET spell_preset_uuid = $2",
-            owner_uuid,
-            spell_preset_uuid
-        )
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-
-    /// Ends the concentration of the owner. Does nothing if the owner is not concentrating.
-    pub async fn remove_concentration(&self, owner_uuid: &str) -> Result<(), Error> {
-        sqlx::query!(
-            "DELETE FROM concentration WHERE owner_uuid = $1",
+    /// Ends the concentration of the owner.
+    ///
+    /// Returns the UUID of the spell preset the owner was concentrating on,
+    /// or `None` if the owner was not concentrating.
+    pub async fn remove_concentration(&self, owner_uuid: &str) -> Result<Option<String>, Error> {
+        let ended = sqlx::query_scalar!(
+            "DELETE FROM concentration WHERE owner_uuid = $1 RETURNING spell_preset_uuid",
             owner_uuid
         )
-        .execute(&self.pool)
+        .fetch_optional(&self.pool)
         .await?;
-        Ok(())
+        Ok(ended)
     }
 
     /// Retrieves all users that are currently concentrating.

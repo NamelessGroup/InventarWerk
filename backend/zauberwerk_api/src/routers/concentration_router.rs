@@ -1,11 +1,19 @@
-use repos::{model_zauberwerk::Concentration, repos::zauberwek::concentration_repository::ConcentrationRepository};
+use repos::{
+    model_zauberwerk::Concentration,
+    repos::{
+        user_repository::UserRepository,
+        zauberwek::{concentration_repository::ConcentrationRepository, spell_preset_repository::SpellPresetRepository},
+    },
+};
+use rocket::tokio::sync::broadcast::Sender;
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 use utils::{DmUser, TargetUser};
 
 use super::OwnerUUID;
+use super::spell_cast_router::{broadcast_concentration_ended, SpellEvent};
 use rocket_errors::anyhow::Result;
-use utoipa::{IntoParams, OpenApi, ToSchema};
+use utoipa::{OpenApi, ToSchema};
 
 #[utoipa::path(
     get,
@@ -60,44 +68,13 @@ pub async fn get_all_concentrations(
 
 }
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
-pub struct SetConcentrationParams {
-    /// UUID of the spell preset the user is concentrating on. Replaces any previous concentration.
-    spell_preset_uuid: String
-}
-
-#[utoipa::path(
-    put,
-    path = "/concentration",
-    summary = "Set the concentration of a user",
-    description = r#"Sets the spell the requesting user is concentrating on. A previous concentration is replaced.
-
-Note: casting a concentration spell via `PUT /spellPreset/cast` sets the concentration automatically.
-
-If `owner_uuid` is given and differs from the requesting user, DM privileges are required."#,
-    params(OwnerUUID, SetConcentrationParams),
-    responses(
-        (status = 204, description = "Concentration successfully set"),
-        (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
-        (status = 500, description = "Spell preset does not exist or database error")
-    ),
-    security(("bearer_auth" = [])),
-    tag = "Concentration"
-)]
-#[put("/concentration?<params..>")]
-pub async fn modify_concentration(
-    target: TargetUser,
-    params: SetConcentrationParams,
-    con_rep: &State<ConcentrationRepository>) -> Result<Status> {
-    con_rep.set_concentration(&target.owner_uuid, &params.spell_preset_uuid).await?;
-    Ok(Status::NoContent)
-}
-
 #[utoipa::path(
     delete,
     path = "/concentration",
     summary = "End the concentration of a user",
     description = r#"Ends the concentration of the requesting user. Does nothing if the user is not concentrating.
+
+If a concentration was ended, a `concentrationEnded` event is broadcast on `GET /spellPreset/cast/stream`.
 
 If `owner_uuid` is given and differs from the requesting user, DM privileges are required."#,
     params(OwnerUUID),
@@ -112,8 +89,17 @@ If `owner_uuid` is given and differs from the requesting user, DM privileges are
 #[delete("/concentration")]
 pub async fn remove_concentration(
     target: TargetUser,
-    con_rep: &State<ConcentrationRepository>) -> Result<Status> {
-    con_rep.remove_concentration(&target.owner_uuid).await?;
+    con_rep: &State<ConcentrationRepository>,
+    usr_rep: &State<UserRepository>,
+    spp_rep: &State<SpellPresetRepository>,
+    queue: &State<Sender<SpellEvent>>) -> Result<Status> {
+    if let Some(ended) = con_rep.remove_concentration(&target.owner_uuid).await? {
+        broadcast_concentration_ended(
+            queue, usr_rep, spp_rep,
+            target.owner_uuid, target.requester_uuid,
+            &ended,
+        ).await?;
+    }
     Ok(Status::NoContent)
 }
 
@@ -122,14 +108,12 @@ pub async fn remove_concentration(
     paths(
         get_concentration,
         get_all_concentrations,
-        modify_concentration,
         remove_concentration
     ),
     components(
         schemas(
             Concentration,
-            ConcentrationReturnList,
-            SetConcentrationParams
+            ConcentrationReturnList
         )
     ),
     tags(

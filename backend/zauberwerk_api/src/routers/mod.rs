@@ -30,7 +30,6 @@ pub fn get_concentration_routes() -> Vec<Route> {
     routes![
         get_concentration,
         get_all_concentrations,
-        modify_concentration,
         remove_concentration
     ]
 }

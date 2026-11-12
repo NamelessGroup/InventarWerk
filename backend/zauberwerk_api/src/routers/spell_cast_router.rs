@@ -23,6 +23,65 @@ use utoipa::{IntoParams, OpenApi, ToSchema};
 /// Highest spell slot level.
 const MAX_SPELL_LEVEL: i32 = 9;
 
+/// All events sent over `GET /spellPreset/cast/stream`.
+/// The SSE event name tells the client which payload to expect.
+#[derive(Clone, Debug)]
+pub enum SpellEvent {
+    /// SSE event `spellCast`
+    Cast(SpellCastEvent),
+    /// SSE event `concentrationEnded`
+    ConcentrationEnded(ConcentrationEndedEvent),
+}
+
+/// Event that is broadcast when the concentration of a user is ended via `DELETE /concentration`.
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ConcentrationEndedEvent {
+    /// UUID of the user whose concentration ended
+    pub owner_uuid: String,
+    /// Display name of the user whose concentration ended
+    pub owner_name: String,
+    /// UUID of the user who ended the concentration. Differs from `ownerUuid` if a DM ended it for a player.
+    pub triggered_by_uuid: String,
+    /// The complete spell preset the user was concentrating on
+    pub spell: SpellPreset,
+    /// Unix timestamp in milliseconds
+    pub timestamp: u128,
+}
+
+/// Current Unix timestamp in milliseconds.
+fn now_millis() -> u128 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_millis()
+}
+
+/// Builds a `ConcentrationEndedEvent` and broadcasts it to all stream clients.
+pub async fn broadcast_concentration_ended(
+    queue: &Sender<SpellEvent>,
+    usr_rep: &UserRepository,
+    spp_rep: &SpellPresetRepository,
+    owner_uuid: String,
+    triggered_by_uuid: String,
+    ended_spell_uuid: &str,
+) -> Result<()> {
+    let owner = usr_rep.get_user(&owner_uuid).await?;
+    let spell = spp_rep.get_spell_preset(ended_spell_uuid).await?;
+
+    let event = ConcentrationEndedEvent {
+        owner_uuid,
+        owner_name: owner.name,
+        triggered_by_uuid,
+        spell,
+        timestamp: now_millis(),
+    };
+
+    // Sending only fails if no client is subscribed, which is fine.
+    let _ = queue.send(SpellEvent::ConcentrationEnded(event));
+    Ok(())
+}
+
 /// Event that is broadcast to all clients of `/spellPreset/cast/stream` whenever a spell is cast.
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -69,7 +128,7 @@ The spell must be contained in at least one spell list of the caster. In a singl
 - one spell slot of the cast level is consumed (cantrips consume no slot),
 - if the spell requires concentration, the caster's concentration is set to this spell, replacing any previous concentration.
 
-On success a `SpellCastEvent` with all information about the cast is returned and broadcast to all clients of `GET /spellPreset/cast/stream`. The changes to spell slots and concentration are additionally reported via the regular last-changes stream."#,
+On success a `SpellCastEvent` with all information about the cast is returned and broadcast as SSE event `spellCast` to all clients of `GET /spellPreset/cast/stream`. The changes to spell slots and concentration are additionally reported via the regular last-changes stream."#,
     params(OwnerUUID, CastSpellParams),
     responses(
         (status = 200, description = "Spell was cast", body = SpellCastEvent),
@@ -89,7 +148,7 @@ pub async fn cast_spell(
     spp_rep: &State<SpellPresetRepository>,
     sli_rep: &State<SpellListRepository>,
     cast_rep: &State<SpellCastRepository>,
-    queue: &State<Sender<SpellCastEvent>>,
+    queue: &State<Sender<SpellEvent>>,
 ) -> Result<Result<Json<SpellCastEvent>, Status>> {
     let TargetUser { requester_uuid, owner_uuid: caster_uuid } = target;
 
@@ -121,10 +180,7 @@ pub async fn cast_spell(
         CastOutcome::NoSlotAvailable => return Ok(Err(Status::Conflict)),
     };
 
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_millis();
+    let timestamp = now_millis();
 
     let event = SpellCastEvent {
         caster_uuid,
@@ -141,7 +197,7 @@ pub async fn cast_spell(
     };
 
     // Sending only fails if no client is subscribed, which is fine.
-    let _ = queue.send(event.clone());
+    let _ = queue.send(SpellEvent::Cast(event.clone()));
 
     Ok(Ok(Json(event)))
 }
@@ -149,10 +205,15 @@ pub async fn cast_spell(
 #[utoipa::path(
     get,
     path = "/spellPreset/cast/stream",
-    summary = "Subscribe to spell cast events",
-    description = "Opens a Server-Sent Events (SSE) stream that pushes a `SpellCastEvent` (JSON) to every connected client whenever a spell is cast via `PUT /spellPreset/cast`.",
+    summary = "Subscribe to spell events",
+    description = r#"Opens a Server-Sent Events (SSE) stream for all connected clients. The SSE event name tells which JSON payload follows:
+
+- `spellCast` (`SpellCastEvent`): a spell was cast via `PUT /spellPreset/cast`
+- `concentrationEnded` (`ConcentrationEndedEvent`): a concentration was ended via `DELETE /concentration`
+
+In the browser use `eventSource.addEventListener('<event name>', ...)`; `onmessage` does not receive named events."#,
     responses(
-        (status = 200, description = "Event stream established", content_type = "text/event-stream", body = SpellCastEvent)
+        (status = 200, description = "Event stream established", content_type = "text/event-stream")
     ),
     security(("bearer_auth" = [])),
     tag = "Spell Casting"
@@ -160,7 +221,7 @@ pub async fn cast_spell(
 #[get("/spellPreset/cast/stream")]
 pub async fn spell_cast_stream(
     _user: AuthenticatedUser,
-    queue: &State<Sender<SpellCastEvent>>,
+    queue: &State<Sender<SpellEvent>>,
     mut end: Shutdown,
 ) -> EventStream![] {
     let mut rx = queue.subscribe();
@@ -175,7 +236,10 @@ pub async fn spell_cast_stream(
                 _ = &mut end => break,
             };
 
-            yield Event::json(&msg);
+            yield match msg {
+                SpellEvent::Cast(event) => Event::json(&event).event("spellCast"),
+                SpellEvent::ConcentrationEnded(event) => Event::json(&event).event("concentrationEnded"),
+            };
         }
     }
 }
@@ -189,6 +253,7 @@ pub async fn spell_cast_stream(
     components(
         schemas(
             SpellCastEvent,
+            ConcentrationEndedEvent,
             CastSpellParams,
             SpellPreset
         )
