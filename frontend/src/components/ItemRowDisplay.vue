@@ -13,11 +13,7 @@
         v-model="amountValue"
         :readonly="!canEdit"
         class="bg-primary-dark row-start-1 my-auto h-8 w-10 rounded-sm border-none px-1 text-right outline-hidden"
-        @click="
-          (e: Event) => {
-            e.stopPropagation()
-          }
-        "
+        @click.stop
         @update="(v) => editAmount(v)"
       />
       <div class="break-wrap row-start-1 flex items-center px-2">{{ item.name }}</div>
@@ -43,7 +39,7 @@
             v-model="itemNote"
             class="border-accent bg-primary-default text-primary-text rounded-sm border text-xs outline-hidden"
             placeholder="Notes"
-            @click="(e) => e.stopPropagation()"
+            @click.stop
             @blur="store().editItemNote(inventoryUuid, item.presetReference, itemNote)"
           ></textarea>
           <textarea
@@ -51,7 +47,7 @@
             v-model="dmNote"
             class="border-accent bg-primary-default text-accent mt-1 rounded-sm border text-xs outline-hidden"
             placeholder="DM Note"
-            @click="(e) => e.stopPropagation()"
+            @click.stop
             @blur="store().editDmNote(inventoryUuid, item.presetReference, dmNote)"
           ></textarea>
 

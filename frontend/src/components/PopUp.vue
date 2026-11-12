@@ -3,17 +3,12 @@
     <div
       v-show="showPopup"
       class="fixed top-0 right-0 bottom-0 left-0 z-30 flex items-center justify-center bg-black/20 p-4 backdrop-blur-[2px]"
-      @click="
-        ($event) => {
-          $event.stopPropagation()
-          close()
-        }
-      "
+      @click.stop="close()"
     >
       <div
         class="popup-card blur-0 border-accent bg-popup-background relative z-40 h-full w-full overflow-visible rounded-sm border p-5 md:h-[60vh] md:w-[80vw]"
         :class="popupClass"
-        @click="($event) => $event.stopPropagation()"
+        @click.stop
       >
         <button
           class="border-accent bg-popup-background absolute -top-2 -right-2 z-50 flex h-7 w-7 items-center rounded-full border text-center text-xl"
