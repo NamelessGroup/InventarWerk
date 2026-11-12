@@ -12,12 +12,14 @@ pub struct OwnerUUID {
 }
 
 pub mod concentration_router;
+pub mod spell_attack_modifier_router;
 pub mod spell_cast_router;
 pub mod spell_list_router;
 pub mod spell_preset_router;
 pub mod spell_slot_router;
 
 use concentration_router::*;
+use spell_attack_modifier_router::*;
 use spell_cast_router::*;
 use spell_list_router::*;
 use spell_preset_router::*;
@@ -30,6 +32,14 @@ pub fn get_concentration_routes() -> Vec<Route> {
         get_all_concentrations,
         modify_concentration,
         remove_concentration
+    ]
+}
+
+pub fn get_spell_attack_modifier_routes() -> Vec<Route> {
+    routes![
+        get_spell_attack_modifier,
+        get_all_spell_attack_modifiers,
+        set_spell_attack_modifier
     ]
 }
 

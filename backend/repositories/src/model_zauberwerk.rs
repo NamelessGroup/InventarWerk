@@ -57,3 +57,11 @@ pub struct Concentration {
     /// UUID of the spell preset the user is concentrating on, or `null` if the user is not concentrating.
     pub spell_preset_uuid: Option<String>,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellAttackModifier {
+    pub owner_uuid: String,
+    /// The spell attack modifier of the user, or `null` if none was set yet.
+    pub modifier: Option<i32>,
+}

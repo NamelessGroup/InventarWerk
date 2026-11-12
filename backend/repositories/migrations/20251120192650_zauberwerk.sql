@@ -91,6 +91,14 @@ CREATE TABLE concentration (
     PRIMARY KEY(owner_uuid)
 );
 
+-- Spell attack modifier of each player. No row means no modifier was set yet.
+CREATE TABLE spell_attack_modifier (
+    owner_uuid TEXT NOT NULL,
+    modifier INTEGER NOT NULL,
+    FOREIGN KEY(owner_uuid) REFERENCES "user"(uuid),
+    PRIMARY KEY(owner_uuid)
+);
+
 CREATE OR REPLACE FUNCTION notify_inventory_change_generic()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -131,6 +139,8 @@ BEGIN
         WHEN 'spell_slots' THEN
             uuid := COALESCE(NEW.owner_uuid, OLD.owner_uuid);
         WHEN 'concentration' THEN
+            uuid := COALESCE(NEW.owner_uuid, OLD.owner_uuid);
+        WHEN 'spell_attack_modifier' THEN
             uuid := COALESCE(NEW.owner_uuid, OLD.owner_uuid);
         -- Add more tables here as needed
         ELSE
@@ -223,6 +233,11 @@ FOR EACH ROW EXECUTE FUNCTION notify_inventory_change_generic();
 -- Trigger for concentration table
 CREATE OR REPLACE TRIGGER concentration_change_trigger
 AFTER INSERT OR UPDATE OR DELETE ON concentration
+FOR EACH ROW EXECUTE FUNCTION notify_inventory_change_generic();
+
+-- Trigger for spell_attack_modifier table
+CREATE OR REPLACE TRIGGER spell_attack_modifier_change_trigger
+AFTER INSERT OR UPDATE OR DELETE ON spell_attack_modifier
 FOR EACH ROW EXECUTE FUNCTION notify_inventory_change_generic();
 
 -- user.dm was an INTEGER (0/1) flag in the init migration
