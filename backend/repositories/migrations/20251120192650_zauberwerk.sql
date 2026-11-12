@@ -8,7 +8,18 @@ CREATE TABLE spell_preset (
     time TEXT NOT NULL,
     concentration INTEGER NOT NULL,
     duration TEXT NOT NULL,
-    range TEXT NOT NULL
+    range TEXT NOT NULL,
+    condition_inflict TEXT NOT NULL,
+    saving_throw TEXT NOT NULL,
+    affects_creature_type TEXT NOT NULL,
+    damage_inflict TEXT NOT NULL,
+    spell_attack TEXT NOT NULL,
+    ritual TEXT NOT NULL,
+    damage_immune TEXT NOT NULL,
+    ability_check TEXT NOT NULL,
+    damage_resist TEXT NOT NULL,
+    condition_immune TEXT NOT NULL,
+    higher_level TEXT NOT NULL
 );
 
 CREATE TABLE spell_preset_component (

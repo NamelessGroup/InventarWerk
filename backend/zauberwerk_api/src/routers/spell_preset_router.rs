@@ -97,6 +97,7 @@ Only accessible for DMs."#,
     responses(
         (status = 204, description = "Spell preset successfully modified"),
         (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 422, description = "Request body is missing fields or has invalid values"),
         (status = 500, description = "Database error")
     ),
     security(("bearer_auth" = [])),
@@ -129,7 +130,8 @@ Only accessible for DMs."#,
     request_body(content = ExternSpellPreset, description = "List of spell presets to import", content_type = "application/json"),
     responses(
         (status = 204, description = "Spell presets processed"),
-        (status = 403, description = "Forbidden - user is not a DM")
+        (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 422, description = "Request body is missing fields or has invalid values")
     ),
     security(("bearer_auth" = [])),
     tag = "Spell Presets"
@@ -143,21 +145,10 @@ pub async fn add_extern_spell_preset(
     for spell in &json_data.spell_presets {
         let mut i = 0;
         loop {
+            // The uuid is ignored, a new one is generated on creation.
             let preset = SpellPreset {
-                uuid: "".to_string(),
-                name: spell.name.clone(),
-                level: spell.level,
-                description: spell.description.clone(),
-                time: spell.time.clone(),
-                components: spell.components.clone(),
-                concentration: spell.concentration,
-                duration: spell.duration.clone(),
-                school: spell.school.clone(),
-                range: spell.range.clone(),
-                class: spell.class.clone(),
-                sub_class: spell.sub_class.clone(),
-                species: spell.species.clone(),
-                feats: spell.feats.clone(),
+                uuid: String::new(),
+                ..spell.clone()
             };
             let res = spp_rep.create_spell_preset(preset).await;
             match res {

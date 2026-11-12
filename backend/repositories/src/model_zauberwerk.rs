@@ -18,7 +18,18 @@ pub struct SpellPreset {
     pub class: Vec<String>,
     pub sub_class: Vec<String>,
     pub species: Vec<String>,
-    pub feats: Vec<String>
+    pub feats: Vec<String>,
+    pub condition_inflict: String,
+    pub saving_throw: String,
+    pub affects_creature_type: String,
+    pub damage_inflict: String,
+    pub spell_attack: String,
+    pub ritual: String,
+    pub damage_immune: String,
+    pub ability_check: String,
+    pub damage_resist: String,
+    pub condition_immune: String,
+    pub higher_level: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

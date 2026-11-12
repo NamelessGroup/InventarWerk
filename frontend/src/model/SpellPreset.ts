@@ -13,4 +13,15 @@ export interface SpellPreset {
   subClass: string[]
   time: string
   uuid: string
+  conditionInflict: string
+  savingThrow: string
+  affectsCreatureType: string
+  damageInflict: string
+  spellAttack: string
+  ritual: string
+  damageImmune: string
+  abilityCheck: string
+  damageResist: string
+  conditionImmune: string
+  higherLevel: string
 }

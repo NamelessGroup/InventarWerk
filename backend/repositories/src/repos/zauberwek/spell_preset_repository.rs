@@ -18,7 +18,7 @@ impl SpellPresetRepository {
             r#"
             SELECT 
                 sp.uuid, sp.name, sp.level, sp.description, sp.time, 
-                sp.concentration, sp.duration, sp.range,
+                sp.concentration, sp.duration, sp.range, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
                 COALESCE(array_agg(DISTINCT spc.component_name) FILTER (WHERE spc.component_name IS NOT NULL), '{}') as "components!",
                 COALESCE(array_agg(DISTINCT sps.spell_preset_school) FILTER (WHERE sps.spell_preset_school IS NOT NULL), '{}') as "school!",
                 COALESCE(array_agg(DISTINCT spclass.spell_preset_class) FILTER (WHERE spclass.spell_preset_class IS NOT NULL), '{}') as "class!",
@@ -33,8 +33,7 @@ impl SpellPresetRepository {
             LEFT JOIN spell_preset_species spsp ON sp.uuid = spsp.spell_preset_uuid
             LEFT JOIN spell_preset_feats spf ON sp.uuid = spf.spell_preset_uuid
             WHERE sp.uuid = $1
-            GROUP BY sp.uuid, sp.name, sp.level, sp.description, sp.time, 
-                     sp.concentration, sp.duration, sp.range
+            GROUP BY sp.uuid
             "#,
             spell_preset_uuid
         )
@@ -56,6 +55,17 @@ impl SpellPresetRepository {
             sub_class: result.sub_class,
             species: result.species,
             feats: result.feats,
+            condition_inflict: result.condition_inflict,
+            saving_throw: result.saving_throw,
+            affects_creature_type: result.affects_creature_type,
+            damage_inflict: result.damage_inflict,
+            spell_attack: result.spell_attack,
+            ritual: result.ritual,
+            damage_immune: result.damage_immune,
+            ability_check: result.ability_check,
+            damage_resist: result.damage_resist,
+            condition_immune: result.condition_immune,
+            higher_level: result.higher_level,
         })
     }
 
@@ -71,8 +81,9 @@ impl SpellPresetRepository {
         let range_value = spell_preset.range.first().cloned().unwrap_or_else(String::new);
 
         sqlx::query!(
-            "INSERT INTO spell_preset (uuid, name, level, description, time, concentration, duration, range)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+            "INSERT INTO spell_preset (uuid, name, level, description, time, concentration, duration, range,
+                 condition_inflict, saving_throw, affects_creature_type, damage_inflict, spell_attack, ritual, damage_immune, ability_check, damage_resist, condition_immune, higher_level)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)",
             id,
             spell_preset.name,
             spell_preset.level,
@@ -80,7 +91,18 @@ impl SpellPresetRepository {
             spell_preset.time,
             if spell_preset.concentration { 1 } else { 0 },
             spell_preset.duration,
-            range_value
+            range_value,
+            spell_preset.condition_inflict,
+            spell_preset.saving_throw,
+            spell_preset.affects_creature_type,
+            spell_preset.damage_inflict,
+            spell_preset.spell_attack,
+            spell_preset.ritual,
+            spell_preset.damage_immune,
+            spell_preset.ability_check,
+            spell_preset.damage_resist,
+            spell_preset.condition_immune,
+            spell_preset.higher_level
         )
         .execute(&self.pool)
         .await?;
@@ -170,7 +192,7 @@ impl SpellPresetRepository {
             r#"
             SELECT 
                 sp.uuid, sp.name, sp.level, sp.description, sp.time, 
-                sp.concentration, sp.duration, sp.range,
+                sp.concentration, sp.duration, sp.range, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
                 COALESCE(array_agg(DISTINCT spc.component_name) FILTER (WHERE spc.component_name IS NOT NULL), '{}') as "components!",
                 COALESCE(array_agg(DISTINCT sps.spell_preset_school) FILTER (WHERE sps.spell_preset_school IS NOT NULL), '{}') as "school!",
                 COALESCE(array_agg(DISTINCT spclass.spell_preset_class) FILTER (WHERE spclass.spell_preset_class IS NOT NULL), '{}') as "class!",
@@ -184,8 +206,7 @@ impl SpellPresetRepository {
             LEFT JOIN spell_preset_subclass spsc ON sp.uuid = spsc.spell_preset_uuid
             LEFT JOIN spell_preset_species spsp ON sp.uuid = spsp.spell_preset_uuid
             LEFT JOIN spell_preset_feats spf ON sp.uuid = spf.spell_preset_uuid
-            GROUP BY sp.uuid, sp.name, sp.level, sp.description, sp.time, 
-                     sp.concentration, sp.duration, sp.range
+            GROUP BY sp.uuid
             "#
         )
         .fetch_all(&self.pool)
@@ -208,6 +229,17 @@ impl SpellPresetRepository {
                 sub_class: result.sub_class,
                 species: result.species,
                 feats: result.feats,
+                condition_inflict: result.condition_inflict,
+                saving_throw: result.saving_throw,
+                affects_creature_type: result.affects_creature_type,
+                damage_inflict: result.damage_inflict,
+                spell_attack: result.spell_attack,
+                ritual: result.ritual,
+                damage_immune: result.damage_immune,
+                ability_check: result.ability_check,
+                damage_resist: result.damage_resist,
+                condition_immune: result.condition_immune,
+                higher_level: result.higher_level,
             })
             .collect();
 
