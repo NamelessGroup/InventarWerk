@@ -23,23 +23,36 @@ use utoipa::OpenApi;
 
 use utoipa_swagger_ui::SwaggerUi;
 
-/// Builds the Swagger UI of this service.
+/// Builds the Swagger UI routes of this service.
 ///
 /// In production all services are served behind one origin (see `frontend/nginx.conf`),
 /// so this Swagger UI additionally lists the API docs of `zauberwerk_api` and
 /// `last_changes_api`. In development every service runs on its own port and
 /// only the own API docs are listed.
-fn swagger_ui() -> SwaggerUi {
-    let swagger = SwaggerUi::new("/swagger-ui/<_..>")
+fn swagger_ui() -> Vec<rocket::Route> {
+    const SWAGGER_PATH: &str = "/swagger-ui/<_..>";
+
+    let own_docs = SwaggerUi::new(SWAGGER_PATH)
         .url("/api-docs/openapi_inventory.json", InventoryApiDoc::openapi())
         .url("/api-docs/openapi_item_preset.json", ItemPresetApiDoc::openapi())
         .url("/api-docs/openapi_account.json", AccountApiDoc::openapi())
         .url("/api-docs/openapi_backup.json", BackupApiDoc::openapi());
 
+    #[cfg(feature = "dev")]
+    return own_docs.into();
+
     #[cfg(not(feature = "dev"))]
-    let swagger = {
+    {
         use utoipa_swagger_ui::{Config as SwaggerConfig, Url};
-        swagger.config(SwaggerConfig::new([
+
+        // utoipa-swagger-ui only serves the API docs registered with `.url()` if no custom
+        // url list is configured. So the API doc routes are taken from `own_docs`, and the
+        // UI route from a second SwaggerUi with the combined url list.
+        let api_doc_routes = Vec::<rocket::Route>::from(own_docs)
+            .into_iter()
+            .filter(|route| route.uri.path().starts_with("/api-docs/"));
+
+        let combined_ui = SwaggerUi::new(SWAGGER_PATH).config(SwaggerConfig::new([
             // inventarwerk_api
             Url::new("InventarWerk: Inventory", "/api-docs/openapi_inventory.json"),
             Url::new("InventarWerk: Item Preset", "/api-docs/openapi_item_preset.json"),
@@ -54,10 +67,13 @@ fn swagger_ui() -> SwaggerUi {
             Url::new("ZauberWerk: Spell Cast", "/api-docs/openapi_spell_cast.json"),
             // last_changes_api
             Url::new("Last Changes", "/api-docs/openapi_last_changes.json"),
-        ]))
-    };
+        ]));
 
-    swagger
+        Vec::<rocket::Route>::from(combined_ui)
+            .into_iter()
+            .chain(api_doc_routes)
+            .collect()
+    }
 }
 
 /// Main async entry point for the backend server.

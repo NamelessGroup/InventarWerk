@@ -117,8 +117,12 @@ If `pg_dump` fails before the download starts, the endpoint answers with an erro
 Restore a backup with:
 
 ```bash
-psql "$DATABASE_URL" -f inventarwerk-backup.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f inventarwerk-backup.sql
+# or without a local psql, using the image of your server version:
+docker run --rm -i postgres:15 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 < inventarwerk-backup.sql
 ```
+
+Use a current `psql` (any major version, but a minor release from August 2025 or later): the dumps contain the `\restrict` meta-command, which older `psql` releases don't know.
 
 The dump drops and recreates all tables (`--clean --if-exists`), so restoring overwrites the current data.
 
