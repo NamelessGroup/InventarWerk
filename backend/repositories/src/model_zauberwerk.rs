@@ -38,8 +38,6 @@ pub struct SpellList {
     pub uuid: String,
     pub name: String,
     pub owner_uuid: String,
-    /// UUIDs of the spell presets in the list, in the same order as `entries`.
-    pub spell_uuids: Vec<String>,
     /// Spell presets in the list with their position, ordered by `sorting`.
     pub entries: Vec<SpellListEntry>,
 }

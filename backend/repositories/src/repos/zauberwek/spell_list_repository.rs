@@ -87,7 +87,6 @@ impl SpellListRepository {
             uuid,
             name,
             owner_uuid,
-            spell_uuids: entries.iter().map(|e| e.spell_preset_uuid.clone()).collect(),
             entries,
         })
     }
