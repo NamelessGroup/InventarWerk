@@ -64,6 +64,7 @@ async fn main() {
     let (cast_tx, _cast_rx) = channel::<SpellEvent>(1024);
 
 
+    #[allow(unused_mut)]
     let mut figment = Config::figment().merge(("secret_key", secret_key));
 
     #[cfg(any(feature = "dev"))]

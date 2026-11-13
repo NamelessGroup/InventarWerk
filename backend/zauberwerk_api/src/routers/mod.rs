@@ -1,6 +1,9 @@
 use rocket::Route;
 use utoipa::IntoParams;
 
+/// Highest spell slot level.
+pub const MAX_SPELL_LEVEL: i32 = 9;
+
 /// Documentation of the optional `owner_uuid` query parameter that is evaluated by the
 /// `utils::TargetUser` guard. Only used for the OpenAPI docs, not for parsing.
 #[derive(IntoParams)]
@@ -49,7 +52,9 @@ pub fn get_spell_list_routes() -> Vec<Route> {
         create_spelllist,
         delete_spell_list,
         patch_spell_list,
-        add_preset_to_list
+        add_preset_to_list,
+        edit_spell_in_list,
+        delete_preset_from_list
     ]
 }
 
@@ -59,8 +64,7 @@ pub fn get_spell_preset_routes() -> Vec<Route> {
         get_all_spell_presets,
         delete_spell_preset,
         edit_spell_preset,
-        add_extern_spell_preset,
-        delete_preset_from_list
+        add_extern_spell_preset
     ]
 }
 

@@ -33,28 +33,28 @@ CREATE TABLE spell_preset_component (
 CREATE TABLE spell_preset_class (
     spell_preset_uuid TEXT NOT NULL,
     spell_preset_class TEXT NULL,
-    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid),
+    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE,
     PRIMARY KEY(spell_preset_uuid, spell_preset_class)
 );
 
 CREATE TABLE spell_preset_subclass (
     spell_preset_uuid TEXT NOT NULL,
     spell_preset_subclass TEXT NULL,
-    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid),
+    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE,
     PRIMARY KEY(spell_preset_uuid, spell_preset_subclass)
 );
 
 CREATE TABLE spell_preset_species (
     spell_preset_uuid TEXT NOT NULL,
     spell_preset_species TEXT NULL,
-    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid),
+    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE,
     PRIMARY KEY(spell_preset_uuid, spell_preset_species)
 );
 
 CREATE TABLE spell_preset_feats (
     spell_preset_uuid TEXT NOT NULL,
     spell_preset_feats TEXT NULL,
-    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid),
+    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE,
     PRIMARY KEY(spell_preset_uuid, spell_preset_feats)
 );
 
@@ -67,8 +67,10 @@ CREATE TABLE spell_list (
 CREATE TABLE spell_list_entry (
     spell_preset_uuid TEXT NOT NULL,
     spell_list_uuid TEXT NOT NULL,
-    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid),
-    FOREIGN KEY(spell_list_uuid) REFERENCES spell_list(uuid),
+    -- Position of the spell in the list, ascending
+    sorting INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE,
+    FOREIGN KEY(spell_list_uuid) REFERENCES spell_list(uuid) ON DELETE CASCADE,
     PRIMARY KEY(spell_preset_uuid, spell_list_uuid)
 );
 
@@ -78,7 +80,9 @@ CREATE TABLE spell_slots (
     spell_slot_maxima INTEGER NOT NULL,
     spell_slot_available INTEGER NOT NULL,
     FOREIGN KEY(owner_uuid) REFERENCES "user"(uuid),
-    PRIMARY KEY(owner_uuid, spell_slot_level)
+    PRIMARY KEY(owner_uuid, spell_slot_level),
+    CHECK (spell_slot_level BETWEEN 1 AND 9),
+    CHECK (spell_slot_available BETWEEN 0 AND spell_slot_maxima)
 );
 
 -- One row per user that is currently concentrating on a spell.

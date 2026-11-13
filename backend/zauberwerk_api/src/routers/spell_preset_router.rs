@@ -1,13 +1,17 @@
-use repos::{model_zauberwerk::SpellPreset, repos::zauberwek::spell_preset_repository::SpellPresetRepository};
+use utils::ApiDocAddon;
+use repos::{model_zauberwerk::SpellPreset, repos::{user_repository::UserRepository, zauberwek::spell_preset_repository::SpellPresetRepository}};
+use rocket::tokio::sync::broadcast::Sender;
 use rocket::{State, http::Status};
-use utils::{AuthenticatedUser, DmUser};
+
+use super::spell_cast_router::{broadcast_concentration_ended, SpellEvent};
+use utils::{ApiError, AuthenticatedUser, DmUser};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, OpenApi, ToSchema};
-use rocket_errors::anyhow::Result;
+use utils::Result;
 use rocket::serde::json::Json;
 
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct SpellPresetUUID{
     /// UUID of the spell preset
     pub spell_preset_uuid: String
@@ -21,9 +25,10 @@ pub struct SpellPresetUUID{
     params(SpellPresetUUID),
     responses(
         (status = 200, description = "Returns the requested spell preset", body = SpellPreset),
-        (status = 500, description = "Spell preset not found or database error")
+        (status = 404, description = "Spell preset not found"),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[get("/spellPreset?<params..>")]
@@ -49,7 +54,7 @@ pub struct AllSpellPresetResult {
         (status = 200, description = "Returns all spell presets", body = AllSpellPresetResult),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[get("/spellPreset/all")]
@@ -65,24 +70,36 @@ pub async fn get_all_spell_presets(
     delete,
     path = "/spellPreset/delete",
     summary = "Delete a spell preset",
-    description = r#"Deletes the spell preset with the given UUID.
+    description = r#"Deletes the spell preset with the given UUID. The preset is also removed from all spell lists.
+
+All concentrations on the preset are ended; for each of them a `concentrationEnded` event is broadcast on `GET /spellPreset/cast/stream`.
 
 Only accessible for DMs."#,
     params(SpellPresetUUID),
     responses(
         (status = 204, description = "Spell preset successfully deleted"),
         (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 404, description = "Spell preset not found"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[delete("/spellPreset/delete?<params..>")]
 pub async fn delete_spell_preset(
-    _dm: DmUser,
+    dm: DmUser,
     params: SpellPresetUUID,
-    spp_rep: &State<SpellPresetRepository>) -> Result<Status> {
-    spp_rep.delete_spell_preset(&params.spell_preset_uuid).await?;
+    spp_rep: &State<SpellPresetRepository>,
+    usr_rep: &State<UserRepository>,
+    queue: &State<Sender<SpellEvent>>) -> Result<Status> {
+    // Fetched before deleting, as it is part of the concentrationEnded events.
+    let Some(spell) = spp_rep.find_spell_preset(&params.spell_preset_uuid).await? else {
+        return Err(ApiError::not_found("spell preset not found"));
+    };
+    let ended_concentrations = spp_rep.delete_spell_preset(&params.spell_preset_uuid).await?;
+    for owner_uuid in ended_concentrations {
+        broadcast_concentration_ended(queue, usr_rep, owner_uuid, dm.user_id.clone(), spell.clone()).await?;
+    }
     Ok(Status::NoContent)
 }
 
@@ -90,17 +107,20 @@ pub async fn delete_spell_preset(
     patch,
     path = "/spellPreset/modify",
     summary = "Modify a spell preset",
-    description = r#"Replaces the spell preset identified by `uuid` in the request body with the given data.
+    description = r#"Replaces all fields of the spell preset identified by `uuid` in the request body with the given data.
+
+The preset keeps its UUID, so spell lists and concentrations referencing it are not affected.
 
 Only accessible for DMs."#,
     request_body(content = SpellPreset, description = "The complete, modified spell preset", content_type = "application/json"),
     responses(
         (status = 204, description = "Spell preset successfully modified"),
         (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 404, description = "No spell preset with the given `uuid` exists"),
         (status = 422, description = "Request body is missing fields or has invalid values"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[patch("/spellPreset/modify", data = "<json_data>")]
@@ -108,12 +128,14 @@ pub async fn edit_spell_preset(
     _dm: DmUser,
     spp_rep: &State<SpellPresetRepository>,
     json_data: Json<SpellPreset>) -> Result<Status> {
-    spp_rep.modify_spell_preset(json_data.into_inner()).await?;
+    if !spp_rep.modify_spell_preset(json_data.into_inner()).await? {
+        return Err(ApiError::not_found("spell preset not found"));
+    }
     Ok(Status::NoContent)
 }
 
 
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ExternSpellPreset {
     spell_presets: Vec<SpellPreset>
 }
@@ -133,7 +155,7 @@ Only accessible for DMs."#,
         (status = 403, description = "Forbidden - user is not a DM"),
         (status = 422, description = "Request body is missing fields or has invalid values")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[put("/spellPreset/addExtern", data = "<json_data>")]
@@ -155,7 +177,7 @@ pub async fn add_extern_spell_preset(
                 Ok(_res) => break,
                 Err(e) => {
                     println!("Error creating spell preset {}: {}", spell.name, e);
-                    std::thread::sleep(std::time::Duration::from_secs(1));
+                    rocket::tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 }
             }
             i += 1;
@@ -171,6 +193,7 @@ pub async fn add_extern_spell_preset(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_spell_preset,
         get_all_spell_presets,
@@ -181,7 +204,6 @@ pub async fn add_extern_spell_preset(
     components(
         schemas(
             SpellPreset,
-            SpellPresetUUID,
             AllSpellPresetResult,
             ExternSpellPreset
         )

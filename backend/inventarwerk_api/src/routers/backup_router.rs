@@ -1,12 +1,13 @@
+use utils::ApiDocAddon;
 use std::env;
 use std::path::PathBuf;
 use std::process::Stdio;
 
 use repos::{server_major_version, DbPool};
 use rocket::response::stream::ByteStream;
-use rocket::tokio::{self, io::AsyncReadExt, process::Command};
+use tokio::{io::AsyncReadExt, process::Command};
 use rocket::State;
-use rocket_errors::anyhow::Result;
+use utils::Result;
 use utoipa::OpenApi;
 
 use utils::{create_error, DmUser};
@@ -16,6 +17,7 @@ const PG_LIB_DIR: &str = "/usr/lib/postgresql";
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(create_database_backup),
     tags((name = "Backup", description = "Database backup endpoints"))
 )]
@@ -75,7 +77,7 @@ fn select_pg_dump(server_major: u32) -> Result<PathBuf> {
         (status = 403, description = "Forbidden - User is not a DM"),
         (status = 500, description = "Internal server error, e.g. no matching pg_dump or pg_dump failed")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Backup"
 )]
 #[get("/backup/database")]

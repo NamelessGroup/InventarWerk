@@ -1,4 +1,4 @@
-use crate::model_inventarwerk::{FrontendItem, FullFrontendInventory, InventoryItem, RawInventory};
+use crate::model_inventarwerk::{FrontendItem, FullFrontendInventory, RawInventory};
 use anyhow::{self, Result};
 use sqlx::{Error, PgPool};
 use uuid::Uuid;
@@ -102,21 +102,6 @@ impl InventoryRepository {
         let read_invs = self.get_inventories_by_reader(user_uuid).await?;
         invs.extend(read_invs);
         return Ok(invs);
-    }
-
-    /// Returns all inventory UUIDs where the user is a writer.
-    pub async fn get_inventories_by_writer(&self, user_uuid: &str) -> Result<Vec<String>> {
-        let inventory_ids = sqlx::query!(
-            "SELECT inventory_uuid FROM inventory_writer WHERE user_uuid = $1",
-            user_uuid
-        )
-        .fetch_all(&self.pool)
-        .await?
-        .into_iter()
-        .map(|record| record.inventory_uuid)
-        .collect();
-
-        Ok(inventory_ids)
     }
 
     /// Returns all inventories (as `FullFrontendInventory`) where the user is owner or reader.
@@ -326,21 +311,6 @@ impl InventoryRepository {
         .await?;
 
         Ok(result.exists.unwrap_or(false))
-    }
-
-    /// Returns all items in an inventory as `InventoryItem`.
-    pub async fn get_items_in_inventory(&self, inventory_uuid: &str) -> Result<Vec<InventoryItem>> {
-        let items = sqlx::query_as!(
-            InventoryItem,
-            "SELECT inventory_uuid, item_preset_uuid, dm_note, amount, sorting, inventory_item_note, creation 
-             FROM inventory_item 
-             WHERE inventory_uuid = $1",
-            inventory_uuid
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        Ok(items)
     }
 
     /// Returns all items in an inventory as `FrontendItem` (joined with preset data).

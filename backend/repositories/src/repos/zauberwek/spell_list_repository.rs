@@ -1,4 +1,4 @@
-use crate::model_zauberwerk::SpellList;
+use crate::model_zauberwerk::{SpellList, SpellListEntry};
 use sqlx::{Error, PgPool};
 use uuid::Uuid;
 
@@ -22,13 +22,7 @@ impl SpellListRepository {
 
         let mut spell_lists = Vec::new();
         for list in lists {
-            let spell_uuids = self.get_spell_uuids_in_list(&list.uuid).await?;
-            spell_lists.push(SpellList {
-                uuid: list.uuid,
-                name: list.name,
-                owner_uuid: list.owner_uuid,
-                spell_uuids,
-            });
+            spell_lists.push(self.build_spell_list(list.uuid, list.name, list.owner_uuid).await?);
         }
 
         Ok(spell_lists)
@@ -42,13 +36,7 @@ impl SpellListRepository {
 
         let mut spell_lists = Vec::new();
         for list in lists {
-            let spell_uuids = self.get_spell_uuids_in_list(&list.uuid).await?;
-            spell_lists.push(SpellList {
-                uuid: list.uuid,
-                name: list.name,
-                owner_uuid: list.owner_uuid,
-                spell_uuids,
-            });
+            spell_lists.push(self.build_spell_list(list.uuid, list.name, list.owner_uuid).await?);
         }
 
         Ok(spell_lists)
@@ -80,26 +68,28 @@ impl SpellListRepository {
         .fetch_one(&self.pool)
         .await?;
 
-        let spell_uuids = self.get_spell_uuids_in_list(&list.uuid).await?;
-
-        Ok(SpellList {
-            uuid: list.uuid,
-            name: list.name,
-            owner_uuid: list.owner_uuid,
-            spell_uuids,
-        })
+        self.build_spell_list(list.uuid, list.name, list.owner_uuid).await
     }
 
-    /// Helper method to get all spell UUIDs in a list.
-    async fn get_spell_uuids_in_list(&self, spell_list_uuid: &str) -> Result<Vec<String>, Error> {
-        let entries = sqlx::query!(
-            "SELECT spell_preset_uuid FROM spell_list_entry WHERE spell_list_uuid = $1",
-            spell_list_uuid
+    /// Builds a `SpellList` with its entries, ordered by `sorting`.
+    async fn build_spell_list(&self, uuid: String, name: String, owner_uuid: String) -> Result<SpellList, Error> {
+        let entries = sqlx::query_as!(
+            SpellListEntry,
+            "SELECT spell_preset_uuid, sorting FROM spell_list_entry
+             WHERE spell_list_uuid = $1
+             ORDER BY sorting, spell_preset_uuid",
+            uuid
         )
         .fetch_all(&self.pool)
         .await?;
 
-        Ok(entries.into_iter().map(|e| e.spell_preset_uuid).collect())
+        Ok(SpellList {
+            uuid,
+            name,
+            owner_uuid,
+            spell_uuids: entries.iter().map(|e| e.spell_preset_uuid.clone()).collect(),
+            entries,
+        })
     }
 
     /// Creates a new spell list.
@@ -129,18 +119,41 @@ impl SpellListRepository {
         Ok(())
     }
 
-    /// Adds a spell preset to a spell list.
-    pub async fn add_preset_to_list(&self, spell_list_uuid: &str, spell_preset_uuid: &str) -> Result<(), Error> {
+    /// Adds a spell preset to a spell list. Does nothing if the preset is already in the list.
+    ///
+    /// If `sorting` is `None`, the spell is appended at the end of the list.
+    pub async fn add_preset_to_list(&self, spell_list_uuid: &str, spell_preset_uuid: &str, sorting: Option<i32>) -> Result<(), Error> {
         sqlx::query!(
-            "INSERT INTO spell_list_entry (spell_preset_uuid, spell_list_uuid) 
-             VALUES ($1, $2)
+            "INSERT INTO spell_list_entry (spell_preset_uuid, spell_list_uuid, sorting)
+             VALUES ($1, $2, COALESCE(
+                 $3,
+                 (SELECT COALESCE(MAX(sorting) + 1, 0) FROM spell_list_entry WHERE spell_list_uuid = $2)
+             ))
              ON CONFLICT DO NOTHING",
             spell_preset_uuid,
-            spell_list_uuid
+            spell_list_uuid,
+            sorting
         )
         .execute(&self.pool)
         .await?;
         Ok(())
+    }
+
+    /// Sets the position of a spell preset in a spell list.
+    ///
+    /// Returns `false` if the preset is not in the list.
+    pub async fn set_sorting(&self, spell_list_uuid: &str, spell_preset_uuid: &str, sorting: i32) -> Result<bool, Error> {
+        let updated = sqlx::query!(
+            "UPDATE spell_list_entry SET sorting = $3
+             WHERE spell_list_uuid = $1 AND spell_preset_uuid = $2",
+            spell_list_uuid,
+            spell_preset_uuid,
+            sorting
+        )
+        .execute(&self.pool)
+        .await?
+        .rows_affected();
+        Ok(updated > 0)
     }
 
     /// Removes a spell preset from a spell list.

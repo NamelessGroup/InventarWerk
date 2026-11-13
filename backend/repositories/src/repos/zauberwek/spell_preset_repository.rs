@@ -1,6 +1,6 @@
 use crate::model_zauberwerk::SpellPreset;
 use anyhow::{self, Result};
-use sqlx::{Error, PgPool};
+use sqlx::{Error, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
 pub struct SpellPresetRepository {
@@ -67,7 +67,8 @@ impl SpellPresetRepository {
         })
     }
 
-    /// Creates a new spell preset.
+    /// Creates a new spell preset. If `uuid` is empty, a new UUID is generated.
+    /// Returns the UUID of the created preset.
     pub async fn create_spell_preset(&self, spell_preset: SpellPreset) -> Result<String, Error> {
         let id = if spell_preset.uuid.is_empty() {
             Uuid::new_v4().to_string()
@@ -75,7 +76,8 @@ impl SpellPresetRepository {
             spell_preset.uuid.clone()
         };
 
-        // Insert the main spell preset
+        let mut tx = self.pool.begin().await?;
+
         sqlx::query!(
             "INSERT INTO spell_preset (uuid, name, level, description, time, concentration, duration, range, school,
                  condition_inflict, saving_throw, affects_creature_type, damage_inflict, spell_attack, ritual, damage_immune, ability_check, damage_resist, condition_immune, higher_level)
@@ -101,74 +103,134 @@ impl SpellPresetRepository {
             spell_preset.condition_immune,
             spell_preset.higher_level
         )
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
-        // Insert components
+        Self::insert_details(&mut tx, &id, &spell_preset).await?;
+
+        tx.commit().await?;
+        Ok(id)
+    }
+
+    /// Modifies an existing spell preset in place.
+    ///
+    /// The preset keeps its UUID, so spell list entries and concentrations referencing it
+    /// stay intact. Components, classes, subclasses, species and feats are replaced.
+    ///
+    /// Returns `false` if no preset with the given UUID exists; nothing is changed then.
+    pub async fn modify_spell_preset(&self, spell_preset: SpellPreset) -> Result<bool, Error> {
+        let mut tx = self.pool.begin().await?;
+
+        let updated = sqlx::query!(
+            "UPDATE spell_preset SET
+                name = $2, level = $3, description = $4, time = $5, concentration = $6, duration = $7,
+                range = $8, school = $9, condition_inflict = $10, saving_throw = $11, affects_creature_type = $12,
+                damage_inflict = $13, spell_attack = $14, ritual = $15, damage_immune = $16, ability_check = $17,
+                damage_resist = $18, condition_immune = $19, higher_level = $20
+             WHERE uuid = $1",
+            spell_preset.uuid,
+            spell_preset.name,
+            spell_preset.level,
+            spell_preset.description,
+            spell_preset.time,
+            spell_preset.concentration,
+            spell_preset.duration,
+            spell_preset.range,
+            spell_preset.school,
+            spell_preset.condition_inflict,
+            spell_preset.saving_throw,
+            spell_preset.affects_creature_type,
+            spell_preset.damage_inflict,
+            spell_preset.spell_attack,
+            spell_preset.ritual,
+            spell_preset.damage_immune,
+            spell_preset.ability_check,
+            spell_preset.damage_resist,
+            spell_preset.condition_immune,
+            spell_preset.higher_level
+        )
+        .execute(&mut *tx)
+        .await?
+        .rows_affected();
+
+        if updated == 0 {
+            // Dropping the transaction rolls it back.
+            return Ok(false);
+        }
+
+        let id = &spell_preset.uuid;
+        sqlx::query!("DELETE FROM spell_preset_component WHERE spell_preset_uuid = $1", id)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query!("DELETE FROM spell_preset_class WHERE spell_preset_uuid = $1", id)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query!("DELETE FROM spell_preset_subclass WHERE spell_preset_uuid = $1", id)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query!("DELETE FROM spell_preset_species WHERE spell_preset_uuid = $1", id)
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query!("DELETE FROM spell_preset_feats WHERE spell_preset_uuid = $1", id)
+            .execute(&mut *tx)
+            .await?;
+
+        Self::insert_details(&mut tx, id, &spell_preset).await?;
+
+        tx.commit().await?;
+        Ok(true)
+    }
+
+    /// Inserts components, classes, subclasses, species and feats of a spell preset.
+    async fn insert_details(
+        tx: &mut Transaction<'_, Postgres>,
+        id: &str,
+        spell_preset: &SpellPreset,
+    ) -> Result<(), Error> {
         for component in &spell_preset.components {
             sqlx::query!(
                 "INSERT INTO spell_preset_component (spell_preset_uuid, component_name) VALUES ($1, $2)",
                 id, component
             )
-            .execute(&self.pool)
+            .execute(&mut **tx)
             .await?;
         }
 
-        // Insert classes
         for class_item in &spell_preset.class {
             sqlx::query!(
                 "INSERT INTO spell_preset_class (spell_preset_uuid, spell_preset_class) VALUES ($1, $2)",
                 id, class_item
             )
-            .execute(&self.pool)
+            .execute(&mut **tx)
             .await?;
         }
 
-        // Insert subclasses
         for subclass_item in &spell_preset.sub_class {
             sqlx::query!(
                 "INSERT INTO spell_preset_subclass (spell_preset_uuid, spell_preset_subclass) VALUES ($1, $2)",
                 id, subclass_item
             )
-            .execute(&self.pool)
+            .execute(&mut **tx)
             .await?;
         }
 
-        // Insert species
         for species_item in &spell_preset.species {
             sqlx::query!(
                 "INSERT INTO spell_preset_species (spell_preset_uuid, spell_preset_species) VALUES ($1, $2)",
                 id, species_item
             )
-            .execute(&self.pool)
+            .execute(&mut **tx)
             .await?;
         }
 
-        // Insert feats
         for feat_item in &spell_preset.feats {
             sqlx::query!(
                 "INSERT INTO spell_preset_feats (spell_preset_uuid, spell_preset_feats) VALUES ($1, $2)",
                 id, feat_item
             )
-            .execute(&self.pool)
+            .execute(&mut **tx)
             .await?;
         }
-
-        Ok(id)
-    }
-
-    /// Modifies an existing spell preset by deleting and recreating it.
-    pub async fn modify_spell_preset(&self, new_spell_preset: SpellPreset) -> Result<(), Error> {
-        // Delete the existing spell preset (CASCADE will handle related tables)
-        sqlx::query!(
-            "DELETE FROM spell_preset WHERE uuid = $1",
-            new_spell_preset.uuid
-        )
-        .execute(&self.pool)
-        .await?;
-
-        // Create the new version
-        self.create_spell_preset(new_spell_preset).await?;
 
         Ok(())
     }
@@ -231,11 +293,35 @@ impl SpellPresetRepository {
         Ok(spells)
     }
 
-    /// Deletes a spell preset by UUID.
-    pub async fn delete_spell_preset(&self, uuid: &str) -> Result<(), Error> {
+    /// Retrieves a spell preset by its UUID, or `None` if it does not exist.
+    pub async fn find_spell_preset(&self, spell_preset_uuid: &str) -> Result<Option<SpellPreset>, Error> {
+        match self.get_spell_preset(spell_preset_uuid).await {
+            Ok(preset) => Ok(Some(preset)),
+            Err(Error::RowNotFound) => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Deletes a spell preset by UUID. The preset is removed from all spell lists and
+    /// all concentrations on it are ended.
+    ///
+    /// Returns the UUIDs of the users whose concentration was ended.
+    pub async fn delete_spell_preset(&self, uuid: &str) -> Result<Vec<String>, Error> {
+        let mut tx = self.pool.begin().await?;
+
+        // Would also be removed by ON DELETE CASCADE, but the affected users are needed.
+        let ended_concentrations = sqlx::query_scalar!(
+            "DELETE FROM concentration WHERE spell_preset_uuid = $1 RETURNING owner_uuid",
+            uuid
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+
         sqlx::query!("DELETE FROM spell_preset WHERE uuid = $1", uuid)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
-        Ok(())
+
+        tx.commit().await?;
+        Ok(ended_concentrations)
     }
 }

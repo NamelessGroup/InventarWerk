@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::{
     model_zauberwerk::Concentration,
     repos::{
@@ -12,7 +13,7 @@ use utils::{DmUser, TargetUser};
 
 use super::OwnerUUID;
 use super::spell_cast_router::{broadcast_concentration_ended, SpellEvent};
-use rocket_errors::anyhow::Result;
+use utils::Result;
 use utoipa::{OpenApi, ToSchema};
 
 #[utoipa::path(
@@ -28,7 +29,7 @@ If `owner_uuid` is given, the concentration of that user is returned instead. Th
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Concentration"
 )]
 #[get("/concentration")]
@@ -55,7 +56,7 @@ Only accessible for DMs."#,
         (status = 403, description = "Forbidden - user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Concentration"
 )]
 #[get("/concentration/all")]
@@ -83,7 +84,7 @@ If `owner_uuid` is given and differs from the requesting user, DM privileges are
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Concentration"
 )]
 #[delete("/concentration")]
@@ -94,10 +95,11 @@ pub async fn remove_concentration(
     spp_rep: &State<SpellPresetRepository>,
     queue: &State<Sender<SpellEvent>>) -> Result<Status> {
     if let Some(ended) = con_rep.remove_concentration(&target.owner_uuid).await? {
+        let spell = spp_rep.get_spell_preset(&ended).await?;
         broadcast_concentration_ended(
-            queue, usr_rep, spp_rep,
+            queue, usr_rep,
             target.owner_uuid, target.requester_uuid,
-            &ended,
+            spell,
         ).await?;
     }
     Ok(Status::NoContent)
@@ -105,6 +107,7 @@ pub async fn remove_concentration(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_concentration,
         get_all_concentrations,
