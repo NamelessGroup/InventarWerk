@@ -24,7 +24,7 @@
       </template>
 
       <template #default>
-        <div class="flex flex-col gap-5 overflow-auto md:overflow-clip">
+        <div class="flex flex-col gap-5 overflow-auto">
           <SpellSlotList
             v-if="zauberData().spellSlots[accountData().uuid] !== undefined"
             :spell-slots="zauberData().spellSlots[accountData().uuid]"
@@ -32,7 +32,11 @@
             :concentration-spell="zauberData().concentrationSpell[accountData().uuid]"
           />
 
-          <div class="min-h-[3000px] md:flex-1 md:overflow-auto"></div>
+          <ContainerGrid class="flex-1" :containers="spellLists">
+            <template #default="{ item }">
+              <SpellListDisplay :spell-list="item" />
+            </template>
+          </ContainerGrid>
         </div>
       </template>
     </PageBase>
@@ -78,6 +82,8 @@ import { computed, ref } from 'vue'
 import PopUp from '@/components/PopUp.vue'
 import { DB } from '@/store/db'
 import UploadPresetListPopUp from '@/components/zauber/UploadPresetListPopUp.vue'
+import ContainerGrid from '@/components/ContainerGrid.vue'
+import SpellListDisplay from '@/components/zauber/SpellListDisplay.vue'
 
 ThemeManager.getInstance().pageTheme = 'zauber'
 
@@ -89,13 +95,17 @@ const errorContent = ref('')
 const searchString = ref('')
 const search = computed(() => searchString.value.toLowerCase())
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function matchSearchString(inventory: SpellList) {
-  if (inventory.name.toLowerCase().includes(search.value)) {
+function matchSearchString(spellList: SpellList) {
+  if (spellList.name.toLowerCase().includes(search.value)) {
     return true
   }
   return false
 }
+
+const spellLists = computed(() => {
+  const allInventories = zauberData().spellListUuids.map((uuid) => zauberData().spellLists[uuid])
+  return allInventories.filter(matchSearchString)
+})
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function submitAddSpellList() {

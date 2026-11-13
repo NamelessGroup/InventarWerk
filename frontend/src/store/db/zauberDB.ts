@@ -91,6 +91,20 @@ export class ZauberDB extends BaseDatabaseHandler {
     return true
   }
 
+  public async editSpellListName(uuid: string, name: string) {
+    const result = await this.patch<unknown>([ZauberDB.SPELL_LIST_END_POINT, 'edit'], {
+      spell_list_uuid: uuid,
+      spell_list_name: name
+    })
+    return result !== undefined
+  }
+
+  public async deleteSpellList(uuid: string) {
+    await this.delete<undefined>([ZauberDB.SPELL_LIST_END_POINT, 'delete'], {
+      spell_list_uuid: uuid
+    })
+  }
+
   private setSpellListInStore(spellList: DBSpellList) {
     zauberData().spellLists[spellList.uuid] = {
       ...spellList,

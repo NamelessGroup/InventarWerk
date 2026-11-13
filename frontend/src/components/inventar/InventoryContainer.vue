@@ -1,112 +1,61 @@
 <template>
-  <div class="border-accent bg-primary-dark space-y-2 overflow-hidden rounded-sm border-2 p-2">
-    <div class="flex items-center gap-2 overflow-hidden">
-      <DiscordImage :user="creator" class="h-6" />
-      <div
-        ref="nameInput"
-        class="bold break-wrap min-w-8 border-none bg-transparent pr-5 text-xl outline-hidden"
-        :contenteditable="inventory.ownerUuid === accountData().uuid"
-        @blur="updateName()"
-        @keydown="
-          (e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              e.stopPropagation()
-              updateName()
-            }
-          }
-        "
-      >
-        {{ inventory.name }}
-      </div>
-      <button
-        v-if="inventory.ownerUuid === accountData().uuid"
-        class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
-        @click="editName()"
-      >
-        <FontAwesomeIcon :icon="faPen" />
-      </button>
+  <BaseContainer
+    :container="inventory"
+    :items="inventory.items"
+    drag-key="presetReference"
+    @update-name="(n) => inventoryData().editInventoryName(inventory.uuid, n)"
+    @delete="inventoryData().deleteInventory(inventory.uuid)"
+    @move="moveItem"
+  >
+    <template #extraInfo>
       <div class="shrink-0">
         ({{ inventory.items.map((i) => i.amount * i.weight).reduce((a, b) => a + b, 0) }} lbs.)
       </div>
-      <div class="flex-1"><!-- Spacer --></div>
-      <button
-        class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
-        @click="expanded = !expanded"
-      >
-        <FontAwesomeIcon
-          class="transition"
-          :class="{ 'rotate-180': !expanded }"
-          :icon="faChevronUp"
-        />
-      </button>
+    </template>
+    <template #extraButtons>
       <button
         class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
         @click="showSharePopup = true"
       >
         <FontAwesomeIcon :icon="faShare" />
       </button>
-      <TimedConfirmationButton
-        v-if="inventory.ownerUuid === accountData().uuid"
-        class="border-accent bg-primary-default text-delete h-7 shrink-0 rounded-sm border px-1.5"
-        :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
-        @confirm="deleteInventory"
-      >
-        <FontAwesomeIcon :icon="faTrashCan" />
+    </template>
 
-        <template #confirmation> Confirm </template>
-      </TimedConfirmationButton>
-    </div>
-
-    <CollapseTransition with-opacity speed="0.5s">
-      <div v-if="expanded" class="space-y-2">
-        <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
-          <NumericInput
-            v-for="[k, i] of moneyOptions"
-            :key="k"
-            v-model="moneyFieldValues[k]"
-            :readonly="!canEdit"
-            class="border-accent bg-primary-default row-start-1 h-10 rounded-sm border px-1 outline-hidden"
-            :class="`col-start-${i}`"
-            @update="(v) => updateMoney(v, k)"
-          />
-          <span
-            v-for="[k, i, l] of moneyOptions"
-            :key="k + 'l'"
-            :class="`col-start-${i}`"
-            class="text-accent row-start-2 text-center text-sm"
-            >{{ l }}</span
-          >
-        </div>
-
-        <div class="space-y-2">
-          <DraggableContainer
-            :model-value="localDraggableItems"
-            group="items"
-            item-key="presetReference"
-            :animation="150"
-            @change="updateInventoryList"
-          >
-            <ItemRowDisplay
-              v-for="item in localDraggableItems"
-              :key="item.presetReference"
-              :can-edit="canEdit"
-              :item="item"
-              :inventory-uuid="inventory.uuid"
-            />
-          </DraggableContainer>
-        </div>
-
-        <button
-          v-if="inventory.writer.includes(accountData().uuid)"
-          class="bg-primary-default h-10 w-full rounded-sm text-center"
-          @click="showAddItemPopup = true"
+    <template #preItems>
+      <div class="grid max-w-full grid-cols-4 gap-x-2 overflow-auto">
+        <NumericInput
+          v-for="[k, i] of moneyOptions"
+          :key="k"
+          v-model="moneyFieldValues[k]"
+          :readonly="!canEdit"
+          class="border-accent bg-primary-default row-start-1 h-10 rounded-sm border px-1 outline-hidden"
+          :class="`col-start-${i}`"
+          @update="(v) => updateMoney(v, k)"
+        />
+        <span
+          v-for="[k, i, l] of moneyOptions"
+          :key="k + 'l'"
+          :class="`col-start-${i}`"
+          class="text-accent row-start-2 text-center text-sm"
+          >{{ l }}</span
         >
-          + Add item
-        </button>
       </div>
-    </CollapseTransition>
-  </div>
+    </template>
+
+    <template #item="{ item }">
+      <ItemRowDisplay :can-edit="canEdit" :item="item" :inventory-uuid="inventory.uuid" />
+    </template>
+
+    <template #postItems>
+      <button
+        v-if="inventory.writer.includes(accountData().uuid)"
+        class="bg-primary-default h-10 w-full rounded-sm text-center"
+        @click="showAddItemPopup = true"
+      >
+        + Add item
+      </button>
+    </template>
+  </BaseContainer>
 
   <EditSharePopUp
     v-if="showSharePopup && accountData().uuid === inventory.ownerUuid"
@@ -129,21 +78,18 @@
 <script setup lang="ts">
 import { computed, ref, watch, type PropType } from 'vue'
 import type { Inventory } from '@/model/Inventory'
+import type { Item } from '@/model/Item'
 import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath'
 import { accountData, inventoryData } from '@/store'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faChevronUp, faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
+import { faShare } from '@fortawesome/free-solid-svg-icons'
 import AddItemPopUp from './AddItemPopUp.vue'
 import EditSharePopUp from '../share/EditSharePopUp.vue'
 import NumericInput from '../NumericInput.vue'
-import DiscordImage from '../DiscordImage.vue'
 import ViewSharePopUp from '../share/ViewSharePopUp.vue'
-import TimedConfirmationButton from '../TimedConfirmationButton.vue'
-import { Settings } from '@/store/Settings'
-import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
-import CollapseTransition from '../CollapseTransition.vue'
-import type { Item } from '@/model/Item'
+import BaseContainer from '../BaseContainer.vue'
+import type { DraggableItem } from '../../model/Drag'
 
 const props = defineProps({
   inventory: {
@@ -151,70 +97,11 @@ const props = defineProps({
     required: true
   }
 })
-
-const nameInput = ref<HTMLDivElement | null>(null)
 const showSharePopup = ref(false)
 const showAddItemPopup = ref(false)
-const expanded = ref(true)
 const canEdit = computed(() => props.inventory.writer.includes(accountData().uuid))
-const creator = computed(
-  () =>
-    accountData().accounts.filter((account) => account.uuid === props.inventory.ownerUuid)[0] ?? {
-      name: 'Unknown',
-      avatar: null,
-      dm: false,
-      uuid: ''
-    }
-)
-const localDraggableItems = computed(() => {
-  return props.inventory.items.map((item) => {
-    return {
-      ...item,
-      sourceInventory: props.inventory.uuid
-    }
-  })
-})
 
-function editName() {
-  if (nameInput.value) {
-    nameInput.value.focus()
-  }
-}
-
-function updateName() {
-  const newName = nameInput.value?.innerText ?? ''
-  if (newName.length == 0) {
-    return
-  }
-  if (newName == props.inventory.name) {
-    return
-  }
-  inventoryData().editInventoryName(props.inventory.uuid, newName)
-}
-
-function deleteInventory() {
-  inventoryData().deleteInventory(props.inventory.uuid)
-}
-
-async function updateInventoryList(e: DragChangeEvent<Item & { sourceInventory: string }>) {
-  if (e.added) {
-    // Item moved to this inventory
-    await moveItem(e.added.element, e.added.newIndex, true)
-  }
-
-  if (e.moved) {
-    // Item moved in this inventory
-    await moveItem(e.moved.element, e.moved.newIndex, false)
-  }
-
-  // We purposefully ignore the `removed` option, since removal will be handled by addition to the new inventory
-}
-
-async function moveItem(
-  item: Item & { sourceInventory: string },
-  newIndex: number,
-  movedHere: boolean
-) {
+async function moveItem(item: DraggableItem<Item>, newIndex: number, movedHere: boolean) {
   if (
     movedHere &&
     props.inventory.items.some(
@@ -233,7 +120,7 @@ async function moveItem(
 
   if (movedHere) {
     await inventoryData().moveItem(
-      item.sourceInventory,
+      item.sourceContainer,
       props.inventory.uuid,
       item.presetReference,
       newIndex
