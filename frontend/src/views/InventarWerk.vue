@@ -30,24 +30,11 @@
       </template>
 
       <template #default>
-        <div class="grid gap-5 overflow-auto md:grid-cols-2 lg:grid-cols-3">
-          <template v-if="Settings.getInstance().strictInventoryGrid">
-            <InventoryContainer
-              v-for="inventory in inventories"
-              :key="inventory.uuid"
-              :inventory="inventory"
-            />
+        <ContainerGrid class="overflow-auto" :containers="inventories">
+          <template #default="{ item }">
+            <InventoryContainer :inventory="item" />
           </template>
-          <template v-else>
-            <div v-for="i in 3" :key="i" class="flex flex-col gap-5">
-              <InventoryContainer
-                v-for="inventory in getNthOf3Inventories(i - 1)"
-                :key="inventory.uuid"
-                :inventory="inventory"
-              />
-            </div>
-          </template>
-        </div>
+        </ContainerGrid>
       </template>
     </PageBase>
 
@@ -97,7 +84,7 @@ import { computed, ref } from 'vue'
 import type { Inventory } from '@/model/Inventory'
 import { parseItems } from '@/parser/itemParser'
 import { DB } from '@/store/db'
-import { Settings } from '@/store/Settings'
+import ContainerGrid from '@/components/ContainerGrid.vue'
 
 ThemeManager.getInstance().pageTheme = 'inventar'
 
@@ -122,10 +109,6 @@ const inventories = computed(() => {
   )
   return allInventories.filter(matchSearchString)
 })
-
-function getNthOf3Inventories(n: number) {
-  return inventories.value.filter((_, idx) => idx % 3 === n)
-}
 
 async function submitAddInventory() {
   if (nameFieldContent.value == '') {
