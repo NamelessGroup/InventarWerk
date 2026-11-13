@@ -53,6 +53,7 @@ pub fn get_spell_list_routes() -> Vec<Route> {
         delete_spell_list,
         patch_spell_list,
         add_preset_to_list,
+        edit_spell_in_list,
         delete_preset_from_list
     ]
 }

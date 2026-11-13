@@ -1,5 +1,5 @@
 use utils::ApiDocAddon;
-use repos::{model_zauberwerk::SpellList, repos::{user_repository::UserRepository, zauberwek::{spell_list_repository::SpellListRepository, spell_preset_repository::SpellPresetRepository}}};
+use repos::{model_zauberwerk::{SpellList, SpellListEntry}, repos::{user_repository::UserRepository, zauberwek::{spell_list_repository::SpellListRepository, spell_preset_repository::SpellPresetRepository}}};
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 use utils::{ApiError, AuthenticatedUser, user_is_dm};
@@ -176,12 +176,22 @@ pub struct SpellListPresetParam {
     spell_preset_uuid: String
 }
 
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
+pub struct SpellListAddPresetParam {
+    /// UUID of the spell list
+    spell_list_uuid: String,
+    /// UUID of the spell preset
+    spell_preset_uuid: String,
+    /// Position of the spell in the list. Defaults to the end of the list.
+    sorting: Option<i32>,
+}
+
 #[utoipa::path(
     put,
     path = "/spellList/spell/addPreset",
     summary = "Add a spell preset to a spell list",
-    description = "Adds the spell preset with the given UUID to the spell list. Only the owner of the list may modify it.",
-    params(SpellListPresetParam),
+    description = "Adds the spell preset with the given UUID to the spell list. Does nothing if the preset is already in the list. Only the owner of the list may modify it.",
+    params(SpellListAddPresetParam),
     responses(
         (status = 204, description = "Spell preset successfully added"),
         (status = 403, description = "Forbidden - user is not the owner of the list"),
@@ -197,7 +207,7 @@ pub async fn add_preset_to_list(
     user: AuthenticatedUser,
     sli_rep: &State<SpellListRepository>,
     spp_rep: &State<SpellPresetRepository>,
-    params: SpellListPresetParam) -> Result<Status> {
+    params: SpellListAddPresetParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
         return Err(ApiError::forbidden());
@@ -205,7 +215,49 @@ pub async fn add_preset_to_list(
     if spp_rep.find_spell_preset(&params.spell_preset_uuid).await?.is_none() {
         return Err(ApiError::not_found("spell preset not found"));
     }
-    sli_rep.add_preset_to_list(&params.spell_list_uuid, &params.spell_preset_uuid).await?;
+    sli_rep.add_preset_to_list(&params.spell_list_uuid, &params.spell_preset_uuid, params.sorting).await?;
+    Ok(Status::NoContent)
+}
+
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
+pub struct SpellListSortingParam {
+    /// UUID of the spell list
+    spell_list_uuid: String,
+    /// UUID of the spell preset
+    spell_preset_uuid: String,
+    /// New position of the spell in the list
+    sorting: i32,
+}
+
+#[utoipa::path(
+    patch,
+    path = "/spellList/spell/edit",
+    summary = "Change the position of a spell in a spell list",
+    description = r#"Sets the `sorting` of the spell preset in the spell list. Spells are returned in ascending order of `sorting`. Only the owner of the list may modify it.
+
+The values do not need to be consecutive or unique; spells with the same `sorting` are ordered by their UUID. To move a spell, the client usually sends the new positions of all spells whose position changed."#,
+    params(SpellListSortingParam),
+    responses(
+        (status = 204, description = "Position successfully set"),
+        (status = 403, description = "Forbidden - user is not the owner of the list"),
+        (status = 404, description = "Spell list not found, or the spell preset is not in the list"),
+        (status = 500, description = "Database error")
+    ),
+    security(("cookie_auth" = [])),
+    tag = "Spell Lists"
+)]
+#[patch("/spellList/spell/edit?<params..>")]
+pub async fn edit_spell_in_list(
+    user: AuthenticatedUser,
+    sli_rep: &State<SpellListRepository>,
+    params: SpellListSortingParam) -> Result<Status> {
+    let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
+    if user.user_id != list.owner_uuid {
+        return Err(ApiError::forbidden());
+    }
+    if !sli_rep.set_sorting(&params.spell_list_uuid, &params.spell_preset_uuid, params.sorting).await? {
+        return Err(ApiError::not_found("spell preset is not in the spell list"));
+    }
     Ok(Status::NoContent)
 }
 
@@ -247,11 +299,13 @@ pub async fn delete_preset_from_list(
         delete_spell_list,
         patch_spell_list,
         add_preset_to_list,
+        edit_spell_in_list,
         delete_preset_from_list
     ),
     components(
         schemas(
             SpellList,
+            SpellListEntry,
             AllSpellListResponse,
         )
     ),

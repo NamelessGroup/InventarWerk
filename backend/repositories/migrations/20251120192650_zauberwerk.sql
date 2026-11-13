@@ -67,6 +67,8 @@ CREATE TABLE spell_list (
 CREATE TABLE spell_list_entry (
     spell_preset_uuid TEXT NOT NULL,
     spell_list_uuid TEXT NOT NULL,
+    -- Position of the spell in the list, ascending
+    sorting INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(spell_preset_uuid) REFERENCES spell_preset(uuid) ON DELETE CASCADE,
     FOREIGN KEY(spell_list_uuid) REFERENCES spell_list(uuid) ON DELETE CASCADE,
     PRIMARY KEY(spell_preset_uuid, spell_list_uuid)
