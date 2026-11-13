@@ -1,5 +1,4 @@
 use utils::ApiDocAddon;
-use std::thread;
 use std::time::Duration;
 
 use repos::{
@@ -9,19 +8,19 @@ use repos::{
     },
 };
 use rocket::{form::FromForm, http::Status, serde::json::Json, State};
-use rocket_errors::anyhow::Result;
+use utils::Result;
 use serde::{Deserialize, Serialize};
 
 use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
-use utils::{create_error, DmUser};
+use utils::{ApiError, DmUser};
 
 use utils::AuthenticatedUser;
 
 use super::{
-    router_utility::{user_has_read_access_to_item_preset, ACCESS_DENIAL_MESSAGE},
+    router_utility::user_has_read_access_to_item_preset,
 };
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -45,7 +44,9 @@ Public presets are readable by everybody, all other presets only if they are con
     params(ItemPresetUUIDParams),
     responses(
         (status = 200, description = "Returns the requested item preset", body = ItemPreset),
-        (status = 500, description = "No read access, preset not found, or database error")
+        (status = 403, description = "Forbidden - no read access"),
+        (status = 404, description = "Item preset not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Item Presets"
@@ -66,7 +67,7 @@ pub async fn get_item_preset(
         )
         .await?
     {
-        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+        return Err(ApiError::forbidden());
     }
     Ok(Json(preset))
 }
@@ -97,7 +98,9 @@ Requires authentication and creator privileges. Returns an error if the user is 
     params(ItemModifyParams),
     responses(
         (status = 204, description = "Item preset successfully modified"),
-        (status = 500, description = "User is not the creator, preset not found, or database error")
+        (status = 403, description = "Forbidden - user is not the creator"),
+        (status = 404, description = "Item preset not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Item Presets"
@@ -110,7 +113,7 @@ pub async fn modify_item_preset(
 ) -> Result<Status> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
     if preset.creator != user.user_id {
-        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+        return Err(ApiError::forbidden());
     }
     ipr_rep
         .update_item_preset(
@@ -135,7 +138,9 @@ Requires authentication and creator privileges. Returns an error if the user is 
     params(ItemPresetUUIDParams),
     responses(
         (status = 204, description = "Item preset successfully deleted"),
-        (status = 500, description = "User is not the creator, preset not found, or database error")
+        (status = 403, description = "Forbidden - user is not the creator"),
+        (status = 404, description = "Item preset not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Item Presets"
@@ -148,7 +153,7 @@ pub async fn delete_item_preset(
 ) -> Result<Status> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
     if preset.creator != user.user_id {
-        return Err(create_error(ACCESS_DENIAL_MESSAGE));
+        return Err(ApiError::forbidden());
     }
 
     ipr_rep.delete(&params.item_preset_uuid).await?;
@@ -244,7 +249,7 @@ pub async fn add_extern(
                 Ok(_res) => break,
                 Err(e) => {
                     println!("Error creating preset {}: {}", x.name, e);
-                    thread::sleep(Duration::from_secs(1));
+                    rocket::tokio::time::sleep(Duration::from_secs(1)).await;
                 }
             }
             i += 1;
@@ -277,7 +282,7 @@ pub async fn add_extern(
         )
     ),
     tags(
-        (name = "Item Presets", description = "Endpoints for managing item presets. Missing access rights are currently reported as `500` with the message `no access`.")
+        (name = "Item Presets", description = "Endpoints for managing item presets.")
     )
 )]
 pub struct ItemPresetApiDoc;

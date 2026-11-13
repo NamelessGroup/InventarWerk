@@ -1,10 +1,10 @@
 use utils::ApiDocAddon;
-use repos::{model_zauberwerk::SpellList, repos::{user_repository::UserRepository, zauberwek::spell_list_repository::SpellListRepository}};
+use repos::{model_zauberwerk::SpellList, repos::{user_repository::UserRepository, zauberwek::{spell_list_repository::SpellListRepository, spell_preset_repository::SpellPresetRepository}}};
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
-use utils::{AuthenticatedUser, user_is_dm};
+use utils::{ApiError, AuthenticatedUser, user_is_dm};
 use utoipa::{IntoParams, OpenApi, ToSchema};
-use::rocket_errors::anyhow::Result;
+use utils::Result;
 
 #[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct SpellListUUID {
@@ -23,7 +23,8 @@ Only the owner of the list or a DM may read it."#,
     responses(
         (status = 200, description = "Returns the requested spell list", body = SpellList),
         (status = 403, description = "Forbidden - user is neither the owner nor a DM"),
-        (status = 500, description = "Spell list not found or database error")
+        (status = 404, description = "Spell list not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Spell Lists"
@@ -33,12 +34,12 @@ pub async fn get_spell_list(
     user: AuthenticatedUser,
     sli_rep: &State<SpellListRepository>,
     usr_rep: &State<UserRepository>,
-    params: SpellListUUID) -> Result<Result<Json<SpellList>, Status>> {
+    params: SpellListUUID) -> Result<Json<SpellList>> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if list.owner_uuid != user.user_id && !user_is_dm(usr_rep, user.user_id).await? {
-        return Ok(Err(Status::Forbidden));
+        return Err(ApiError::forbidden());
     }
-    Ok(Ok(Json(list)))
+    Ok(Json(list))
 }
 
 
@@ -112,7 +113,8 @@ pub async fn get_all_spell_list(
     responses(
         (status = 204, description = "Spell list successfully deleted"),
         (status = 403, description = "Forbidden - user is not the owner of the list"),
-        (status = 500, description = "Spell list not found or database error")
+        (status = 404, description = "Spell list not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Spell Lists"
@@ -124,7 +126,7 @@ pub async fn delete_spell_list(
     params: SpellListUUID) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
-        return Ok(Status::Forbidden);
+        return Err(ApiError::forbidden());
     }
     sli_rep.delete_spell_list(&params.spell_list_uuid).await?;
     Ok(Status::NoContent)
@@ -147,7 +149,8 @@ pub struct SpellListEditParam {
     responses(
         (status = 204, description = "Spell list successfully renamed"),
         (status = 403, description = "Forbidden - user is not the owner of the list"),
-        (status = 500, description = "Spell list not found or database error")
+        (status = 404, description = "Spell list not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Spell Lists"
@@ -159,7 +162,7 @@ pub async fn patch_spell_list(
     params: SpellListEditParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
-        return Ok(Status::Forbidden);
+        return Err(ApiError::forbidden());
     }
     sli_rep.rename_spell_list(&params.spell_list_uuid, &params.spell_list_name).await?;
     Ok(Status::NoContent)
@@ -182,7 +185,9 @@ pub struct SpellListPresetParam {
     responses(
         (status = 204, description = "Spell preset successfully added"),
         (status = 403, description = "Forbidden - user is not the owner of the list"),
-        (status = 500, description = "Spell list not found or database error")
+        (status = 404, description = "Spell preset not found"),
+        (status = 404, description = "Spell list not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Spell Lists"
@@ -191,10 +196,14 @@ pub struct SpellListPresetParam {
 pub async fn add_preset_to_list(
     user: AuthenticatedUser,
     sli_rep: &State<SpellListRepository>,
+    spp_rep: &State<SpellPresetRepository>,
     params: SpellListPresetParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
-        return Ok(Status::Forbidden);
+        return Err(ApiError::forbidden());
+    }
+    if spp_rep.find_spell_preset(&params.spell_preset_uuid).await?.is_none() {
+        return Err(ApiError::not_found("spell preset not found"));
     }
     sli_rep.add_preset_to_list(&params.spell_list_uuid, &params.spell_preset_uuid).await?;
     Ok(Status::NoContent)
@@ -209,7 +218,8 @@ pub async fn add_preset_to_list(
     responses(
         (status = 204, description = "Spell preset successfully removed"),
         (status = 403, description = "Forbidden - user is not the owner of the list"),
-        (status = 500, description = "Spell list not found or database error")
+        (status = 404, description = "Spell list not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Spell Lists"
@@ -221,7 +231,7 @@ pub async fn delete_preset_from_list(
     params: SpellListPresetParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
-        return Ok(Status::Forbidden);
+        return Err(ApiError::forbidden());
     }
     sli_rep.remove_preset_from_list(&params.spell_list_uuid, &params.spell_preset_uuid).await?;
     Ok(Status::NoContent)

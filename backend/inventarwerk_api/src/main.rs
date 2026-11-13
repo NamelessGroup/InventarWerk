@@ -109,6 +109,7 @@ async fn main() {
         lock_toggle!();
     }
 
+    #[allow(unused_mut)]
     let mut figment = Config::figment().merge(("secret_key", secret_key));
 
     #[cfg(any(feature = "dev"))]

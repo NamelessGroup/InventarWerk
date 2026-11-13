@@ -5,9 +5,9 @@ use std::process::Stdio;
 
 use repos::{server_major_version, DbPool};
 use rocket::response::stream::ByteStream;
-use rocket::tokio::{self, io::AsyncReadExt, process::Command};
+use tokio::{io::AsyncReadExt, process::Command};
 use rocket::State;
-use rocket_errors::anyhow::Result;
+use utils::Result;
 use utoipa::OpenApi;
 
 use utils::{create_error, DmUser};

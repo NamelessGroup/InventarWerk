@@ -16,9 +16,9 @@ use utoipa::ToSchema;
 use repos::model_inventarwerk::User;
 use repos::repos::user_repository::UserRepository;
 
-use rocket_errors::anyhow::Result;
+use utils::Result;
 
-use utils::{create_error, DmUser};
+use utils::{ApiError, DmUser};
 use crate::{lock_toggle, locked_status};
 
 
@@ -71,7 +71,8 @@ pub struct DMResponse {
     description = r#"Checks if a user (by UUID) is a Dungeon Master (DM). Requires authentication."#,
     responses(
         (status = 200, description = "A JSON response indicating whether the user is DM", body = DMResponse),
-        (status = 500, description = "User not found or database error")
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Accounts"
@@ -142,7 +143,8 @@ pub struct DiscordUser {
 New users can only register while the system is not locked (see `GET /account/isLocked`)."#,
     responses(
         (status = 303, description = "Login successful, redirects to the frontend"),
-        (status = 500, description = "Discord request failed, system is locked for new users, or database error")
+        (status = 403, description = "System is locked for new users"),
+        (status = 500, description = "Discord request failed or database error")
     ),
     tag = "Accounts"
 )]
@@ -203,7 +205,7 @@ pub async fn callback(
     
     if !has_user {
         if locked_status!() {
-            return Err(create_error("No new Users allowed"));
+            return Err(ApiError::new(Status::Forbidden, "no new users allowed"));
         }
         let _res = usr_rep
             .create_user(&user_response.id, &user_response.username, &avatar_unpacked)

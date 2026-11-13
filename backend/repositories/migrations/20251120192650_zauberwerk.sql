@@ -78,7 +78,9 @@ CREATE TABLE spell_slots (
     spell_slot_maxima INTEGER NOT NULL,
     spell_slot_available INTEGER NOT NULL,
     FOREIGN KEY(owner_uuid) REFERENCES "user"(uuid),
-    PRIMARY KEY(owner_uuid, spell_slot_level)
+    PRIMARY KEY(owner_uuid, spell_slot_level),
+    CHECK (spell_slot_level BETWEEN 1 AND 9),
+    CHECK (spell_slot_available BETWEEN 0 AND spell_slot_maxima)
 );
 
 -- One row per user that is currently concentrating on a spell.

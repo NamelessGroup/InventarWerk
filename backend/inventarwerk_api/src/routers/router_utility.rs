@@ -1,28 +1,5 @@
-use repos::repos::{inventory_repository::InventoryRepository};
-use rocket_errors::anyhow::Result;
-
-pub static ACCESS_DENIAL_MESSAGE: &str = "no access";
-
-/// Checks if a user has read access to a specific inventory.
-///
-/// # Arguments
-/// * `inv_rep` - Reference to the inventory repository.
-/// * `inventory_uuid` - The UUID of the inventory.
-/// * `user_id` - The UUID of the user.
-///
-/// # Returns
-/// `true` if the user is a reader of the inventory, otherwise `false`.
-pub async fn user_has_read_access_to_inventory(
-    inv_rep: &InventoryRepository,
-    inventory_uuid: String,
-    user_id: String,
-) -> Result<bool> {
-    Ok(inv_rep
-        .get_full_inventory(&inventory_uuid)
-        .await?
-        .reader
-        .contains(&user_id))
-}
+use repos::repos::inventory_repository::InventoryRepository;
+use utils::Result;
 
 /// Checks if a user has write access to a specific inventory.
 ///

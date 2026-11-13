@@ -47,15 +47,6 @@ impl UserRepository {
         Ok(users)
     }
 
-    /// Deletes a user by their UUID.
-    pub async fn delete_user(&self, uuid: &str) -> Result<u64> {
-        let result = sqlx::query!("DELETE FROM \"user\" WHERE uuid = $1", uuid)
-            .execute(&self.pool)
-            .await?;
-
-        Ok(result.rows_affected())
-    }
-
     /// Updates a user's name, avatar, and DM status by UUID.
     pub async fn update_user(&self, uuid: &str, name: &str, avatar: &str, dm: bool) -> Result<User> {
         let user = sqlx::query_as!(

@@ -14,15 +14,13 @@ use rocket::response::stream::{Event, EventStream};
 use rocket::tokio::select;
 use rocket::tokio::sync::broadcast::{error::RecvError, Sender};
 use rocket::{http::Status, serde::json::Json, Shutdown, State};
-use rocket_errors::anyhow::Result;
+use utils::Result;
 use serde::{Deserialize, Serialize};
-use utils::{AuthenticatedUser, TargetUser};
+use utils::{ApiError, AuthenticatedUser, TargetUser};
 
-use super::OwnerUUID;
+use super::{OwnerUUID, MAX_SPELL_LEVEL};
 use utoipa::{IntoParams, OpenApi, ToSchema};
 
-/// Highest spell slot level.
-const MAX_SPELL_LEVEL: i32 = 9;
 
 /// All events sent over `GET /spellPreset/cast/stream`.
 /// The SSE event name tells the client which payload to expect.
@@ -34,7 +32,8 @@ pub enum SpellEvent {
     ConcentrationEnded(ConcentrationEndedEvent),
 }
 
-/// Event that is broadcast when the concentration of a user is ended via `DELETE /concentration`.
+/// Event that is broadcast when the concentration of a user is ended, either via `DELETE /concentration`
+/// or because the spell preset was deleted via `DELETE /spellPreset/delete`.
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ConcentrationEndedEvent {
@@ -62,13 +61,11 @@ fn now_millis() -> u128 {
 pub async fn broadcast_concentration_ended(
     queue: &Sender<SpellEvent>,
     usr_rep: &UserRepository,
-    spp_rep: &SpellPresetRepository,
     owner_uuid: String,
     triggered_by_uuid: String,
-    ended_spell_uuid: &str,
+    spell: SpellPreset,
 ) -> Result<()> {
     let owner = usr_rep.get_user(&owner_uuid).await?;
-    let spell = spp_rep.get_spell_preset(ended_spell_uuid).await?;
 
     let event = ConcentrationEndedEvent {
         owner_uuid,
@@ -136,7 +133,8 @@ On success a `SpellCastEvent` with all information about the cast is returned an
         (status = 400, description = "Invalid cast level"),
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM, or the spell is not in a spell list of the caster"),
         (status = 409, description = "No spell slot of the cast level available"),
-        (status = 500, description = "Spell preset not found or database error")
+        (status = 404, description = "Spell preset not found"),
+        (status = 500, description = "Database error")
     ),
     security(("cookie_auth" = [])),
     tag = "Spell Casting"
@@ -150,7 +148,7 @@ pub async fn cast_spell(
     sli_rep: &State<SpellListRepository>,
     cast_rep: &State<SpellCastRepository>,
     queue: &State<Sender<SpellEvent>>,
-) -> Result<Result<Json<SpellCastEvent>, Status>> {
+) -> Result<Json<SpellCastEvent>> {
     let TargetUser { requester_uuid, owner_uuid: caster_uuid } = target;
 
     let spell = spp_rep.get_spell_preset(&params.spell_preset_uuid).await?;
@@ -162,11 +160,11 @@ pub async fn cast_spell(
         (spell.level..=MAX_SPELL_LEVEL).contains(&cast_level)
     };
     if !level_valid {
-        return Ok(Err(Status::BadRequest));
+        return Err(ApiError::bad_request("invalid cast level"));
     }
 
     if !sli_rep.owner_has_spell(&caster_uuid, &spell.uuid).await? {
-        return Ok(Err(Status::Forbidden));
+        return Err(ApiError::new(Status::Forbidden, "spell is not in a spell list of the caster"));
     }
 
     let caster = usr_rep.get_user(&caster_uuid).await?;
@@ -178,7 +176,7 @@ pub async fn cast_spell(
         CastOutcome::Cast { remaining_slots, previous_concentration } => {
             (remaining_slots, previous_concentration)
         }
-        CastOutcome::NoSlotAvailable => return Ok(Err(Status::Conflict)),
+        CastOutcome::NoSlotAvailable => return Err(ApiError::conflict("no spell slot of the cast level available")),
     };
 
     let timestamp = now_millis();
@@ -200,7 +198,7 @@ pub async fn cast_spell(
     // Sending only fails if no client is subscribed, which is fine.
     let _ = queue.send(SpellEvent::Cast(event.clone()));
 
-    Ok(Ok(Json(event)))
+    Ok(Json(event))
 }
 
 #[utoipa::path(
@@ -210,7 +208,7 @@ pub async fn cast_spell(
     description = r#"Opens a Server-Sent Events (SSE) stream for all connected clients. The SSE event name tells which JSON payload follows:
 
 - `spellCast` (`SpellCastEvent`): a spell was cast via `PUT /spellPreset/cast`
-- `concentrationEnded` (`ConcentrationEndedEvent`): a concentration was ended via `DELETE /concentration`
+- `concentrationEnded` (`ConcentrationEndedEvent`): a concentration was ended via `DELETE /concentration`, or because the spell preset was deleted via `DELETE /spellPreset/delete`
 
 In the browser use `eventSource.addEventListener('<event name>', ...)`; `onmessage` does not receive named events."#,
     responses(

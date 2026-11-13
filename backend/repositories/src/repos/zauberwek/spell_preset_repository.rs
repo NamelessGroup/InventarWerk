@@ -293,11 +293,35 @@ impl SpellPresetRepository {
         Ok(spells)
     }
 
-    /// Deletes a spell preset by UUID.
-    pub async fn delete_spell_preset(&self, uuid: &str) -> Result<(), Error> {
+    /// Retrieves a spell preset by its UUID, or `None` if it does not exist.
+    pub async fn find_spell_preset(&self, spell_preset_uuid: &str) -> Result<Option<SpellPreset>, Error> {
+        match self.get_spell_preset(spell_preset_uuid).await {
+            Ok(preset) => Ok(Some(preset)),
+            Err(Error::RowNotFound) => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Deletes a spell preset by UUID. The preset is removed from all spell lists and
+    /// all concentrations on it are ended.
+    ///
+    /// Returns the UUIDs of the users whose concentration was ended.
+    pub async fn delete_spell_preset(&self, uuid: &str) -> Result<Vec<String>, Error> {
+        let mut tx = self.pool.begin().await?;
+
+        // Would also be removed by ON DELETE CASCADE, but the affected users are needed.
+        let ended_concentrations = sqlx::query_scalar!(
+            "DELETE FROM concentration WHERE spell_preset_uuid = $1 RETURNING owner_uuid",
+            uuid
+        )
+        .fetch_all(&mut *tx)
+        .await?;
+
         sqlx::query!("DELETE FROM spell_preset WHERE uuid = $1", uuid)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
-        Ok(())
+
+        tx.commit().await?;
+        Ok(ended_concentrations)
     }
 }

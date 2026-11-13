@@ -4,7 +4,7 @@ use repos::{
     repos::zauberwek::spell_attack_modifier_repository::SpellAttackModifierRepository,
 };
 use rocket::{http::Status, serde::json::Json, State};
-use rocket_errors::anyhow::Result;
+use utils::Result;
 use serde::{Deserialize, Serialize};
 use utils::{DmUser, TargetUser};
 use utoipa::{IntoParams, OpenApi, ToSchema};

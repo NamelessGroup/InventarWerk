@@ -1,6 +1,9 @@
 use rocket::Route;
 use utoipa::IntoParams;
 
+/// Highest spell slot level.
+pub const MAX_SPELL_LEVEL: i32 = 9;
+
 /// Documentation of the optional `owner_uuid` query parameter that is evaluated by the
 /// `utils::TargetUser` guard. Only used for the OpenAPI docs, not for parsing.
 #[derive(IntoParams)]
