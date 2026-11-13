@@ -128,21 +128,21 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, type PropType } from 'vue'
-import type { Inventory } from '../model/Inventory'
+import type { Inventory } from '@/model/Inventory'
 import ItemRowDisplay from './ItemRowDisplay.vue'
 import type { MoneyFields } from '@/utils/moneyMath'
 import { accountData, inventoryData } from '@/store'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faChevronUp, faPen, faShare, faTrashCan } from '@fortawesome/free-solid-svg-icons'
 import AddItemPopUp from './AddItemPopUp.vue'
-import EditSharePopUp from './share/EditSharePopUp.vue'
-import NumericInput from './NumericInput.vue'
-import DiscordImage from './DiscordImage.vue'
-import ViewSharePopUp from './share/ViewSharePopUp.vue'
-import TimedConfirmationButton from './TimedConfirmationButton.vue'
+import EditSharePopUp from '../share/EditSharePopUp.vue'
+import NumericInput from '../NumericInput.vue'
+import DiscordImage from '../DiscordImage.vue'
+import ViewSharePopUp from '../share/ViewSharePopUp.vue'
+import TimedConfirmationButton from '../TimedConfirmationButton.vue'
 import { Settings } from '@/store/Settings'
 import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
-import CollapseTransition from './CollapseTransition.vue'
+import CollapseTransition from '../CollapseTransition.vue'
 import type { Item } from '@/model/Item'
 
 const props = defineProps({

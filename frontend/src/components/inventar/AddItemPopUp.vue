@@ -29,10 +29,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import PopUp from './PopUp.vue'
+import PopUp from '../PopUp.vue'
 import autocomplete, { type AutocompleteItem } from 'autocompleter'
 import { inventoryData } from '@/store'
-import NumericInput from './NumericInput.vue'
+import NumericInput from '../NumericInput.vue'
 import { DB } from '@/store/db/index.ts'
 
 const props = defineProps({

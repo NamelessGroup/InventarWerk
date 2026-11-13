@@ -30,10 +30,10 @@
 
 <script setup lang="ts">
 import { ref, type PropType } from 'vue'
-import PopUp from './PopUp.vue'
+import PopUp from '../PopUp.vue'
 import type { Item } from '@/model/Item'
 import { inventoryData } from '@/store'
-import NumericInput from './NumericInput.vue'
+import NumericInput from '../NumericInput.vue'
 
 const props = defineProps({
   inventoryUuid: {

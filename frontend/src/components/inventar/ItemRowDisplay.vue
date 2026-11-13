@@ -79,9 +79,9 @@ import { accountData, inventoryData } from '@/store'
 import { marked } from 'marked'
 import EditItemPopUp from './EditItemPopUp.vue'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
-import NumericInput from './NumericInput.vue'
-import CollapseTransition from './CollapseTransition.vue'
-import TimedConfirmationButton from './TimedConfirmationButton.vue'
+import NumericInput from '../NumericInput.vue'
+import CollapseTransition from '../CollapseTransition.vue'
+import TimedConfirmationButton from '../TimedConfirmationButton.vue'
 import { Settings } from '@/store/Settings'
 
 const props = defineProps({
