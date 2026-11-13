@@ -41,7 +41,7 @@
         />
       </button>
       <button
-        class="h-7 w-7 shrink-0 rounded-sm border border-amber-300 bg-fuchsia-900"
+        class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
         @click="showSharePopup = true"
       >
         <FontAwesomeIcon :icon="faShare" />
