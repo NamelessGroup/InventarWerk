@@ -15,7 +15,6 @@ use repos::repos::zauberwek::spell_slot_repository::SpellSlotRepository;
 use repos::repos::zauberwek::spell_cast_repository::SpellCastRepository;
 use rocket::tokio::sync::broadcast::channel;
 use rocket::config::Config;
-use rocket::fs::FileServer;
 use std::env;
 
 use repos::DbPool;
@@ -85,7 +84,6 @@ async fn main() {
         .manage(sli_rep)
         .manage(cast_rep)
         .manage(cast_tx)
-        .mount("/", FileServer::from("./static"))
         .mount("/", routers::get_spell_list_routes())
         .mount("/", routers::get_concentration_routes())
         .mount("/", routers::get_spell_attack_modifier_routes())
