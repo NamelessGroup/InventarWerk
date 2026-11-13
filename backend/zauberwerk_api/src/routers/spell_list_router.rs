@@ -1,7 +1,7 @@
 use repos::{model_zauberwerk::SpellList, repos::{user_repository::UserRepository, zauberwek::spell_list_repository::SpellListRepository}};
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
-use utils::{AuthenticatedUser, DmUser, user_is_dm};
+use utils::{AuthenticatedUser, user_is_dm};
 use utoipa::{IntoParams, OpenApi, ToSchema};
 use::rocket_errors::anyhow::Result;
 
@@ -77,13 +77,12 @@ pub struct AllSpellListResponse {
 #[utoipa::path(
     get,
     path = "/spellList/all",
-    summary = "Retrieve all spell lists",
-    description = r#"Returns the spell lists of all users.
-
-Only accessible for DMs."#,
+    summary = "Retrieve all accessible spell lists",
+    description = r#"Returns all spell lists the requesting user may read:
+- DMs receive the spell lists of all users.
+- All other users receive their own spell lists."#,
     responses(
-        (status = 200, description = "Returns all spell lists", body = AllSpellListResponse),
-        (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 200, description = "Returns the accessible spell lists", body = AllSpellListResponse),
         (status = 500, description = "Database error")
     ),
     security(("bearer_auth" = [])),
@@ -91,9 +90,14 @@ Only accessible for DMs."#,
 )]
 #[get("/spellList/all")]
 pub async fn get_all_spell_list(
-    _dm: DmUser,
-    sli_rep: &State<SpellListRepository>) -> Result<Json<AllSpellListResponse>> {
-    let lists = sli_rep.get_all_spell_lists().await?;
+    user: AuthenticatedUser,
+    sli_rep: &State<SpellListRepository>,
+    usr_rep: &State<UserRepository>) -> Result<Json<AllSpellListResponse>> {
+    let lists = if user_is_dm(usr_rep, user.user_id.clone()).await? {
+        sli_rep.get_all_spell_lists().await?
+    } else {
+        sli_rep.get_spell_list_for_owner(&user.user_id).await?
+    };
     Ok(Json(AllSpellListResponse { spell_lists: lists }))
 }
 
@@ -101,7 +105,7 @@ pub async fn get_all_spell_list(
     delete,
     path = "/spellList/delete",
     summary = "Delete a spell list",
-    description = "Deletes the spell list with the given UUID. Only the owner of the list may delete it.",
+    description = "Deletes the spell list with the given UUID, including all of its entries. The spell presets themselves are not deleted. Only the owner of the list may delete it.",
     params(SpellListUUID),
     responses(
         (status = 204, description = "Spell list successfully deleted"),

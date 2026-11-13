@@ -65,7 +65,7 @@ pub async fn get_all_spell_presets(
     delete,
     path = "/spellPreset/delete",
     summary = "Delete a spell preset",
-    description = r#"Deletes the spell preset with the given UUID.
+    description = r#"Deletes the spell preset with the given UUID. The preset is also removed from all spell lists, and concentrations on it are ended (without a `concentrationEnded` event).
 
 Only accessible for DMs."#,
     params(SpellPresetUUID),
@@ -90,13 +90,16 @@ pub async fn delete_spell_preset(
     patch,
     path = "/spellPreset/modify",
     summary = "Modify a spell preset",
-    description = r#"Replaces the spell preset identified by `uuid` in the request body with the given data.
+    description = r#"Replaces all fields of the spell preset identified by `uuid` in the request body with the given data.
+
+The preset keeps its UUID, so spell lists and concentrations referencing it are not affected.
 
 Only accessible for DMs."#,
     request_body(content = SpellPreset, description = "The complete, modified spell preset", content_type = "application/json"),
     responses(
         (status = 204, description = "Spell preset successfully modified"),
         (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 404, description = "No spell preset with the given `uuid` exists"),
         (status = 422, description = "Request body is missing fields or has invalid values"),
         (status = 500, description = "Database error")
     ),
@@ -108,7 +111,9 @@ pub async fn edit_spell_preset(
     _dm: DmUser,
     spp_rep: &State<SpellPresetRepository>,
     json_data: Json<SpellPreset>) -> Result<Status> {
-    spp_rep.modify_spell_preset(json_data.into_inner()).await?;
+    if !spp_rep.modify_spell_preset(json_data.into_inner()).await? {
+        return Ok(Status::NotFound);
+    }
     Ok(Status::NoContent)
 }
 
