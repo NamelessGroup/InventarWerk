@@ -1,8 +1,9 @@
 import type { SpellPreset } from '@/model/SpellPreset'
 import { parse, type Entry } from './Entry'
 import { processList } from './DB'
+import { DB } from '@/store/db'
 
-interface ToolsSpell {
+export interface ToolsSpell {
   name: string
   source: string
   level: number
@@ -55,7 +56,7 @@ interface Duration {
   concentration: boolean | undefined
 }
 
-type SourceJson = Record<string, SourceBookData>
+export type SourceJson = Record<string, SourceBookData>
 type SourceBookData = Record<string, SourceData>
 interface SourceData {
   class: {
@@ -86,6 +87,18 @@ function parseAttack(a: string[] | undefined) {
   return r.join(', ')
 }
 
+const schoolMap: Record<string, string> = {
+  T: 'Transmutation',
+  N: 'Necromancy',
+  I: 'Illusion',
+  V: 'Evocation',
+  E: 'Enchantment',
+  D: 'Divination',
+  C: 'Conjuration',
+  BM: 'Biomancy',
+  A: 'Abjuration'
+}
+
 function convertSpell(original: ToolsSpell, source?: SourceData): SpellPreset {
   return {
     uuid: '',
@@ -93,7 +106,7 @@ function convertSpell(original: ToolsSpell, source?: SourceData): SpellPreset {
     duration: original.duration
       .map((d) => (d.duration ? `${d.duration.amount} ${d.duration.type}` : d.type))
       .join(', '),
-    range: [`${original.range.distance} ${original.range.type}`],
+    range: `${original.range.distance} ${original.range.type}`,
     description: original.entries.map(parse).join('\n\n'),
     higherLevel: original.entriesHigherLevel
       ? original.entriesHigherLevel.map(parse).join('\n\n')
@@ -101,7 +114,7 @@ function convertSpell(original: ToolsSpell, source?: SourceData): SpellPreset {
     components: parseComponents(original.components),
     concentration: original.duration.some((t) => t.concentration === true),
     level: original.level,
-    school: ['TODO'],
+    school: schoolMap[original.school] ?? 'unknown school',
     conditionInflict: array(original.conditionInflict),
     conditionImmune: array(original.conditionImmune),
     savingThrow: array(original.savingThrow),
@@ -123,7 +136,7 @@ function convertSpell(original: ToolsSpell, source?: SourceData): SpellPreset {
   }
 }
 
-interface SpellJson {
+export interface SpellJson {
   spells: ToolsSpell[]
 }
 
@@ -144,9 +157,11 @@ function flattenSources(sources: SourceJson): SourceBookData {
   return result
 }
 
-export function parseSpellList(spellList: SpellJson, sources: SourceJson) {
+export async function parseSpellList(spellList: SpellJson[], sources: SourceJson) {
   const flattenedSources = flattenSources(sources)
-  const spells = spellList.spells.map((s) => convertSpell(s, flattenedSources[s.name]))
+  const spells = spellList
+    .flatMap((l) => l.spells)
+    .map((s) => convertSpell(s, flattenedSources[s.name]))
 
-  processList(spells, 'TODO', 'TODO')
+  return processList(spells, DB.zauber.getMassUploadURL(), 'spell_presets')
 }

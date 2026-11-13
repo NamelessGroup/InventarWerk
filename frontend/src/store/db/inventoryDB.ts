@@ -257,4 +257,8 @@ export class InventoryDB extends BaseDatabaseHandler {
       inventory_uuid: inventoryUuid
     })
   }
+
+  public getMassUploadURL() {
+    return this.baseURL + InventoryDB.ITEM_PRESET_END_POINT + '/addExtern'
+  }
 }

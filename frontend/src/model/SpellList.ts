@@ -1,11 +1,14 @@
 import type { SpellPreset } from './SpellPreset'
 
-interface RawSpellList<T> {
+interface RawSpellList {
   name: string
   ownerUuid: string
-  spellUuids: T[]
   uuid: string
 }
 
-export type DBSpellList = RawSpellList<string>
-export type SpellList = RawSpellList<SpellPreset>
+export interface DBSpellList extends RawSpellList {
+  spellUuids: string[]
+}
+export interface SpellList extends RawSpellList {
+  spells: SpellPreset[]
+}

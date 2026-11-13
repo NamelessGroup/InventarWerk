@@ -1,7 +1,7 @@
 import type { ItemPreset } from '@/model/ItemPreset'
 import { parse, type Entry } from './Entry'
 import { processList } from './DB'
-import { BaseDatabaseHandler } from '@/store/db/base'
+import { DB } from '@/store/db'
 
 interface ItemJSON {
   name: string
@@ -230,5 +230,5 @@ export async function parseItems(itemList: ItemListJSON) {
     parsedItemList.push(parsedItem)
   }
 
-  processList(parsedItemList, BaseDatabaseHandler.getBaseURL(8000) + 'TODO', 'TODO')
+  processList(parsedItemList, DB.inventory.getMassUploadURL(), 'presets')
 }

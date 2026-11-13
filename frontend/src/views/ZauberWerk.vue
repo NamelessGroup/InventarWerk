@@ -14,6 +14,13 @@
           />
         </div>
         <div class="flex-1"></div>
+        <button
+          v-if="accountData().userIsDm"
+          class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
+          @click="showAddExternPopUp = true"
+        >
+          <FontAwesomeIcon :icon="faUpload" />
+        </button>
       </template>
 
       <template #default>
@@ -48,6 +55,7 @@
         <p class="text-error-text col-span-2 row-start-3">{{ errorContent }}</p>
       </div>
     </PopUp>
+    <UploadPresetListPopUp v-if="showAddExternPopUp" @close="showAddExternPopUp = false" />
 
     <button
       class="border-accent bg-primary-default fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border"
@@ -64,15 +72,17 @@ import SpellSlotList from '@/components/zauber/SpellSlotList.vue'
 import type { SpellList } from '@/model/SpellList'
 import { accountData, zauberData } from '@/store'
 import { ThemeManager } from '@/theme/ThemeManager'
-import { faPlus, faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faPlus, faSearch, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, ref } from 'vue'
 import PopUp from '@/components/PopUp.vue'
 import { DB } from '@/store/db'
+import UploadPresetListPopUp from '@/components/zauber/UploadPresetListPopUp.vue'
 
 ThemeManager.getInstance().pageTheme = 'zauber'
 
 const showCreation = ref(false)
+const showAddExternPopUp = ref(false)
 const nameFieldContent = ref('')
 const errorContent = ref('')
 
@@ -87,18 +97,19 @@ function matchSearchString(inventory: SpellList) {
   return false
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function submitAddSpellList() {
   if (nameFieldContent.value == '') {
     errorContent.value = 'Name cannot be empty'
     return
   }
-  const result = await DB.inventory.createInventory(nameFieldContent.value)
+  const result = await DB.zauber.createSpellList(nameFieldContent.value)
   if (result) {
     nameFieldContent.value = ''
     errorContent.value = ''
     showCreation.value = false
   } else {
-    errorContent.value = 'Error creating inventory'
+    errorContent.value = 'Error creating spell list'
   }
 }
 </script>
