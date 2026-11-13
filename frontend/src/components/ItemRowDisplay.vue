@@ -13,11 +13,7 @@
         v-model="amountValue"
         :readonly="!canEdit"
         class="bg-primary-dark row-start-1 my-auto h-8 w-10 rounded-sm border-none px-1 text-right outline-hidden"
-        @click="
-          (e: Event) => {
-            e.stopPropagation()
-          }
-        "
+        @click.stop
         @update="(v) => editAmount(v)"
       />
       <div class="break-wrap row-start-1 flex items-center px-2">{{ item.name }}</div>
@@ -33,36 +29,38 @@
         <template #confirmation> Confirm </template>
       </TimedConfirmationButton>
     </div>
-    <div v-show="expanded">
-      <div class="relative flex min-h-12 flex-col">
-        <p class="text-xs">Price: {{ priceString }}</p>
-        <p class="mb-1 text-xs">Weight: {{ item.weight }} lbs.</p>
-        <p class="markdown mb-1 text-xs" v-html="description"></p>
-        <textarea
-          v-model="itemNote"
-          class="border-accent bg-primary-default text-primary-text rounded-sm border text-xs outline-hidden"
-          placeholder="Notes"
-          @click="(e) => e.stopPropagation()"
-          @blur="inventoryData().editItemNote(inventoryUuid, item.presetReference, itemNote)"
-        ></textarea>
-        <textarea
-          v-if="accountData().userIsDm"
-          v-model="dmNote"
-          class="border-accent bg-primary-default text-accent mt-1 rounded-sm border text-xs outline-hidden"
-          placeholder="DM Note"
-          @click="(e) => e.stopPropagation()"
-          @blur="inventoryData().editDmNote(inventoryUuid, item.presetReference, dmNote)"
-        ></textarea>
+    <CollapseTransition>
+      <div v-show="expanded">
+        <div class="relative flex min-h-12 flex-col">
+          <p class="text-xs">Price: {{ priceString }}</p>
+          <p class="mb-1 text-xs">Weight: {{ item.weight }} lbs.</p>
+          <p class="markdown mb-1 text-xs" v-html="description"></p>
+          <textarea
+            v-model="itemNote"
+            class="border-accent bg-primary-default text-primary-text rounded-sm border text-xs outline-hidden"
+            placeholder="Notes"
+            @click.stop
+            @blur="inventoryData().editItemNote(inventoryUuid, item.presetReference, itemNote)"
+          ></textarea>
+          <textarea
+            v-if="accountData().userIsDm"
+            v-model="dmNote"
+            class="border-accent bg-primary-default text-accent mt-1 rounded-sm border text-xs outline-hidden"
+            placeholder="DM Note"
+            @click.stop
+            @blur="inventoryData().editDmNote(inventoryUuid, item.presetReference, dmNote)"
+          ></textarea>
 
-        <button
-          v-if="accountData().uuid == item.presetCreator"
-          class="border-accent bg-primary-dark absolute top-2 right-0 h-6 w-6 rounded-sm border text-xs"
-          @click="(e) => openEdit(e)"
-        >
-          <FontAwesomeIcon :icon="faPen" />
-        </button>
+          <button
+            v-if="accountData().uuid == item.presetCreator"
+            class="border-accent bg-primary-dark absolute top-2 right-0 h-6 w-6 rounded-sm border text-xs"
+            @click="(e) => openEdit(e)"
+          >
+            <FontAwesomeIcon :icon="faPen" />
+          </button>
+        </div>
       </div>
-    </div>
+    </CollapseTransition>
     <EditItemPopUp
       v-if="showItemEdit"
       :item="item"
@@ -82,6 +80,7 @@ import { marked } from 'marked'
 import EditItemPopUp from './EditItemPopUp.vue'
 import { breakDownMoney, type MoneyFields } from '@/utils/moneyMath'
 import NumericInput from './NumericInput.vue'
+import CollapseTransition from './CollapseTransition.vue'
 import TimedConfirmationButton from './TimedConfirmationButton.vue'
 import { Settings } from '@/store/Settings'
 

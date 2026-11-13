@@ -46,9 +46,9 @@ body {
   --color-background: var(--colBackground);
   --color-popup-background: var(--colPopUpBackground);
   --color-text: var(--colFont);
-  --color-error-popup-text: var(--colErrorFont);
-  --color-error-popup-bg: var(--colErrorBackground);
-  --color-error-popup-bar: var(--colErrorBar);
+  --color-error-popup-text: var(--colErrorPopUpFont);
+  --color-error-popup-bg: var(--colErrorPopUpBackground);
+  --color-error-popup-bar: var(--colErrorPopUpBar);
   --color-error-text: var(--colErrorFont);
   --color-accent: var(--colAccent);
   --color-delete: var(--colDelete);
