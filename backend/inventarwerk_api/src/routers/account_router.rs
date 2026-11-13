@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use reqwest::Client;
 use rocket::form::FromForm;
 use rocket::http::{Cookie, CookieJar, Status};
@@ -21,12 +22,13 @@ use utils::{create_error, DmUser};
 use crate::{lock_toggle, locked_status};
 
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct AccountUUIDParams {
+    /// UUID of the user to check
     account_uuid: String,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct AccountResponse {
     accounts: Vec<User>,
 }
@@ -37,9 +39,10 @@ pub struct AccountResponse {
     summary = "Retrieve all users",
     description = r#"Returns a JSON response containing all users. Requires authentication."#,
     responses(
-        (status = 200, description = "A list of user accounts", body = AccountResponse)
+        (status = 200, description = "A list of user accounts", body = AccountResponse),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/get")]
@@ -54,7 +57,7 @@ pub async fn get_accounts(
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 #[serde(crate = "rocket::serde")]
 pub struct DMResponse {
     isDm: bool,
@@ -67,9 +70,10 @@ pub struct DMResponse {
     summary = "Check if a user is a DM",
     description = r#"Checks if a user (by UUID) is a Dungeon Master (DM). Requires authentication."#,
     responses(
-        (status = 200, description = "A JSON response indicating whether the user is DM", body = DMResponse)
+        (status = 200, description = "A JSON response indicating whether the user is DM", body = DMResponse),
+        (status = 500, description = "User not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/isDm?<params..>")]
@@ -90,7 +94,7 @@ pub async fn is_account_dm(
     summary = "Redirect to the Discord login page",
     description = r#"Redirects the user to the Discord OAuth login page."#,
     responses(
-        (status = 307, description = "Redirecting to Discord login")
+        (status = 303, description = "Redirecting to Discord login")
     ),
     tag = "Accounts"
 )]
@@ -105,12 +109,13 @@ pub async fn login() -> Redirect {
     Redirect::to(url)
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct CodeParams {
+    /// OAuth authorization code issued by Discord
     code: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TokenResponse {
     access_token: String,
     token_type: String,
@@ -119,7 +124,7 @@ pub struct TokenResponse {
     scope: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DiscordUser {
     id: String,
     username: String,
@@ -132,11 +137,13 @@ pub struct DiscordUser {
     path = "/account/oauth/callback",
     params(CodeParams),
     summary = "Handle OAuth callback from Discord",
-    description = r#"Enters the OAuth flow, exchanging the code for a token. Retrieves user info from Discord and creates/updates a user in the DB."#,
+    description = r#"Called by Discord after login. Exchanges the code for a token, retrieves the user info from Discord and creates/updates the user in the DB. Sets the `user_id` session cookie.
+
+New users can only register while the system is not locked (see `GET /account/isLocked`)."#,
     responses(
-        (status = 307, description = "Redirects to the base URL after processing the OAuth callback")
+        (status = 303, description = "Login successful, redirects to the frontend"),
+        (status = 500, description = "Discord request failed, system is locked for new users, or database error")
     ),
-    security(("bearer_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/oauth/callback?<params..>")]
@@ -229,7 +236,7 @@ pub async fn callback(
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct InfoResponse {
     userUUID: String,
 }
@@ -242,7 +249,7 @@ pub struct InfoResponse {
     responses(
         (status = 200, description = "UUID of the authenticated user", body = InfoResponse)
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/info")]
@@ -253,7 +260,7 @@ pub async fn account_info(user: AuthenticatedUser) -> Json<InfoResponse> {
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct LoggedInResponse {
     loggedIn: bool,
 }
@@ -297,7 +304,7 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Status {
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct IsLockedResponse {
     isLocked: bool,
 }
@@ -328,7 +335,7 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
         (status = 204, description = "System lock toggled successfully"),
         (status = 403, description = "Forbidden - user is not a DM")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[patch("/account/toggleLock")]
@@ -341,6 +348,7 @@ pub async fn toggle_lock(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_accounts,
         is_account_dm,
@@ -357,11 +365,7 @@ pub async fn toggle_lock(
             DMResponse,
             AccountResponse,
             LoggedInResponse,
-            TokenResponse,
             InfoResponse,
-            DiscordUser,
-            CodeParams,
-            AccountUUIDParams,
             IsLockedResponse
         )
     ),

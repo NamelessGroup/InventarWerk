@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::{model_zauberwerk::SpellPreset, repos::zauberwek::spell_preset_repository::SpellPresetRepository};
 use rocket::{State, http::Status};
 use utils::{AuthenticatedUser, DmUser};
@@ -7,7 +8,7 @@ use rocket_errors::anyhow::Result;
 use rocket::serde::json::Json;
 
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct SpellPresetUUID{
     /// UUID of the spell preset
     pub spell_preset_uuid: String
@@ -23,7 +24,7 @@ pub struct SpellPresetUUID{
         (status = 200, description = "Returns the requested spell preset", body = SpellPreset),
         (status = 500, description = "Spell preset not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[get("/spellPreset?<params..>")]
@@ -49,7 +50,7 @@ pub struct AllSpellPresetResult {
         (status = 200, description = "Returns all spell presets", body = AllSpellPresetResult),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[get("/spellPreset/all")]
@@ -74,7 +75,7 @@ Only accessible for DMs."#,
         (status = 403, description = "Forbidden - user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[delete("/spellPreset/delete?<params..>")]
@@ -103,7 +104,7 @@ Only accessible for DMs."#,
         (status = 422, description = "Request body is missing fields or has invalid values"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[patch("/spellPreset/modify", data = "<json_data>")]
@@ -118,7 +119,7 @@ pub async fn edit_spell_preset(
 }
 
 
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ExternSpellPreset {
     spell_presets: Vec<SpellPreset>
 }
@@ -138,7 +139,7 @@ Only accessible for DMs."#,
         (status = 403, description = "Forbidden - user is not a DM"),
         (status = 422, description = "Request body is missing fields or has invalid values")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Presets"
 )]
 #[put("/spellPreset/addExtern", data = "<json_data>")]
@@ -176,6 +177,7 @@ pub async fn add_extern_spell_preset(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_spell_preset,
         get_all_spell_presets,
@@ -186,7 +188,6 @@ pub async fn add_extern_spell_preset(
     components(
         schemas(
             SpellPreset,
-            SpellPresetUUID,
             AllSpellPresetResult,
             ExternSpellPreset
         )

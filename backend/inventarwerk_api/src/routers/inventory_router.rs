@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::model_inventarwerk::{FullFrontendInventory, ItemPreset};
 use repos::repos::inventory_repository::InventoryRepository;
 use repos::repos::item_preset_repository::ItemPresetRepository;
@@ -21,12 +22,13 @@ use super::router_utility::{
     user_is_creator_of_inventory, ACCESS_DENIAL_MESSAGE,
 };
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct InventoryUUIDParams {
+    /// UUID of the inventory
     inventory_uuid: String,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetAllInventoriesReturn {
     inventories: Vec<FullFrontendInventory>,
 }
@@ -38,9 +40,10 @@ pub struct GetAllInventoriesReturn {
     description = r#"Retrieves all inventories associated with the authenticated user.  
 Requires authentication. Returns an error if retrieval fails."#,
     responses(
-        (status = 200, description = "All inventories of the user", body = GetAllInventoriesReturn)
+        (status = 200, description = "All inventories of the user", body = GetAllInventoriesReturn),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[get("/inventory/all")]
@@ -62,9 +65,10 @@ pub async fn get_all_inventories(
 Requires authentication. Returns an error if the user lacks access."#,
     params(InventoryUUIDParams),
     responses(
-        (status = 200, description = "Specific inventory details", body = FullFrontendInventory)
+        (status = 200, description = "Specific inventory details", body = FullFrontendInventory),
+        (status = 500, description = "No read access, inventory not found, or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[get("/inventory?<params..>")]
@@ -80,8 +84,9 @@ pub async fn get_specific_inventory(
     Ok(Json(inv))
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct InventoryCreateParams {
+    /// Name of the new inventory
     name: String,
 }
 
@@ -89,13 +94,14 @@ pub struct InventoryCreateParams {
     put,
     path = "/inventory",
     summary = "Create a new inventory",
-    description = r#"Creates a new inventory entry in the system.
-Requires authentication. Returns an error if creation fails."#,
+    description = r#"Creates a new inventory owned by the requesting user. All DMs automatically get read and write access.
+Requires authentication."#,
     params(InventoryCreateParams),
     responses(
-        (status = 200, description = "The newly created inventory", body = FullFrontendInventory)
+        (status = 200, description = "The newly created inventory", body = FullFrontendInventory),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[put("/inventory?<params..>")]
@@ -126,10 +132,13 @@ pub async fn create_inventory(
     .await
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct InventoryAddItemByPresetParams {
+    /// UUID of the inventory
     inventory_uuid: String,
+    /// UUID of the item preset to add
     preset_uuid: String,
+    /// Amount of the item
     amount: i32,
 }
 
@@ -141,9 +150,10 @@ pub struct InventoryAddItemByPresetParams {
 Requires authentication and write access. Returns an error if access is denied."#,
     params(InventoryAddItemByPresetParams),
     responses(
-        (status = 204, description = "Item added to inventory by preset")
+        (status = 204, description = "Item added to inventory by preset"),
+        (status = 500, description = "No write access, preset not found, or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[put("/inventory/item/addPreset?<params..>")]
@@ -174,10 +184,13 @@ pub async fn add_preset_to_inventory(
     Ok(Status::NoContent)
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct InventoryAddItemByNameParams {
+    /// UUID of the inventory
     inventory_uuid: String,
+    /// Name of the new item preset
     name: String,
+    /// Amount of the item
     amount: i32,
 }
 
@@ -189,9 +202,10 @@ pub struct InventoryAddItemByNameParams {
 Requires authentication and write access. Returns an error if access is denied."#,
     params(InventoryAddItemByNameParams),
     responses(
-        (status = 200, description = "The created item preset", body = ItemPreset)
+        (status = 200, description = "The created item preset", body = ItemPreset),
+        (status = 500, description = "No write access or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[put("/inventory/item/addNew?<params..>")]
@@ -219,12 +233,17 @@ pub async fn add_new_item_to_inventory(
     Ok(Json(ipr_rep.get_by_uuid(&id).await?))
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct ItemEditParams {
+    /// UUID of the inventory
     inventory_uuid: String,
+    /// UUID of the item preset of the item
     item_preset_uuid: String,
+    /// New amount. Unchanged if omitted.
     amount: Option<i32>,
+    /// New sorting position. Unchanged if omitted.
     sorting: Option<i32>,
+    /// New note of the item, visible to everybody with read access. Unchanged if omitted.
     inventory_item_note: Option<String>,
 }
 
@@ -236,9 +255,10 @@ pub struct ItemEditParams {
 Requires authentication and write access. Returns an error if access is denied."#,
     params(ItemEditParams),
     responses(
-        (status = 204, description = "Item edited successfully")
+        (status = 204, description = "Item edited successfully"),
+        (status = 500, description = "No write access or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[patch("/inventory/item/edit?<params..>")]
@@ -269,10 +289,13 @@ pub async fn edit_item(
     Ok(Status::NoContent)
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct NoteAddParams {
+    /// UUID of the item preset of the item
     item_preset_uuid: String,
+    /// UUID of the inventory
     inventory_uuid: String,
+    /// The DM note. Replaces any previous DM note.
     note: String,
 }
 
@@ -285,9 +308,10 @@ Requires authentication and DM privileges."#,
     params(NoteAddParams),
     responses(
         (status = 204, description = "DM note successfully added"),
-        (status = 403, description = "Forbidden - user is not a DM")
+        (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[patch("/inventory/item/addNote?<params..>")]
@@ -309,11 +333,15 @@ pub async fn add_note_to_item(
     Ok(Status::NoContent)
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct ItemMoveParams {
+    /// UUID of the inventory that currently contains the item
     source_inventory_uuid: String,
+    /// UUID of the inventory to move the item to
     target_inventory_uuid: String,
+    /// UUID of the item preset of the item
     item_preset_uuid: String,
+    /// Sorting position in the target inventory. Unchanged if omitted.
     new_sorting: Option<i32>,
 }
 
@@ -325,9 +353,10 @@ pub struct ItemMoveParams {
 Requires authentication and write access on both inventories. Returns an error if access is denied."#,
     params(ItemMoveParams),
     responses(
-        (status = 204, description = "Item moved successfully")
+        (status = 204, description = "Item moved successfully"),
+        (status = 500, description = "Source and target are the same, no write access to one of the inventories, item not in source or already in target, or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[patch("/inventory/item/move?<params..>")]
@@ -370,9 +399,11 @@ pub async fn move_item_between_inventories(
     Ok(Status::NoContent)
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct ItemDeleteParams {
+    /// UUID of the inventory
     inventory_uuid: String,
+    /// UUID of the item preset of the item
     item_preset_uuid: String,
 }
 
@@ -384,9 +415,10 @@ pub struct ItemDeleteParams {
 Requires authentication and write access. Returns an error if access is denied."#,
     params(ItemDeleteParams),
     responses(
-        (status = 204, description = "Item removed successfully")
+        (status = 204, description = "Item removed successfully"),
+        (status = 500, description = "No write access or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[delete("/inventory/item/remove?<params..>")]
@@ -410,10 +442,13 @@ pub async fn delete_item_from_inventory(
     Ok(Status::NoContent)
 }
 
-#[derive(Debug, FromForm, ToSchema, IntoParams)]
+#[derive(Debug, FromForm, IntoParams)]
 pub struct InventoryEditParams {
+    /// UUID of the inventory
     inventory_uuid: String,
+    /// New amount of money in the inventory. Unchanged if omitted.
     amount: Option<i32>,
+    /// New name of the inventory. Unchanged if omitted.
     name: Option<String>,
 }
 
@@ -421,13 +456,14 @@ pub struct InventoryEditParams {
     patch,
     path = "/inventory/edit",
     summary = "Edit an inventory",
-    description = r#"Changes properties of an inventory, such as its name or amount field.
+    description = r#"Changes the name and/or the money (`amount`) of an inventory.
 Requires authentication and write access. Returns an error if access is denied."#,
     params(InventoryEditParams),
     responses(
-        (status = 204, description = "Inventory edited successfully")
+        (status = 204, description = "Inventory edited successfully"),
+        (status = 500, description = "No write access or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[patch("/inventory/edit?<params..>")]
@@ -455,8 +491,9 @@ pub async fn edit_inventory(
     Ok(Status::NoContent)
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct InventoryShareParams {
+    /// UUID of the inventory
     inventory_uuid: String,
     /// User UUID to add/remove/update. If None, all users will be added as readers.
     member_uuid: Option<String>,
@@ -479,9 +516,10 @@ Requires creator privileges (except for removing oneself)."#,
     params(InventoryShareParams),
     responses(
         (status = 204, description = "Permissions updated successfully"),
-        (status = 400, description = "Invalid parameters")
+        (status = 400, description = "Invalid `share_type`"),
+        (status = 500, description = "User is not the creator (and does not remove themself), or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[patch("/inventory/share?<params..>")]
@@ -554,9 +592,10 @@ pub async fn set_inventory_share_permissions(
 Requires authentication and creator privileges. Returns an error if the user is not the creator."#,
     params(InventoryUUIDParams),
     responses(
-        (status = 204, description = "Inventory deleted successfully")
+        (status = 204, description = "Inventory deleted successfully"),
+        (status = 500, description = "User is not the creator, inventory not found, or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Inventories"
 )]
 #[delete("/inventory/delete?<params..>")]
@@ -580,6 +619,7 @@ pub async fn delete_inventory(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_all_inventories,
         get_specific_inventory,
@@ -596,23 +636,13 @@ pub async fn delete_inventory(
     ),
     components(
         schemas(
-            InventoryUUIDParams,
-            InventoryCreateParams,
-            InventoryAddItemByPresetParams,
-            InventoryAddItemByNameParams,
-            ItemEditParams,
-            NoteAddParams,
-            ItemDeleteParams,
-            ItemMoveParams,
-            InventoryEditParams,
-            InventoryShareParams,
             GetAllInventoriesReturn,
             FullFrontendInventory,
             ItemPreset
         )
     ),
     tags(
-        (name = "Inventories", description = "Endpoints for managing inventories")
+        (name = "Inventories", description = "Endpoints for managing inventories. Missing access rights are currently reported as `500` with the message `no access`.")
     )
 )]
 pub struct InventoryApiDoc;

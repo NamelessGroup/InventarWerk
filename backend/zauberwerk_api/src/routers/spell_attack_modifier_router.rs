@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::{
     model_zauberwerk::SpellAttackModifier,
     repos::zauberwek::spell_attack_modifier_repository::SpellAttackModifierRepository,
@@ -23,7 +24,7 @@ If `owner_uuid` is given, the modifier of that user is returned instead. This is
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Attack Modifier"
 )]
 #[get("/spellAttackModifier")]
@@ -51,7 +52,7 @@ Only accessible for DMs."#,
         (status = 403, description = "Forbidden - user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Attack Modifier"
 )]
 #[get("/spellAttackModifier/all")]
@@ -64,7 +65,7 @@ pub async fn get_all_spell_attack_modifiers(
     }))
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct SetSpellAttackModifierParams {
     /// New spell attack modifier (may be negative)
     modifier: i32,
@@ -83,7 +84,7 @@ If `owner_uuid` is given and differs from the requesting user, DM privileges are
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "User does not exist or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Attack Modifier"
 )]
 #[put("/spellAttackModifier?<params..>")]
@@ -100,6 +101,7 @@ pub async fn set_spell_attack_modifier(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_spell_attack_modifier,
         get_all_spell_attack_modifiers,
@@ -109,7 +111,6 @@ pub async fn set_spell_attack_modifier(
         schemas(
             SpellAttackModifier,
             SpellAttackModifierList,
-            SetSpellAttackModifierParams
         )
     ),
     tags(

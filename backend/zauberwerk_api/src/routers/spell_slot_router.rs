@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::{model_zauberwerk::SpellSlot, repos::zauberwek::spell_slot_repository::SpellSlotRepository};
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
@@ -17,7 +18,7 @@ pub struct SpellSlotResponse {
     get,
     path = "/spellSlot",
     summary = "Retrieve the spell slots of a user",
-    description = r#"Returns all spell slots (level 1-9) of the requesting user.
+    description = r#"Returns the spell slots of the requesting user, sorted by level. Only levels whose maximum was set via `PATCH /spellSlot/maxima` are contained; a new user has no spell slots.
 
 If `owner_uuid` is given, the spell slots of that user are returned instead. This is only allowed for DMs, unless it is the requesting user's own UUID."#,
     params(OwnerUUID),
@@ -26,7 +27,7 @@ If `owner_uuid` is given, the spell slots of that user are returned instead. Thi
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Slots"
 )]
 #[get("/spellSlot")]
@@ -40,7 +41,7 @@ pub async fn get_spell_slots(
     }))
 }
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct PatchSpellSlotParams {
     /// Spell slot level (1-9)
     level: i32,
@@ -52,7 +53,7 @@ pub struct PatchSpellSlotParams {
     patch,
     path = "/spellSlot/available",
     summary = "Set the available spell slots of a level",
-    description = r#"Sets the number of currently available spell slots for the given level.
+    description = r#"Sets the number of currently available spell slots for the given level. Does nothing if no maximum was set for this level yet.
 
 If `owner_uuid` is given, the spell slots of that user are modified instead. This is only allowed for DMs, unless it is the requesting user's own UUID."#,
     params(OwnerUUID, PatchSpellSlotParams),
@@ -61,7 +62,7 @@ If `owner_uuid` is given, the spell slots of that user are modified instead. Thi
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Slots"
 )]
 #[patch("/spellSlot/available?<params..>")]
@@ -77,7 +78,7 @@ pub async fn patch_available_spell_slots(
     patch,
     path = "/spellSlot/maxima",
     summary = "Set the maximum spell slots of a level",
-    description = r#"Sets the maximum number of spell slots for the given level.
+    description = r#"Sets the maximum number of spell slots for the given level. If the level did not exist yet, it is created with all slots available.
 
 If `owner_uuid` is given, the spell slots of that user are modified instead. This is only allowed for DMs, unless it is the requesting user's own UUID."#,
     params(OwnerUUID, PatchSpellSlotParams),
@@ -86,7 +87,7 @@ If `owner_uuid` is given, the spell slots of that user are modified instead. Thi
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Slots"
 )]
 #[patch("/spellSlot/maxima?<params..>")]
@@ -111,7 +112,7 @@ If `owner_uuid` is given, the spell slots of that user are reset instead. This i
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Slots"
 )]
 #[patch("/spellSlot/reset")]
@@ -124,6 +125,7 @@ pub async fn reset_spell_slots(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_spell_slots,
         patch_available_spell_slots,
@@ -134,7 +136,6 @@ pub async fn reset_spell_slots(
         schemas(
             SpellSlot,
             SpellSlotResponse,
-            PatchSpellSlotParams
         )
     ),
     tags(

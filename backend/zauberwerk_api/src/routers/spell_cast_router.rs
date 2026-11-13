@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::{
     model_zauberwerk::SpellPreset,
     repos::{
@@ -110,7 +111,7 @@ pub struct SpellCastEvent {
     pub timestamp: u128,
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct CastSpellParams {
     /// UUID of the spell preset to cast
     spell_preset_uuid: String,
@@ -137,7 +138,7 @@ On success a `SpellCastEvent` with all information about the cast is returned an
         (status = 409, description = "No spell slot of the cast level available"),
         (status = 500, description = "Spell preset not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Casting"
 )]
 #[put("/spellPreset/cast?<params..>")]
@@ -215,7 +216,7 @@ In the browser use `eventSource.addEventListener('<event name>', ...)`; `onmessa
     responses(
         (status = 200, description = "Event stream established", content_type = "text/event-stream")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Casting"
 )]
 #[get("/spellPreset/cast/stream")]
@@ -246,6 +247,7 @@ pub async fn spell_cast_stream(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         cast_spell,
         spell_cast_stream
@@ -254,7 +256,6 @@ pub async fn spell_cast_stream(
         schemas(
             SpellCastEvent,
             ConcentrationEndedEvent,
-            CastSpellParams,
             SpellPreset
         )
     ),

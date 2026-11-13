@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use std::thread;
 use std::time::Duration;
 
@@ -23,13 +24,14 @@ use super::{
     router_utility::{user_has_read_access_to_item_preset, ACCESS_DENIAL_MESSAGE},
 };
 
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct GetItemPresetReturn {
     item_presets: Vec<ItemPreset>,
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct ItemPresetUUIDParams {
+    /// UUID of the item preset
     item_preset_uuid: String,
 }
 
@@ -39,12 +41,13 @@ pub struct ItemPresetUUIDParams {
     summary = "Retrieve a specific item preset",
     description = r#"Retrieves a specific item preset by UUID.
 
-Requires authentication and read access. Returns an error if the user lacks access or the preset does not exist."#,
+Public presets are readable by everybody, all other presets only if they are contained in an inventory the user owns or can read."#,
     params(ItemPresetUUIDParams),
     responses(
-        (status = 200, description = "Returns the requested item preset", body = ItemPreset)
+        (status = 200, description = "Returns the requested item preset", body = ItemPreset),
+        (status = 500, description = "No read access, preset not found, or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Item Presets"
 )]
 #[get("/itemPreset?<params..>")]
@@ -68,13 +71,19 @@ pub async fn get_item_preset(
     Ok(Json(preset))
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct ItemModifyParams {
+    /// UUID of the item preset
     item_preset_uuid: String,
+    /// New name. Unchanged if omitted.
     name: Option<String>,
+    /// New price. Unchanged if omitted.
     price: Option<i32>,
+    /// New weight. Unchanged if omitted.
     weight: Option<f32>,
+    /// New description. Unchanged if omitted.
     description: Option<String>,
+    /// New item type. Unchanged if omitted.
     item_type: Option<String>,
 }
 
@@ -87,9 +96,10 @@ pub struct ItemModifyParams {
 Requires authentication and creator privileges. Returns an error if the user is not the creator."#,
     params(ItemModifyParams),
     responses(
-        (status = 204, description = "Item preset successfully modified")
+        (status = 204, description = "Item preset successfully modified"),
+        (status = 500, description = "User is not the creator, preset not found, or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Item Presets"
 )]
 #[patch("/itemPreset/modify?<params..>")]
@@ -124,9 +134,10 @@ pub async fn modify_item_preset(
 Requires authentication and creator privileges. Returns an error if the user is not the creator."#,
     params(ItemPresetUUIDParams),
     responses(
-        (status = 204, description = "Item preset successfully deleted")
+        (status = 204, description = "Item preset successfully deleted"),
+        (status = 500, description = "User is not the creator, preset not found, or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Item Presets"
 )]
 #[delete("/itemPreset/delete?<params..>")]
@@ -152,9 +163,10 @@ pub async fn delete_item_preset(
 
 Requires authentication. Returns an error if the retrieval fails."#,
     responses(
-        (status = 200, description = "Returns a list of all accessible item presets", body = GetItemPresetReturn)
+        (status = 200, description = "Returns a list of all accessible item presets", body = GetItemPresetReturn),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Item Presets"
 )]
 #[get("/itemPreset/all")]
@@ -176,7 +188,7 @@ pub async fn get_all_item_presets(
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ExternPresetData {
     name: String,
     uuid: String,
@@ -187,7 +199,7 @@ pub struct ExternPresetData {
     itemType: String,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ExternPresetDataList {
     presets: Vec<ExternPresetData>,
 }
@@ -202,9 +214,10 @@ Requires DM privileges. Retries up to 5 times on creation errors, then skips the
     request_body = ExternPresetDataList,
     responses(
         (status = 204, description = "External item presets successfully imported"),
-        (status = 403, description = "Forbidden - user is not a DM")
+        (status = 403, description = "Forbidden - user is not a DM"),
+        (status = 422, description = "Request body is missing fields or has invalid values")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Item Presets"
 )]
 #[put("/itemPreset/addExtern", data = "<json_data>")]
@@ -247,6 +260,7 @@ pub async fn add_extern(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_item_preset,
         modify_item_preset,
@@ -257,15 +271,13 @@ pub async fn add_extern(
     components(
         schemas(
             GetItemPresetReturn,
-            ItemPresetUUIDParams,
-            ItemModifyParams,
             ItemPreset,
             ExternPresetData,
             ExternPresetDataList
         )
     ),
     tags(
-        (name = "Item Presets", description = "Endpoints for managing item presets")
+        (name = "Item Presets", description = "Endpoints for managing item presets. Missing access rights are currently reported as `500` with the message `no access`.")
     )
 )]
 pub struct ItemPresetApiDoc;

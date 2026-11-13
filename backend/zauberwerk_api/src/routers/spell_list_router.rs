@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::{model_zauberwerk::SpellList, repos::{user_repository::UserRepository, zauberwek::spell_list_repository::SpellListRepository}};
 use rocket::{State, http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
@@ -5,7 +6,7 @@ use utils::{AuthenticatedUser, user_is_dm};
 use utoipa::{IntoParams, OpenApi, ToSchema};
 use::rocket_errors::anyhow::Result;
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct SpellListUUID {
     /// UUID of the spell list
     spell_list_uuid: String
@@ -24,7 +25,7 @@ Only the owner of the list or a DM may read it."#,
         (status = 403, description = "Forbidden - user is neither the owner nor a DM"),
         (status = 500, description = "Spell list not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Lists"
 )]
 #[get("/spellList?<params..>")]
@@ -41,7 +42,7 @@ pub async fn get_spell_list(
 }
 
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct SpellListNameParam {
     /// Name of the new spell list
     spell_list_name: String
@@ -54,9 +55,10 @@ pub struct SpellListNameParam {
     description = "Creates a new, empty spell list owned by the requesting user.",
     params(SpellListNameParam),
     responses(
-        (status = 204, description = "Spell list successfully created")
+        (status = 200, description = "The newly created spell list", body = SpellList),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Lists"
 )]
 #[put("/spellList?<params..>")]
@@ -85,7 +87,7 @@ pub struct AllSpellListResponse {
         (status = 200, description = "Returns the accessible spell lists", body = AllSpellListResponse),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Lists"
 )]
 #[get("/spellList/all")]
@@ -112,7 +114,7 @@ pub async fn get_all_spell_list(
         (status = 403, description = "Forbidden - user is not the owner of the list"),
         (status = 500, description = "Spell list not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Lists"
 )]
 #[delete("/spellList/delete?<params..>")]
@@ -128,7 +130,7 @@ pub async fn delete_spell_list(
     Ok(Status::NoContent)
 }
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct SpellListEditParam {
     /// UUID of the spell list
     spell_list_uuid: String,
@@ -147,7 +149,7 @@ pub struct SpellListEditParam {
         (status = 403, description = "Forbidden - user is not the owner of the list"),
         (status = 500, description = "Spell list not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Lists"
 )]
 #[patch("/spellList/edit?<params..>")]
@@ -163,7 +165,7 @@ pub async fn patch_spell_list(
     Ok(Status::NoContent)
 }
 
-#[derive(Serialize, Deserialize, FromForm, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, FromForm, IntoParams)]
 pub struct SpellListPresetParam {
     /// UUID of the spell list
     spell_list_uuid: String,
@@ -182,7 +184,7 @@ pub struct SpellListPresetParam {
         (status = 403, description = "Forbidden - user is not the owner of the list"),
         (status = 500, description = "Spell list not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Lists"
 )]
 #[put("/spellList/spell/addPreset?<params..>")]
@@ -209,7 +211,7 @@ pub async fn add_preset_to_list(
         (status = 403, description = "Forbidden - user is not the owner of the list"),
         (status = 500, description = "Spell list not found or database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Spell Lists"
 )]
 #[delete("/spellList/spell/removePreset?<params..>")]
@@ -227,6 +229,7 @@ pub async fn delete_preset_from_list(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_spell_list,
         create_spelllist,
@@ -239,11 +242,7 @@ pub async fn delete_preset_from_list(
     components(
         schemas(
             SpellList,
-            SpellListUUID,
-            SpellListNameParam,
             AllSpellListResponse,
-            SpellListEditParam,
-            SpellListPresetParam
         )
     ),
     tags(

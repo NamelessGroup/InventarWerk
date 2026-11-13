@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use repos::{
     model_zauberwerk::Concentration,
     repos::{
@@ -28,7 +29,7 @@ If `owner_uuid` is given, the concentration of that user is returned instead. Th
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Concentration"
 )]
 #[get("/concentration")]
@@ -55,7 +56,7 @@ Only accessible for DMs."#,
         (status = 403, description = "Forbidden - user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Concentration"
 )]
 #[get("/concentration/all")]
@@ -83,7 +84,7 @@ If `owner_uuid` is given and differs from the requesting user, DM privileges are
         (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM"),
         (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Concentration"
 )]
 #[delete("/concentration")]
@@ -105,6 +106,7 @@ pub async fn remove_concentration(
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_concentration,
         get_all_concentrations,

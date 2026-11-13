@@ -112,3 +112,62 @@ pub async fn user_is_dm(usr_rep: &UserRepository, user_id: String) -> Result<boo
 pub fn create_error(msg: &str) -> AnyhowError {
     anyhow!(msg.to_string()).into()
 }
+
+/// Name of the OpenAPI security scheme used by all authenticated endpoints.
+pub const SECURITY_SCHEME: &str = "cookie_auth";
+
+/// OpenAPI modifier shared by all API docs.
+///
+/// - Registers the `cookie_auth` security scheme (private `user_id` cookie).
+/// - Adds a `401 Unauthorized` response to every operation that requires authentication,
+///   because every auth guard (`AuthenticatedUser`, `DmUser`, `TargetUser`) responds with it.
+///
+/// Use with `#[openapi(modifiers(&ApiDocAddon), ...)]` after `use utils::ApiDocAddon;`.
+pub struct ApiDocAddon;
+
+impl utoipa::Modify for ApiDocAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        use utoipa::openapi::security::{ApiKey, ApiKeyValue, SecurityScheme};
+        use utoipa::openapi::ResponseBuilder;
+
+        openapi
+            .components
+            .get_or_insert_with(Default::default)
+            .add_security_scheme(
+                SECURITY_SCHEME,
+                SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::with_description(
+                    "user_id",
+                    "Private (encrypted) session cookie, set by `GET /account/oauth/callback` after logging in via `GET /account/login`. \
+                     The browser sends it automatically; it can not be entered manually.",
+                ))),
+            );
+
+        for path_item in openapi.paths.paths.values_mut() {
+            let operations = [
+                &mut path_item.get,
+                &mut path_item.put,
+                &mut path_item.post,
+                &mut path_item.delete,
+                &mut path_item.patch,
+            ];
+            for operation in operations.into_iter().flatten() {
+                let requires_auth = operation
+                    .security
+                    .as_ref()
+                    .is_some_and(|security| !security.is_empty());
+                if requires_auth {
+                    operation
+                        .responses
+                        .responses
+                        .entry("401".to_string())
+                        .or_insert_with(|| {
+                            ResponseBuilder::new()
+                                .description("Unauthorized - user is not logged in")
+                                .build()
+                                .into()
+                        });
+                }
+            }
+        }
+    }
+}
