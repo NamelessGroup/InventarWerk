@@ -6,14 +6,12 @@ pub mod account_router;
 pub mod backup_router;
 pub mod inventory_router;
 pub mod item_preset_router;
-pub mod last_changes_router;
 mod router_utility;
 
 use account_router::*;
 use backup_router::*;
 use inventory_router::*;
 use item_preset_router::*;
-use last_changes_router::*;
 
 /// Returns all inventory-related routes.
 pub fn get_inventory_routes() -> Vec<Route> {
@@ -46,11 +44,6 @@ pub fn get_account_routes() -> Vec<Route> {
         is_locked,
         toggle_lock
     ]
-}
-
-/// Returns all last-changes-related routes.
-pub fn get_last_changes_routes() -> Vec<Route> {
-    routes![last_changes]
 }
 
 /// Returns all item preset-related routes.
