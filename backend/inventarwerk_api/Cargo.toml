@@ -16,8 +16,8 @@ repos = {path = "../repositories"}
 utils = {path = "../utils"}
 # pg_dump is started as child process for the database backup
 tokio = { version = "1", features = ["process", "io-util", "rt"] }
-utoipa = {version="5.3.1"}
-utoipa-swagger-ui = {version="9", features = ["rocket"]}
+utoipa = {version="6.0.0"}
+utoipa-swagger-ui = {version="10", features = ["rocket"]}
 
 [features]
 dev = []
