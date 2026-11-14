@@ -189,7 +189,7 @@ impl SpellPresetRepository {
     ) -> Result<(), Error> {
         for component in &spell_preset.components {
             sqlx::query!(
-                "INSERT INTO spell_preset_component (spell_preset_uuid, component_name) VALUES ($1, $2)",
+                "INSERT INTO spell_preset_component (spell_preset_uuid, component_name) VALUES ($1, $2) ON CONFLICT DO NOTHING",
                 id, component
             )
             .execute(&mut **tx)
@@ -198,7 +198,7 @@ impl SpellPresetRepository {
 
         for class_item in &spell_preset.class {
             sqlx::query!(
-                "INSERT INTO spell_preset_class (spell_preset_uuid, spell_preset_class) VALUES ($1, $2)",
+                "INSERT INTO spell_preset_class (spell_preset_uuid, spell_preset_class) VALUES ($1, $2) ON CONFLICT DO NOTHING",
                 id, class_item
             )
             .execute(&mut **tx)
@@ -207,7 +207,7 @@ impl SpellPresetRepository {
 
         for subclass_item in &spell_preset.sub_class {
             sqlx::query!(
-                "INSERT INTO spell_preset_subclass (spell_preset_uuid, spell_preset_subclass) VALUES ($1, $2)",
+                "INSERT INTO spell_preset_subclass (spell_preset_uuid, spell_preset_subclass) VALUES ($1, $2) ON CONFLICT DO NOTHING",
                 id, subclass_item
             )
             .execute(&mut **tx)
@@ -216,7 +216,7 @@ impl SpellPresetRepository {
 
         for species_item in &spell_preset.species {
             sqlx::query!(
-                "INSERT INTO spell_preset_species (spell_preset_uuid, spell_preset_species) VALUES ($1, $2)",
+                "INSERT INTO spell_preset_species (spell_preset_uuid, spell_preset_species) VALUES ($1, $2) ON CONFLICT DO NOTHING",
                 id, species_item
             )
             .execute(&mut **tx)
@@ -225,7 +225,7 @@ impl SpellPresetRepository {
 
         for feat_item in &spell_preset.feats {
             sqlx::query!(
-                "INSERT INTO spell_preset_feats (spell_preset_uuid, spell_preset_feats) VALUES ($1, $2)",
+                "INSERT INTO spell_preset_feats (spell_preset_uuid, spell_preset_feats) VALUES ($1, $2) ON CONFLICT DO NOTHING",
                 id, feat_item
             )
             .execute(&mut **tx)
