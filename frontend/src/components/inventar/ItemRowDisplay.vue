@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
   <div
-    class="bg-primary-default my-2 grid rounded-sm border p-1"
+    class="bg-primary-default grid rounded-sm border p-1"
     :class="{
       'border-accent': expanded,
       'border-primary-default': !expanded

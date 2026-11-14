@@ -11,6 +11,7 @@ export const zauberData = defineStore('zauber', () => {
   const spellListUuids = ref<string[]>([])
   const spellLists = ref<Record<string, SpellList>>({})
   const spellPresets = ref<Record<string, SpellPreset>>({})
+  const spellPresetList = ref<SpellPreset[]>([])
   const spellSlots = ref<Record<string, SpellSlots>>({})
   const concentrationSpell = ref<Record<string, string | undefined>>({})
 
@@ -47,16 +48,51 @@ export const zauberData = defineStore('zauber', () => {
     DB.zauber.deleteSpellList(uuid)
   }
 
+  function removeSpell(listUuid: string, spellUuid: string) {
+    spellLists.value[listUuid].entries = spellLists.value[listUuid].entries.filter(
+      (spell) => spell.uuid !== spellUuid
+    )
+    DB.zauber.removeSpell(listUuid, spellUuid)
+  }
+
+  function addPreset(spellPreset: SpellPreset) {
+    spellPresetList.value.push(spellPreset)
+    spellPresets.value[spellPreset.uuid] = spellPreset
+  }
+
+  function getPreset(uuid: string) {
+    return spellPresets.value[uuid]
+  }
+
+  function deletePreset(uuid: string) {
+    delete spellPresets.value[uuid]
+    spellPresetList.value = spellPresetList.value.filter((s) => s.uuid !== uuid)
+    DB.zauber.deletePreset(uuid)
+  }
+
+  function addSpellToList(listUuid: string, presetUuid: string) {
+    spellLists.value[listUuid].entries.push({
+      ...getPreset(presetUuid),
+      sorting: Math.max(...spellLists.value[listUuid].entries.map((s) => s.sorting), 0) + 1
+    })
+    DB.zauber.addSpellToList(listUuid, presetUuid)
+  }
+
   return {
     spellListUuids,
     spellLists,
-    spellPresets,
+    spellPresetList,
     spellSlots,
     setAvailableSlots,
     setSpellSlotMaxima,
     resetSpellSlots,
     concentrationSpell,
     editSpellListName,
-    deleteSpellList
+    deleteSpellList,
+    removeSpell,
+    addPreset,
+    getPreset,
+    deletePreset,
+    addSpellToList
   }
 })

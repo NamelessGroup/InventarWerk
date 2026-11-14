@@ -63,6 +63,7 @@
             group="items"
             :item-key="dragKey"
             :animation="150"
+            class="flex flex-col gap-2"
             @change="onDragEvent"
           >
             <div v-for="(item, idx) in localDraggableItems" :key="idx" :item="item">
