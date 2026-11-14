@@ -42,7 +42,7 @@ interface Range {
 interface Components {
   v: boolean
   s: boolean
-  m: string | undefined
+  m?: string | boolean | { text: string; cost?: number; consume?: boolean | string }
 }
 
 interface Duration {
@@ -76,8 +76,10 @@ interface SourceData {
 function parseComponents(c: Components) {
   const comps: string[] = []
   if (c.v) comps.push('Verbal')
-  if (c.s) comps.push('Somantic')
-  if (c.m) comps.push(`Material (${c.m})`)
+  if (c.s) comps.push('Somatic')
+  if (typeof c.m === 'string') comps.push(`Material (${c.m})`)
+  else if (typeof c.m === 'object' && c.m !== null) comps.push(`Material (${c.m.text})`)
+  else if (c.m) comps.push('Material')
   return comps
 }
 

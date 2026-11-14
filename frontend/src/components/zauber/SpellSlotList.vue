@@ -8,9 +8,9 @@
       <span>Spell Slots</span>
       <div class="flex-1"></div>
       <button
-        v-if="accountData().userIsDm"
+        v-if="accountData().userIsDm || accountData().uuid === user"
         class="border-accent bg-primary-default mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-sm"
-        @click="zauberData().resetSpellSlots()"
+        @click="zauberData().resetSpellSlots(user)"
       >
         <FontAwesomeIcon :icon="faRotateLeft" />
       </button>
