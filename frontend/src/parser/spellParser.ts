@@ -33,7 +33,7 @@ interface Time {
 
 interface Range {
   type: string
-  distance: {
+  distance?: {
     type: string
     amount?: number
   }
@@ -83,6 +83,16 @@ function parseComponents(c: Components) {
   return comps
 }
 
+function parseRange(r: Range | undefined) {
+  if (!r) return ''
+  const d = r.distance
+  if (!d) return r.type
+  const dist = d.amount !== undefined ? `${d.amount} ${d.type}` : d.type
+  // area spells (cone, line, radius, ...) originate from the caster
+  if (r.type !== 'point') return `self (${dist} ${r.type})`
+  return dist
+}
+
 function array(a: string[] | undefined) {
   if (!a) return ''
   return a.join(', ')
@@ -116,9 +126,7 @@ function convertSpell(original: ToolsSpell, classes?: string[]): SpellPreset {
     duration: original.duration
       .map((d) => (d.duration ? `${d.duration.amount} ${d.duration.type}` : d.type))
       .join(', '),
-    range: original.range.distance.amount
-      ? `${original.range.distance.amount} ${original.range.distance.type}`
-      : original.range.distance.type,
+    range: parseRange(original.range),
     description: original.entries.map(parse).join('\n\n'),
     higherLevel: original.entriesHigherLevel
       ? original.entriesHigherLevel.map(parse).join('\n\n')
