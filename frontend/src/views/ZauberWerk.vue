@@ -21,6 +21,12 @@
         >
           <FontAwesomeIcon :icon="faUpload" />
         </button>
+        <button
+          class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
+          @click="showManagePresets = true"
+        >
+          <FontAwesomeIcon :icon="faList" />
+        </button>
       </template>
 
       <template #default>
@@ -52,7 +58,7 @@
         />
         <button
           class="border-accent bg-primary-default col-span-2 row-start-2 rounded-sm border p-1"
-          @click="() => {}"
+          @click="submitAddSpellList()"
         >
           Submit
         </button>
@@ -60,6 +66,7 @@
       </div>
     </PopUp>
     <UploadPresetListPopUp v-if="showAddExternPopUp" @close="showAddExternPopUp = false" />
+    <SpellPresetOverview v-if="showManagePresets" @close="showManagePresets = false" />
 
     <button
       class="border-accent bg-primary-default fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border"
@@ -76,7 +83,7 @@ import SpellSlotList from '@/components/zauber/SpellSlotList.vue'
 import type { SpellList } from '@/model/SpellList'
 import { accountData, zauberData } from '@/store'
 import { ThemeManager } from '@/theme/ThemeManager'
-import { faPlus, faSearch, faUpload } from '@fortawesome/free-solid-svg-icons'
+import { faList, faPlus, faSearch, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, ref } from 'vue'
 import PopUp from '@/components/PopUp.vue'
@@ -84,6 +91,7 @@ import { DB } from '@/store/db'
 import UploadPresetListPopUp from '@/components/zauber/UploadPresetListPopUp.vue'
 import ContainerGrid from '@/components/ContainerGrid.vue'
 import SpellListDisplay from '@/components/zauber/SpellListDisplay.vue'
+import SpellPresetOverview from '@/components/zauber/SpellPresetOverview.vue'
 
 ThemeManager.getInstance().pageTheme = 'zauber'
 
@@ -91,6 +99,7 @@ const showCreation = ref(false)
 const showAddExternPopUp = ref(false)
 const nameFieldContent = ref('')
 const errorContent = ref('')
+const showManagePresets = ref(false)
 
 const searchString = ref('')
 const search = computed(() => searchString.value.toLowerCase())
@@ -107,7 +116,6 @@ const spellLists = computed(() => {
   return allInventories.filter(matchSearchString)
 })
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function submitAddSpellList() {
   if (nameFieldContent.value == '') {
     errorContent.value = 'Name cannot be empty'

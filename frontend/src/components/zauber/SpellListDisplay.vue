@@ -1,12 +1,18 @@
 <template>
   <BaseContainer
     :container="spellList"
-    :items="spellList.spells"
+    :items="spellList.entries"
+    drag-key="uuid"
     @update-name="(n: string) => zauberData().editSpellListName(spellList.uuid, n)"
     @delete="zauberData().deleteSpellList(spellList.uuid)"
   >
     <template #item="{ item }">
-      <SpellDisplay :spell="item" :can-edit="false" :spell-list-uuid="spellList.uuid" />
+      <SpellDisplay
+        :spell="item"
+        :can-delete="canDoStuff"
+        :can-cast="canDoStuff"
+        :spell-list-uuid="spellList.uuid"
+      />
     </template>
 
     <template #postItems>
@@ -18,15 +24,23 @@
       </button>
     </template>
   </BaseContainer>
+
+  <AddSpellPreset
+    v-if="showAddSpellPopup"
+    :spell-list-uuid="spellList.uuid"
+    @close="showAddSpellPopup = false"
+  />
 </template>
 
 <script setup lang="ts">
 import type { SpellList } from '@/model/SpellList'
-import { zauberData } from '@/store'
-import { ref, type PropType } from 'vue'
+import { accountData, zauberData } from '@/store'
+import { computed, ref, type PropType } from 'vue'
 import SpellDisplay from './SpellDisplay.vue'
+import BaseContainer from '../BaseContainer.vue'
+import AddSpellPreset from './AddSpellPreset.vue'
 
-defineProps({
+const props = defineProps({
   spellList: {
     type: Object as PropType<SpellList>,
     required: true
@@ -34,4 +48,6 @@ defineProps({
 })
 
 const showAddSpellPopup = ref(false)
+
+const canDoStuff = computed(() => props.spellList.ownerUuid === accountData().uuid)
 </script>

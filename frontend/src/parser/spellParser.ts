@@ -35,7 +35,7 @@ interface Range {
   type: string
   distance: {
     type: string
-    amount: number
+    amount?: number
   }
 }
 
@@ -59,10 +59,18 @@ interface Duration {
 export type SourceJson = Record<string, SourceBookData>
 type SourceBookData = Record<string, SourceData>
 interface SourceData {
-  class: {
-    name: string
-    source: string
-  }[]
+  class:
+    | {
+        name: string
+        source: string
+      }[]
+    | undefined
+  classVariant:
+    | {
+        name: string
+        source: string
+      }[]
+    | undefined
 }
 
 function parseComponents(c: Components) {
@@ -99,14 +107,16 @@ const schoolMap: Record<string, string> = {
   A: 'Abjuration'
 }
 
-function convertSpell(original: ToolsSpell, source?: SourceData): SpellPreset {
+function convertSpell(original: ToolsSpell, classes?: string[]): SpellPreset {
   return {
     uuid: '',
     name: original.name,
     duration: original.duration
       .map((d) => (d.duration ? `${d.duration.amount} ${d.duration.type}` : d.type))
       .join(', '),
-    range: `${original.range.distance} ${original.range.type}`,
+    range: original.range.distance.amount
+      ? `${original.range.distance.amount} ${original.range.distance.type}`
+      : original.range.distance.type,
     description: original.entries.map(parse).join('\n\n'),
     higherLevel: original.entriesHigherLevel
       ? original.entriesHigherLevel.map(parse).join('\n\n')
@@ -129,7 +139,7 @@ function convertSpell(original: ToolsSpell, source?: SourceData): SpellPreset {
 
     ritual: original.meta?.ritual ?? false,
 
-    class: source ? source.class.map((c) => c.name) : [],
+    class: classes ? classes : [],
     feats: [],
     species: [],
     subClass: []
@@ -137,20 +147,21 @@ function convertSpell(original: ToolsSpell, source?: SourceData): SpellPreset {
 }
 
 export interface SpellJson {
-  spells: ToolsSpell[]
+  spell: ToolsSpell[]
 }
 
-function flattenSources(sources: SourceJson): SourceBookData {
-  const result: SourceBookData = {}
+function flattenSources(sources: SourceJson) {
+  const result: Record<string, string[]> = {}
   const books = Object.keys(sources)
   for (const book of books) {
     const data = sources[book]
     const spells = Object.keys(data)
     for (const spell of spells) {
       if (result[spell] !== undefined) {
-        result[spell].class.push(...data[spell].class)
+        const classes = data[spell].class ?? data[spell].classVariant ?? []
+        result[spell].push(...classes.map((c) => c.name))
       } else {
-        result[spell] = data[spell]
+        result[spell] = (data[spell].class ?? data[spell].classVariant ?? []).map((c) => c.name)
       }
     }
   }
@@ -160,8 +171,8 @@ function flattenSources(sources: SourceJson): SourceBookData {
 export async function parseSpellList(spellList: SpellJson[], sources: SourceJson) {
   const flattenedSources = flattenSources(sources)
   const spells = spellList
-    .flatMap((l) => l.spells)
-    .map((s) => convertSpell(s, flattenedSources[s.name]))
+    .flatMap((l) => l.spell)
+    .map((s) => convertSpell(s, Array.from(new Set(flattenedSources[s.name]))))
 
   return processList(spells, DB.zauber.getMassUploadURL(), 'spell_presets')
 }
