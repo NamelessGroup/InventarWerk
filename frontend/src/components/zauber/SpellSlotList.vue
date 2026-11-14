@@ -7,7 +7,6 @@
       <span v-if="accountData().userIsDm">{{ owner.name }}</span>
       <span>Spell Slots</span>
       <div class="flex-1"></div>
-      <button @click="temp()">temp</button>
       <button
         v-if="accountData().userIsDm"
         class="border-accent bg-primary-default mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-sm"
@@ -26,12 +25,17 @@
     <div class="flex flex-wrap gap-5">
       <div v-for="lvl in maxSpellSlot" :key="lvl" class="flex items-center gap-1">
         <span>{{ lvl }}:</span>
-        <SpellSlotDot v-for="[idx, slot] in spellSlots[lvl].entries()" :key="idx" :filled="!slot" />
+        <SpellSlotDot v-for="[idx, slot] in spellSlots[lvl].entries()" :key="idx" :state="slot" />
       </div>
     </div>
 
-    <div v-if="concentrationSpell" class="text-lg">
-      Concentrating on <span class="bold text-accent italic">{{ concentrationSpell }}</span>
+    <div v-if="concentrationSpell" class="flex items-center gap-2">
+      <span
+        >Concentrating on
+        <span class="bold text-accent italic">{{
+          zauberData().getPreset(concentrationSpell).name
+        }}</span></span
+      >
       <button
         class="border-accent bg-primary-default mr-2 flex h-7 w-fit shrink-0 items-center gap-2 rounded-sm border"
       >
@@ -96,8 +100,4 @@ const maxSpellSlot = computed(() => {
   }
   return max
 })
-
-function temp() {
-  zauberData().setAvailableSlots(1, 3)
-}
 </script>

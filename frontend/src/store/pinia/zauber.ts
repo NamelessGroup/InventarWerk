@@ -33,8 +33,11 @@ export const zauberData = defineStore('zauber', () => {
 
   function resetSpellSlots(uuid?: string) {
     if (!uuid) uuid = accountData().uuid
-    //spellSlots.value[uuid] = generateSlotArray()
-    // TODO
+    for (let i = 1; i <= 9; i++) {
+      if (spellSlots.value[uuid][i] === undefined) continue
+      const len = spellSlots.value[uuid][i].length
+      spellSlots.value[uuid][i] = generateSlotArray(len, len)
+    }
     DB.zauber.resetSpellSlots(uuid)
   }
 

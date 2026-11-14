@@ -11,7 +11,7 @@
         :spell="item"
         :can-delete="canDoStuff"
         :can-cast="canDoStuff"
-        :spell-list-uuid="spellList.uuid"
+        @delete="zauberData().removeSpell(spellList.uuid, item.uuid)"
       />
     </template>
 

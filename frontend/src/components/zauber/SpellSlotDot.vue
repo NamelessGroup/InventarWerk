@@ -1,7 +1,11 @@
 <template>
   <span
     class="border-accent inline-flex h-6 w-6 items-center justify-center rounded-full border"
-    :class="filled ? 'bg-primary-dark text-text' : 'bg-primary-light text-transparent'"
+    :class="
+      state === SpellSlotState.USED
+        ? 'bg-primary-dark text-text'
+        : 'bg-primary-light text-transparent'
+    "
   >
     <svg
       viewBox="0 0 24 24"
@@ -17,7 +21,10 @@
 </template>
 
 <script setup lang="ts">
+import { SpellSlotState } from '@/model/SpellSlots'
+import type { PropType } from 'vue'
+
 defineProps({
-  filled: { type: Boolean, default: false }
+  state: { type: Number as PropType<SpellSlotState>, default: SpellSlotState.AVAILABLE }
 })
 </script>

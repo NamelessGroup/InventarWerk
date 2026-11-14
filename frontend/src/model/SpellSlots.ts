@@ -1,1 +1,6 @@
-export type SpellSlots = Record<number, boolean[]>
+export type SpellSlots = Record<number, SpellSlotState[]>
+
+export enum SpellSlotState {
+  AVAILABLE,
+  USED
+}

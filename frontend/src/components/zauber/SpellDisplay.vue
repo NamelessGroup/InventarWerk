@@ -11,7 +11,11 @@
     <div class="flex items-center gap-2">
       <div class="break-wrap flex flex-1 items-center">{{ spell.name }}</div>
 
-      <button v-if="canCast" class="bg-primary-dark text-accent h-8 rounded-sm border-none px-3">
+      <button
+        v-if="canCast"
+        class="bg-primary-dark text-accent h-8 rounded-sm border-none px-3"
+        @click="cast"
+      >
         <FontAwesomeIcon :icon="faWandSparkles" />
       </button>
       <TimedConfirmationButton
@@ -44,6 +48,8 @@
       </div>
     </CollapseTransition>
   </div>
+
+  <CastSpellPopUp v-if="showCastPopUp" :spell="spell" @close="showCastPopUp = false" />
 </template>
 
 <script setup lang="ts">
@@ -55,6 +61,7 @@ import type { SpellEntry } from '@/model/SpellList'
 import CollapseTransition from '../CollapseTransition.vue'
 import TimedConfirmationButton from '../TimedConfirmationButton.vue'
 import { marked } from 'marked'
+import CastSpellPopUp from './CastSpellPopUp.vue'
 
 const props = defineProps({
   spell: {
@@ -75,6 +82,13 @@ const expanded = ref(false)
 
 const emit = defineEmits(['delete'])
 
+const showCastPopUp = ref(false)
+
 const description = computed(() => marked.parse(props.spell.description))
 const higherLevelDescription = computed(() => marked.parse(props.spell.higherLevel))
+
+function cast(e: Event) {
+  e.stopPropagation()
+  showCastPopUp.value = true
+}
 </script>

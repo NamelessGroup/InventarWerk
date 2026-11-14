@@ -12,6 +12,7 @@ export class ZauberDB extends BaseDatabaseHandler {
   private static SPELL_LIST_END_POINT = 'spellList'
   private static SPELL_PRESET_END_POINT = 'spellPreset'
   private static SPELL_END_POINT = this.SPELL_LIST_END_POINT + '/spell'
+  private static CAST_END_POINT = this.SPELL_PRESET_END_POINT + '/cast'
 
   public constructor() {
     super(BaseDatabaseHandler.getBaseURL(8001))
@@ -133,6 +134,16 @@ export class ZauberDB extends BaseDatabaseHandler {
     ])
     if (!result) return []
     return result.spellPresets
+  }
+
+  public async cast(spell: string, level: number, ritual: boolean) {
+    // TODO
+    void ritual
+    const result = await this.put<unknown>([ZauberDB.CAST_END_POINT], {
+      spell_preset_uuid: spell,
+      level: level.toString()
+    })
+    return result !== undefined
   }
 
   public async getAllSpellLists(): Promise<DBSpellList[]> {
