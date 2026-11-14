@@ -1,0 +1,283 @@
+use utils::ApiDocAddon;
+use repos::{
+    model_zauberwerk::SpellPreset,
+    repos::{
+        user_repository::UserRepository,
+        zauberwek::{
+            spell_cast_repository::{CastOutcome, SpellCastRepository},
+            spell_list_repository::SpellListRepository,
+            spell_preset_repository::SpellPresetRepository,
+        },
+    },
+};
+use rocket::response::stream::{Event, EventStream};
+use rocket::tokio::select;
+use rocket::tokio::sync::broadcast::{error::RecvError, Sender};
+use rocket::{http::Status, serde::json::Json, Shutdown, State};
+use utils::Result;
+use serde::{Deserialize, Serialize};
+use utils::{ApiError, AuthenticatedUser, TargetUser};
+
+use super::{OwnerUUID, MAX_SPELL_LEVEL};
+use utoipa::{IntoParams, OpenApi, ToSchema};
+
+
+/// All events sent over `GET /spellPreset/cast/stream`.
+/// The SSE event name tells the client which payload to expect.
+#[derive(Clone, Debug)]
+pub enum SpellEvent {
+    /// SSE event `spellCast`
+    Cast(SpellCastEvent),
+    /// SSE event `concentrationEnded`
+    ConcentrationEnded(ConcentrationEndedEvent),
+}
+
+/// Event that is broadcast when the concentration of a user is ended, either via `DELETE /concentration`
+/// or because the spell preset was deleted via `DELETE /spellPreset/delete`.
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ConcentrationEndedEvent {
+    /// UUID of the user whose concentration ended
+    pub owner_uuid: String,
+    /// Display name of the user whose concentration ended
+    pub owner_name: String,
+    /// UUID of the user who ended the concentration. Differs from `ownerUuid` if a DM ended it for a player.
+    pub triggered_by_uuid: String,
+    /// The complete spell preset the user was concentrating on
+    pub spell: SpellPreset,
+    /// Unix timestamp in milliseconds
+    pub timestamp: u128,
+}
+
+/// Current Unix timestamp in milliseconds.
+fn now_millis() -> u128 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_millis()
+}
+
+/// Builds a `ConcentrationEndedEvent` and broadcasts it to all stream clients.
+pub async fn broadcast_concentration_ended(
+    queue: &Sender<SpellEvent>,
+    usr_rep: &UserRepository,
+    owner_uuid: String,
+    triggered_by_uuid: String,
+    spell: SpellPreset,
+) -> Result<()> {
+    let owner = usr_rep.get_user(&owner_uuid).await?;
+
+    let event = ConcentrationEndedEvent {
+        owner_uuid,
+        owner_name: owner.name,
+        triggered_by_uuid,
+        spell,
+        timestamp: now_millis(),
+    };
+
+    // Sending only fails if no client is subscribed, which is fine.
+    let _ = queue.send(SpellEvent::ConcentrationEnded(event));
+    Ok(())
+}
+
+/// Event that is broadcast to all clients of `/spellPreset/cast/stream` whenever a spell is cast.
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellCastEvent {
+    /// UUID of the user who cast the spell
+    pub caster_uuid: String,
+    /// Display name of the user who cast the spell
+    pub caster_name: String,
+    /// UUID of the user who triggered the cast. Differs from `casterUuid` if a DM cast on behalf of a player.
+    pub triggered_by_uuid: String,
+    /// The complete spell preset that was cast
+    pub spell: SpellPreset,
+    /// Level the spell was cast at (0 for cantrips)
+    pub cast_level: i32,
+    /// Whether the spell was cast at a higher level than its base level
+    pub upcast: bool,
+    /// Whether the spell was cast as a ritual (no spell slot consumed)
+    pub ritual: bool,
+    /// Whether a spell slot was consumed (false for cantrips and ritual casts)
+    pub slot_consumed: bool,
+    /// Available spell slots of `castLevel` after casting, `null` for cantrips and ritual casts
+    pub remaining_slots: Option<i32>,
+    /// Whether the caster is now concentrating on this spell
+    pub concentration: bool,
+    /// UUID of the spell preset the caster was concentrating on before and which was replaced by this cast
+    pub replaced_concentration_uuid: Option<String>,
+    /// Unix timestamp of the cast in milliseconds
+    pub timestamp: u128,
+}
+
+#[derive(FromForm, IntoParams)]
+pub struct CastSpellParams {
+    /// UUID of the spell preset to cast
+    spell_preset_uuid: String,
+    /// Level to cast the spell at. Defaults to the base level of the spell. Must be between the base level and 9. Cantrips can only be cast at level 0.
+    level: Option<i32>,
+    /// Cast the spell as a ritual. Defaults to false. Only allowed for spells with the ritual tag. A ritual cast consumes no spell slot and is always at the base level of the spell, but the caster must have a spell slot maximum > 0 for that level.
+    ritual: Option<bool>,
+}
+
+#[utoipa::path(
+    put,
+    path = "/spellPreset/cast",
+    summary = "Cast a spell",
+    description = r#"Casts a spell for the requesting user (or, for DMs, for the user given by `owner_uuid`).
+
+The spell must be contained in at least one spell list of the caster. In a single transaction:
+- one spell slot of the cast level is consumed (cantrips and ritual casts consume no slot),
+- if the spell requires concentration, the caster's concentration is set to this spell, replacing any previous concentration.
+
+On success a `SpellCastEvent` with all information about the cast is returned and broadcast as SSE event `spellCast` to all clients of `GET /spellPreset/cast/stream`. The changes to spell slots and concentration are additionally reported via the regular last-changes stream."#,
+    params(OwnerUUID, CastSpellParams),
+    responses(
+        (status = 200, description = "Spell was cast", body = SpellCastEvent),
+        (status = 400, description = "Invalid cast level, or ritual cast of a spell without the ritual tag"),
+        (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM, the spell is not in a spell list of the caster, or (ritual cast) the caster has no spell slots of the cast level at all"),
+        (status = 409, description = "No spell slot of the cast level available"),
+        (status = 404, description = "Spell preset not found"),
+        (status = 500, description = "Database error")
+    ),
+    security(("cookie_auth" = [])),
+    tag = "Spell Casting"
+)]
+#[put("/spellPreset/cast?<params..>")]
+pub async fn cast_spell(
+    target: TargetUser,
+    params: CastSpellParams,
+    usr_rep: &State<UserRepository>,
+    spp_rep: &State<SpellPresetRepository>,
+    sli_rep: &State<SpellListRepository>,
+    cast_rep: &State<SpellCastRepository>,
+    queue: &State<Sender<SpellEvent>>,
+) -> Result<Json<SpellCastEvent>> {
+    let TargetUser { requester_uuid, owner_uuid: caster_uuid } = target;
+
+    let spell = spp_rep.get_spell_preset(&params.spell_preset_uuid).await?;
+
+    let cast_level = params.level.unwrap_or(spell.level);
+    let level_valid = if spell.level == 0 {
+        cast_level == 0
+    } else {
+        (spell.level..=MAX_SPELL_LEVEL).contains(&cast_level)
+    };
+    if !level_valid {
+        return Err(ApiError::bad_request("invalid cast level"));
+    }
+
+    let ritual = params.ritual.unwrap_or(false);
+    if ritual {
+        if !spell.ritual {
+            return Err(ApiError::bad_request("spell can not be cast as a ritual"));
+        }
+        // Ritual casts are always at the base level of the spell.
+        if cast_level != spell.level {
+            return Err(ApiError::bad_request("ritual casts can not be upcast"));
+        }
+    }
+
+    if !sli_rep.owner_has_spell(&caster_uuid, &spell.uuid).await? {
+        return Err(ApiError::new(Status::Forbidden, "spell is not in a spell list of the caster"));
+    }
+
+    let caster = usr_rep.get_user(&caster_uuid).await?;
+
+    let (remaining_slots, replaced_concentration_uuid) = match cast_rep
+        .cast_spell(&caster_uuid, &spell.uuid, cast_level, !ritual, spell.concentration)
+        .await?
+    {
+        CastOutcome::Cast { remaining_slots, previous_concentration } => {
+            (remaining_slots, previous_concentration)
+        }
+        CastOutcome::NoSlotAvailable => return Err(ApiError::conflict("no spell slot of the cast level available")),
+        CastOutcome::NoSlotOfLevel => {
+            return Err(ApiError::new(Status::Forbidden, "caster has no spell slots of the cast level"))
+        }
+    };
+
+    let timestamp = now_millis();
+
+    let event = SpellCastEvent {
+        caster_uuid,
+        caster_name: caster.name,
+        triggered_by_uuid: requester_uuid,
+        upcast: cast_level > spell.level,
+        concentration: spell.concentration,
+        spell,
+        cast_level,
+        ritual,
+        slot_consumed: remaining_slots.is_some(),
+        remaining_slots,
+        replaced_concentration_uuid,
+        timestamp,
+    };
+
+    // Sending only fails if no client is subscribed, which is fine.
+    let _ = queue.send(SpellEvent::Cast(event.clone()));
+
+    Ok(Json(event))
+}
+
+#[utoipa::path(
+    get,
+    path = "/spellPreset/cast/stream",
+    summary = "Subscribe to spell events",
+    description = r#"Opens a Server-Sent Events (SSE) stream for all connected clients. The SSE event name tells which JSON payload follows:
+
+- `spellCast` (`SpellCastEvent`): a spell was cast via `PUT /spellPreset/cast`
+- `concentrationEnded` (`ConcentrationEndedEvent`): a concentration was ended via `DELETE /concentration`, or because the spell preset was deleted via `DELETE /spellPreset/delete`
+
+In the browser use `eventSource.addEventListener('<event name>', ...)`; `onmessage` does not receive named events."#,
+    responses(
+        (status = 200, description = "Event stream established", content_type = "text/event-stream")
+    ),
+    security(("cookie_auth" = [])),
+    tag = "Spell Casting"
+)]
+#[get("/spellPreset/cast/stream")]
+pub async fn spell_cast_stream(
+    _user: AuthenticatedUser,
+    queue: &State<Sender<SpellEvent>>,
+    mut end: Shutdown,
+) -> EventStream![] {
+    let mut rx = queue.subscribe();
+    EventStream! {
+        loop {
+            let msg = select! {
+                msg = rx.recv() => match msg {
+                    Ok(msg) => msg,
+                    Err(RecvError::Closed) => break,
+                    Err(RecvError::Lagged(_)) => continue,
+                },
+                _ = &mut end => break,
+            };
+
+            yield match msg {
+                SpellEvent::Cast(event) => Event::json(&event).event("spellCast"),
+                SpellEvent::ConcentrationEnded(event) => Event::json(&event).event("concentrationEnded"),
+            };
+        }
+    }
+}
+
+#[derive(OpenApi)]
+#[openapi(
+    modifiers(&ApiDocAddon),
+    paths(
+        cast_spell,
+        spell_cast_stream
+    ),
+    components(
+        schemas(
+            SpellCastEvent,
+            ConcentrationEndedEvent,
+            SpellPreset
+        )
+    ),
+    tags(
+        (name = "Spell Casting", description = "Casting spells and subscribing to cast events")
+    )
+)]
+pub struct SpellCastApiDoc;

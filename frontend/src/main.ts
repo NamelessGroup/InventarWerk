@@ -4,11 +4,13 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import { createPinia } from 'pinia'
 import { ErrorHandler } from './errorHandling/ErrorHandler'
+import { router } from './router.ts'
 
 ErrorHandler.getInstance().addListener((e) => console.error(e))
 
 const app = createApp(App)
 app.use(createPinia())
+app.use(router)
 app.config.errorHandler = (err, _, info) => {
   console.error(err)
   console.info(info)

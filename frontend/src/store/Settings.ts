@@ -1,4 +1,3 @@
-import { DatabaseHandler } from './DatabaseHandler'
 import { reactive } from 'vue'
 
 const LOCAL_STORAGE_KEY = 'invSettings'
@@ -54,7 +53,6 @@ export class Settings {
   public set timeBetweenFetches(timeBetweenFetches: number) {
     this.settings.timeBetweenFetches = timeBetweenFetches ?? 5
     this.save()
-    DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
   }
 
   public set strictInventoryGrid(strictInventoryGrid: boolean) {

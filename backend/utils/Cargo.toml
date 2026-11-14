@@ -1,0 +1,11 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rocket = { version = "0.5.1", features = ["json", "secrets"] }
+repos = {path = "../repositories"}
+anyhow = { version="1.0.96"}
+sqlx = { version = "0.9.0", default-features = false }
+utoipa = {version="6.0.0"}

@@ -20,7 +20,7 @@
         <input id="strictInventoryGrid" v-model="strictInventoryGrid" type="checkbox" />
         <label for="strictInventoryGrid">Strict inventory grid</label>
       </div>
-      <div v-if="store().userIsDm" class="space-x-2 md:col-span-2">
+      <div v-if="accountData().userIsDm" class="space-x-2 md:col-span-2">
         <input id="serverLock" v-model="serverLock" type="checkbox" />
         <label for="serverLock">Prohibit new users from joining</label>
       </div>
@@ -37,7 +37,9 @@
           <option :value="undefined">Default</option>
           <option value="contrastLight">High Contrast Light</option>
           <option value="contrastDark">High Contrast Dark</option>
-          <option value="inventar">Inventarwerk</option>
+          <option value="inventar">InventarWerk</option>
+          <option value="zauber">ZauberWerk</option>
+          <option value="home">Home</option>
         </select>
       </div>
 
@@ -60,7 +62,7 @@
 import { computed } from 'vue'
 import PopUp from './PopUp.vue'
 import { Settings } from '@/store/Settings'
-import { store } from '@/store'
+import { accountData } from '@/store'
 import { version } from '@/utils/version'
 import DiscordImage from './DiscordImage.vue'
 import { ThemeManager } from '@/theme/ThemeManager.ts'
@@ -84,8 +86,8 @@ const strictInventoryGrid = computed({
 })
 
 const serverLock = computed({
-  get: () => store().isServerLocked,
-  set: () => store().toggleLock()
+  get: () => accountData().isServerLocked,
+  set: () => accountData().toggleLock()
 })
 
 const noDeleteConfirmation = computed({
@@ -99,7 +101,7 @@ const theme = computed({
 })
 
 const dmAccount = computed(() => {
-  const dm = store().accounts.filter((a) => a.dm)
+  const dm = accountData().accounts.filter((a) => a.dm)
   return dm.length > 0
     ? dm[0]
     : {

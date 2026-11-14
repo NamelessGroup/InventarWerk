@@ -1,28 +1,5 @@
-use repos::repos::{inventory_repository::InventoryRepository, user_repository::UserRepository};
-use rocket_errors::anyhow::Result;
-
-pub static ACCESS_DENIAL_MESSAGE: &str = "no access";
-
-/// Checks if a user has read access to a specific inventory.
-///
-/// # Arguments
-/// * `inv_rep` - Reference to the inventory repository.
-/// * `inventory_uuid` - The UUID of the inventory.
-/// * `user_id` - The UUID of the user.
-///
-/// # Returns
-/// `true` if the user is a reader of the inventory, otherwise `false`.
-pub async fn user_has_read_access_to_inventory(
-    inv_rep: &InventoryRepository,
-    inventory_uuid: String,
-    user_id: String,
-) -> Result<bool> {
-    Ok(inv_rep
-        .get_full_inventory(&inventory_uuid)
-        .await?
-        .reader
-        .contains(&user_id))
-}
+use repos::repos::inventory_repository::InventoryRepository;
+use utils::Result;
 
 /// Checks if a user has write access to a specific inventory.
 ///
@@ -43,18 +20,6 @@ pub async fn user_has_write_access_to_inventory(
         .await?
         .writer
         .contains(&user_id))
-}
-
-/// Checks if a user is a Dungeon Master (DM).
-///
-/// # Arguments
-/// * `usr_rep` - Reference to the user repository.
-/// * `user_id` - The UUID of the user.
-///
-/// # Returns
-/// `true` if the user is a DM, otherwise `false`.
-pub async fn user_is_dm(usr_rep: &UserRepository, user_id: String) -> Result<bool> {
-    Ok(usr_rep.get_user(&user_id).await?.dm == 1)
 }
 
 /// Checks if a user is the creator (owner) of a specific inventory.

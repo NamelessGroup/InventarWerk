@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate rocket;
 
-mod last_changes_map_macro;
 mod locked_macros;
 mod routers;
 
@@ -13,17 +12,69 @@ use repos::repos::item_preset_repository::ItemPresetRepository;
 use repos::repos::user_repository::UserRepository;
 use repos::DbPool;
 use rocket::config::Config;
-use rocket::fs::FileServer;
 use std::env;
 
 use routers::account_router::AccountApiDoc;
+use routers::backup_router::BackupApiDoc;
 use routers::inventory_router::InventoryApiDoc;
 use routers::item_preset_router::ItemPresetApiDoc;
-use routers::last_changes_router::LastChangesApiDoc;
 
 use utoipa::OpenApi;
 
 use utoipa_swagger_ui::SwaggerUi;
+
+/// Builds the Swagger UI routes of this service.
+///
+/// In production all services are served behind one origin (see `frontend/nginx.conf`),
+/// so this Swagger UI additionally lists the API docs of `zauberwerk_api` and
+/// `last_changes_api`. In development every service runs on its own port and
+/// only the own API docs are listed.
+fn swagger_ui() -> Vec<rocket::Route> {
+    const SWAGGER_PATH: &str = "/swagger-ui/<_..>";
+
+    let own_docs = SwaggerUi::new(SWAGGER_PATH)
+        .url("/api-docs/openapi_inventory.json", InventoryApiDoc::openapi())
+        .url("/api-docs/openapi_item_preset.json", ItemPresetApiDoc::openapi())
+        .url("/api-docs/openapi_account.json", AccountApiDoc::openapi())
+        .url("/api-docs/openapi_backup.json", BackupApiDoc::openapi());
+
+    #[cfg(feature = "dev")]
+    return own_docs.into();
+
+    #[cfg(not(feature = "dev"))]
+    {
+        use utoipa_swagger_ui::{Config as SwaggerConfig, Url};
+
+        // utoipa-swagger-ui only serves the API docs registered with `.url()` if no custom
+        // url list is configured. So the API doc routes are taken from `own_docs`, and the
+        // UI route from a second SwaggerUi with the combined url list.
+        let api_doc_routes = Vec::<rocket::Route>::from(own_docs)
+            .into_iter()
+            .filter(|route| route.uri.path().starts_with("/api-docs/"));
+
+        let combined_ui = SwaggerUi::new(SWAGGER_PATH).config(SwaggerConfig::new([
+            // inventarwerk_api
+            Url::new("InventarWerk: Inventory", "/api-docs/openapi_inventory.json"),
+            Url::new("InventarWerk: Item Preset", "/api-docs/openapi_item_preset.json"),
+            Url::new("InventarWerk: Account", "/api-docs/openapi_account.json"),
+            Url::new("InventarWerk: Backup", "/api-docs/openapi_backup.json"),
+            // zauberwerk_api
+            Url::new("ZauberWerk: Spell List", "/api-docs/openapi_spell_list.json"),
+            Url::new("ZauberWerk: Spell Preset", "/api-docs/openapi_spell_preset.json"),
+            Url::new("ZauberWerk: Spell Slot", "/api-docs/openapi_spell_slot.json"),
+            Url::new("ZauberWerk: Concentration", "/api-docs/openapi_concentration.json"),
+            Url::new("ZauberWerk: Spell Attack Modifier", "/api-docs/openapi_spell_attack_modifier.json"),
+            Url::new("ZauberWerk: Spell Cast", "/api-docs/openapi_spell_cast.json"),
+            // last_changes_api
+            Url::new("Last Changes", "/api-docs/openapi_last_changes.json"),
+        ]));
+
+        Vec::<rocket::Route>::from(combined_ui)
+            .into_iter()
+            .chain(api_doc_routes)
+            .collect()
+    }
+}
 
 /// Main async entry point for the backend server.
 #[rocket::main]
@@ -39,8 +90,16 @@ async fn main() {
     let usr_rep = UserRepository::new(dbconn.clone());
     let ipr_rep = ItemPresetRepository::new(dbconn.clone());
 
+    // Use shared secret key from environment variable or generate one
     let mut secret_key = [0u8; 32];
-    let _ = rand_bytes(&mut secret_key);
+    if let Ok(key_str) = env::var("SECRET_KEY") {
+        let key_bytes = key_str.as_bytes();
+        let len = key_bytes.len().min(32);
+        secret_key[..len].copy_from_slice(&key_bytes[..len]);
+    } else {
+        eprintln!("WARNING: SECRET_KEY not set, generating random key. Sessions won't work across API restarts!");
+        let _ = rand_bytes(&mut secret_key);
+    }
 
     if !usr_rep
         .any_user_exists()
@@ -50,7 +109,15 @@ async fn main() {
         lock_toggle!();
     }
 
-    let figment = Config::figment().merge(("secret_key", secret_key));
+    #[allow(unused_mut)]
+    let mut figment = Config::figment().merge(("secret_key", secret_key));
+
+    #[cfg(any(feature = "dev"))]
+    {
+        figment = figment.merge(("address", "127.0.0.1"))
+        .merge(("port", 8000));
+    }
+
     let config = Config::from(figment);
     #[allow(unused_mut)]
     let mut r = rocket::build()
@@ -58,30 +125,14 @@ async fn main() {
         .manage(inv_rep)
         .manage(usr_rep)
         .manage(ipr_rep)
-        .mount("/", FileServer::from("./static"))
+        .manage(dbconn)
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())
         .mount("/", routers::get_item_preset_routes())
-        .mount("/", routers::get_last_changes_routes())
-        .mount(
-            "/",
-            SwaggerUi::new("/swagger-ui/<_..>")
-                .url(
-                    "/api-docs/openapi_inventory.json",
-                    InventoryApiDoc::openapi(),
-                )
-                .url(
-                    "/api-docs/openapi_item_preset.json",
-                    ItemPresetApiDoc::openapi(),
-                )
-                .url("/api-docs/openapi_account.json", AccountApiDoc::openapi())
-                .url(
-                    "/api-docs/openapi_last_changes.json",
-                    LastChangesApiDoc::openapi(),
-                ),
-        );
+        .mount("/", routers::get_backup_routes())
+        .mount("/", swagger_ui());
 
-    #[cfg(any(feature = "dev", feature = "dev-deploy"))]
+    #[cfg(any(feature = "dev"))]
     {
         println!("Starting with CORS.");
         println!("Only do this in development.");

@@ -1,4 +1,4 @@
-use crate::model::User;
+use crate::model_inventarwerk::User;
 use anyhow::Result;
 use sqlx::PgPool;
 
@@ -14,7 +14,7 @@ impl UserRepository {
     /// Creates a new user with the given UUID, name, and avatar.
     /// The first user created is assigned DM status.
     pub async fn create_user(&self, uuid: &str, name: &str, avatar: &str) -> Result<User> {
-        let dm: i32 = if self.dm_exists().await? { 0 } else { 1 };
+        let dm = !self.dm_exists().await?;
         let user = sqlx::query_as!(
             User,
             "INSERT INTO \"user\" (uuid, name, avatar, dm) VALUES ($1, $2, $3, $4) RETURNING *",
@@ -47,17 +47,8 @@ impl UserRepository {
         Ok(users)
     }
 
-    /// Deletes a user by their UUID.
-    pub async fn delete_user(&self, uuid: &str) -> Result<u64> {
-        let result = sqlx::query!("DELETE FROM \"user\" WHERE uuid = $1", uuid)
-            .execute(&self.pool)
-            .await?;
-
-        Ok(result.rows_affected())
-    }
-
     /// Updates a user's name, avatar, and DM status by UUID.
-    pub async fn update_user(&self, uuid: &str, name: &str, avatar: &str, dm: i32) -> Result<User> {
+    pub async fn update_user(&self, uuid: &str, name: &str, avatar: &str, dm: bool) -> Result<User> {
         let user = sqlx::query_as!(
             User,
             "UPDATE \"user\" SET name = $1, avatar = $2, dm = $3 WHERE uuid = $4 RETURNING *",
@@ -86,7 +77,7 @@ impl UserRepository {
 
     /// Checks if any user with DM status exists.
     pub async fn dm_exists(&self) -> Result<bool> {
-        let exists = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM \"user\" WHERE dm = 1)")
+        let exists = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM \"user\" WHERE dm)")
             .fetch_one(&self.pool)
             .await?;
 
@@ -95,7 +86,7 @@ impl UserRepository {
 
     /// Retrieves the IDs of all users with DM status.
     pub async fn get_all_dm_ids(&self) -> Result<Vec<String>> {
-        let dm_ids = sqlx::query_scalar!("SELECT uuid FROM \"user\" WHERE dm = 1")
+        let dm_ids = sqlx::query_scalar!("SELECT uuid FROM \"user\" WHERE dm")
             .fetch_all(&self.pool)
             .await?;
 
