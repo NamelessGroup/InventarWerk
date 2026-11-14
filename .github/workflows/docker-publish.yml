@@ -127,7 +127,11 @@ jobs:
 
       - name: Short commit hash
         id: version
-        run: echo "short=${GITHUB_SHA::6}" >> "$GITHUB_OUTPUT"
+        env:
+          # On pull_request events GITHUB_SHA is GitHub's temporary merge commit
+          # (refs/pull/N/merge), which is not reachable from any branch. Use the PR head instead.
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: echo "short=${SHA::6}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push images
         id: bake
