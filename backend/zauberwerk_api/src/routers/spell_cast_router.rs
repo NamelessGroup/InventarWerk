@@ -96,9 +96,11 @@ pub struct SpellCastEvent {
     pub cast_level: i32,
     /// Whether the spell was cast at a higher level than its base level
     pub upcast: bool,
-    /// Whether a spell slot was consumed (false for cantrips)
+    /// Whether the spell was cast as a ritual (no spell slot consumed)
+    pub ritual: bool,
+    /// Whether a spell slot was consumed (false for cantrips and ritual casts)
     pub slot_consumed: bool,
-    /// Available spell slots of `castLevel` after casting, `null` for cantrips
+    /// Available spell slots of `castLevel` after casting, `null` for cantrips and ritual casts
     pub remaining_slots: Option<i32>,
     /// Whether the caster is now concentrating on this spell
     pub concentration: bool,
@@ -114,6 +116,8 @@ pub struct CastSpellParams {
     spell_preset_uuid: String,
     /// Level to cast the spell at. Defaults to the base level of the spell. Must be between the base level and 9. Cantrips can only be cast at level 0.
     level: Option<i32>,
+    /// Cast the spell as a ritual. Defaults to false. Only allowed for spells with the ritual tag. A ritual cast consumes no spell slot and is always at the base level of the spell, but the caster must have a spell slot maximum > 0 for that level.
+    ritual: Option<bool>,
 }
 
 #[utoipa::path(
@@ -123,15 +127,15 @@ pub struct CastSpellParams {
     description = r#"Casts a spell for the requesting user (or, for DMs, for the user given by `owner_uuid`).
 
 The spell must be contained in at least one spell list of the caster. In a single transaction:
-- one spell slot of the cast level is consumed (cantrips consume no slot),
+- one spell slot of the cast level is consumed (cantrips and ritual casts consume no slot),
 - if the spell requires concentration, the caster's concentration is set to this spell, replacing any previous concentration.
 
 On success a `SpellCastEvent` with all information about the cast is returned and broadcast as SSE event `spellCast` to all clients of `GET /spellPreset/cast/stream`. The changes to spell slots and concentration are additionally reported via the regular last-changes stream."#,
     params(OwnerUUID, CastSpellParams),
     responses(
         (status = 200, description = "Spell was cast", body = SpellCastEvent),
-        (status = 400, description = "Invalid cast level"),
-        (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM, or the spell is not in a spell list of the caster"),
+        (status = 400, description = "Invalid cast level, or ritual cast of a spell without the ritual tag"),
+        (status = 403, description = "Forbidden - foreign owner_uuid given but user is not a DM, the spell is not in a spell list of the caster, or (ritual cast) the caster has no spell slots of the cast level at all"),
         (status = 409, description = "No spell slot of the cast level available"),
         (status = 404, description = "Spell preset not found"),
         (status = 500, description = "Database error")
@@ -163,6 +167,17 @@ pub async fn cast_spell(
         return Err(ApiError::bad_request("invalid cast level"));
     }
 
+    let ritual = params.ritual.unwrap_or(false);
+    if ritual {
+        if !spell.ritual {
+            return Err(ApiError::bad_request("spell can not be cast as a ritual"));
+        }
+        // Ritual casts are always at the base level of the spell.
+        if cast_level != spell.level {
+            return Err(ApiError::bad_request("ritual casts can not be upcast"));
+        }
+    }
+
     if !sli_rep.owner_has_spell(&caster_uuid, &spell.uuid).await? {
         return Err(ApiError::new(Status::Forbidden, "spell is not in a spell list of the caster"));
     }
@@ -170,13 +185,16 @@ pub async fn cast_spell(
     let caster = usr_rep.get_user(&caster_uuid).await?;
 
     let (remaining_slots, replaced_concentration_uuid) = match cast_rep
-        .cast_spell(&caster_uuid, &spell.uuid, cast_level, spell.concentration)
+        .cast_spell(&caster_uuid, &spell.uuid, cast_level, !ritual, spell.concentration)
         .await?
     {
         CastOutcome::Cast { remaining_slots, previous_concentration } => {
             (remaining_slots, previous_concentration)
         }
         CastOutcome::NoSlotAvailable => return Err(ApiError::conflict("no spell slot of the cast level available")),
+        CastOutcome::NoSlotOfLevel => {
+            return Err(ApiError::new(Status::Forbidden, "caster has no spell slots of the cast level"))
+        }
     };
 
     let timestamp = now_millis();
@@ -189,6 +207,7 @@ pub async fn cast_spell(
         concentration: spell.concentration,
         spell,
         cast_level,
+        ritual,
         slot_consumed: remaining_slots.is_some(),
         remaining_slots,
         replaced_concentration_uuid,
