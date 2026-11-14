@@ -182,6 +182,9 @@ impl SpellPresetRepository {
     }
 
     /// Inserts components, classes, subclasses, species and feats of a spell preset.
+    ///
+    /// Duplicate entries within a list (e.g. the same class listed twice in imported data)
+    /// are silently ignored via `ON CONFLICT DO NOTHING` instead of failing the whole insert.
     async fn insert_details(
         tx: &mut Transaction<'_, Postgres>,
         id: &str,

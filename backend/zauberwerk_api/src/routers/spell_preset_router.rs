@@ -146,6 +146,8 @@ pub struct ExternSpellPreset {
     summary = "Import spell presets",
     description = r#"Creates new spell presets from the given list (e.g. for importing external spell data). The `uuid` field of each preset is ignored; new UUIDs are generated.
 
+Duplicate entries within `components`, `class`, `subClass`, `species` or `feats` are ignored.
+
 Each preset is retried up to 5 times on failure and skipped afterwards, so the request succeeds even if individual presets could not be created.
 
 Only accessible for DMs."#,
