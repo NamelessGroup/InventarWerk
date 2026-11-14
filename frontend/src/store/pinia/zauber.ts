@@ -41,6 +41,12 @@ export const zauberData = defineStore('zauber', () => {
     DB.zauber.resetSpellSlots(uuid)
   }
 
+  function endConcentration(uuid?: string) {
+    if (!uuid) uuid = accountData().uuid
+    concentrationSpell.value[uuid] = undefined
+    DB.zauber.removeConcentration(uuid)
+  }
+
   function editSpellListName(uuid: string, name: string) {
     spellLists.value[uuid].name = name
     DB.zauber.editSpellListName(uuid, name)
@@ -90,6 +96,7 @@ export const zauberData = defineStore('zauber', () => {
     setSpellSlotMaxima,
     resetSpellSlots,
     concentrationSpell,
+    endConcentration,
     editSpellListName,
     deleteSpellList,
     removeSpell,

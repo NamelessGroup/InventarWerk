@@ -37,7 +37,9 @@
         }}</span></span
       >
       <button
+        v-if="accountData().userIsDm || accountData().uuid === user"
         class="border-accent bg-primary-default mr-2 flex h-7 w-fit shrink-0 items-center gap-2 rounded-sm border"
+        @click="zauberData().endConcentration(user)"
       >
         <FontAwesomeIcon :icon="faX" />
         <span>Cancel Concentration</span>
