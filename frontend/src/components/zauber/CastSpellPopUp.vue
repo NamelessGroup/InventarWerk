@@ -10,7 +10,7 @@
         <label for="ritual">Cast as Ritual</label>
       </div>
 
-      <div v-if="spell.level > 0" class="flex items-center gap-x-2">
+      <div v-if="spell.level > 0 && !ritual" class="flex items-center gap-x-2">
         <label for="level">Cast at level:</label>
         <select
           id="level"
@@ -64,18 +64,24 @@ const availableLevel = computed(() =>
 )
 
 async function cast() {
-  let slotAvailable = true
-  const slots = zauberData().spellSlots[accountData().uuid]
-  if (slots[level.value] === undefined || slots[level.value].length === 0) slotAvailable = false
-  else if (!slots[level.value].some((s) => s === SpellSlotState.AVAILABLE)) slotAvailable = false
-  if (!slotAvailable && !ritual.value) {
-    errorText.value = 'No spell slot available'
-    return
-  }
-  for (let i = 0; i < slots[level.value].length; i++) {
-    if (slots[level.value][i] === SpellSlotState.AVAILABLE) {
-      slots[level.value][i] = SpellSlotState.USED
-      break
+  // rituals can not be upcast
+  if (ritual.value) level.value = props.spell.level
+  // cantrips never use spell slots
+  if (level.value > 0) {
+    const levelSlots = zauberData().spellSlots[accountData().uuid]?.[level.value] ?? []
+    if (ritual.value) {
+      // rituals use no slot, but the caster must be able to cast spells of this level
+      if (levelSlots.length === 0) {
+        errorText.value = 'You can not cast spells of this level'
+        return
+      }
+    } else {
+      const idx = levelSlots.indexOf(SpellSlotState.AVAILABLE)
+      if (idx === -1) {
+        errorText.value = 'No spell slot available'
+        return
+      }
+      levelSlots[idx] = SpellSlotState.USED
     }
   }
   if (props.spell.concentration) {
