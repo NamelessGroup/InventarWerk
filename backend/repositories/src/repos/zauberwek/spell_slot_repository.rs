@@ -23,14 +23,18 @@ impl SpellSlotRepository {
     /// Updates the maximum spell slots for a specific level and owner.
     ///
     /// A new level is created with all slots available. If the maximum of an existing level is
-    /// lowered below the available slots, the available slots are lowered to the new maximum.
+    /// raised, the additional slots are directly available. If it is lowered below the available
+    /// slots, the available slots are lowered to the new maximum.
     pub async fn modify_max_spell_slots(&self, owner_uuid: &str, spell_slot_level: i32, new_maxima: i32) -> Result<(), Error> {
         sqlx::query!(
             "INSERT INTO spell_slots (owner_uuid, spell_slot_level, spell_slot_maxima, spell_slot_available)
              VALUES ($1, $2, $3, $3)
              ON CONFLICT (owner_uuid, spell_slot_level)
              DO UPDATE SET spell_slot_maxima = $3,
-                           spell_slot_available = LEAST(spell_slots.spell_slot_available, $3)",
+                           spell_slot_available = LEAST(
+                               spell_slots.spell_slot_available
+                                   + GREATEST($3 - spell_slots.spell_slot_maxima, 0),
+                               $3)",
             owner_uuid,
             spell_slot_level,
             new_maxima
