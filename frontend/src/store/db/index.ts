@@ -1,12 +1,12 @@
 import { AccountDB } from './accountDB'
 import { CastStream } from './castStream'
-import { LastChangesDB } from './changesDB'
+import { LastChangesStream } from './changesDB'
 import { InventoryDB } from './inventoryDB'
 import { ZauberDB } from './zauberDB'
 
 class DBFacade {
   private accountDB: AccountDB
-  private changesDB: LastChangesDB
+  private changesDB: LastChangesStream
   private inventoryDB: InventoryDB
   private zauberDB: ZauberDB
   private castStream: CastStream
@@ -15,7 +15,7 @@ class DBFacade {
     this.accountDB = new AccountDB()
     this.inventoryDB = new InventoryDB()
     this.zauberDB = new ZauberDB()
-    this.changesDB = new LastChangesDB()
+    this.changesDB = new LastChangesStream()
     this.castStream = new CastStream()
   }
 

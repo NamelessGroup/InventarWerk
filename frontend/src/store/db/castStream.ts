@@ -14,7 +14,7 @@ export class CastStream extends BaseDatabaseHandler {
   public async initialize(): Promise<void> {
     if (!accountData().userIsDm) return
     this.eventSource = new EventSource(this.baseURL, { withCredentials: true })
-    window.onbeforeunload = () => this.eventSource?.close()
+    window.addEventListener('beforeunload', () => this.eventSource?.close())
     this.eventSource.addEventListener('spellCast', (e) => {
       const data = CastStream.getData(e.data)
       for (const listener of this.castListeners) {

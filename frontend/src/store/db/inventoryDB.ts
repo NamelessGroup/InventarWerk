@@ -14,8 +14,15 @@ export class InventoryDB extends BaseDatabaseHandler {
   }
 
   public async initialize(): Promise<void> {
-    inventoryData().itemPresets = await this.getAllPresets()
+    await this.initPresets()
+    await this.initInventories()
+  }
 
+  public async initPresets() {
+    inventoryData().itemPresets = await this.getAllPresets()
+  }
+
+  public async initInventories() {
     const inventories = await this.getAllInventoriesFromDB()
     inventories.forEach((inventory) => this.setInventoryInStore(inventory))
     inventoryData().inventoryUuids = inventories.map((inventory) => inventory.uuid).sort()
