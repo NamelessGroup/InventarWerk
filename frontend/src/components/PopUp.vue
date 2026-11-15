@@ -11,6 +11,7 @@
         @click.stop
       >
         <button
+          v-if="showCloseButton"
           class="border-accent bg-popup-background absolute -top-2 -right-2 z-50 flex h-7 w-7 items-center rounded-full border text-center text-xl"
           @click="close()"
         >
@@ -35,6 +36,10 @@ defineProps({
   popupClass: {
     type: String,
     default: ''
+  },
+  showCloseButton: {
+    type: Boolean,
+    default: true
   }
 })
 

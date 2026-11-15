@@ -1,4 +1,5 @@
 import { AccountDB } from './accountDB'
+import { CastStream } from './castStream'
 import { LastChangesDB } from './changesDB'
 import { InventoryDB } from './inventoryDB'
 import { ZauberDB } from './zauberDB'
@@ -8,12 +9,14 @@ class DBFacade {
   private changesDB: LastChangesDB
   private inventoryDB: InventoryDB
   private zauberDB: ZauberDB
+  private castStream: CastStream
 
   constructor() {
     this.accountDB = new AccountDB()
     this.inventoryDB = new InventoryDB()
     this.zauberDB = new ZauberDB()
     this.changesDB = new LastChangesDB()
+    this.castStream = new CastStream()
   }
 
   get account() {
@@ -32,8 +35,12 @@ class DBFacade {
     return this.zauberDB
   }
 
+  get cast() {
+    return this.castStream
+  }
+
   public async initialize() {
-    for (const db of [this.account, this.inventory, this.zauber, this.changes]) {
+    for (const db of [this.account, this.inventory, this.zauber, this.changes, this.castStream]) {
       await db.initialize()
     }
   }

@@ -67,6 +67,7 @@
     </PopUp>
     <UploadPresetListPopUp v-if="showAddExternPopUp" @close="showAddExternPopUp = false" />
     <SpellPresetOverview v-if="showManagePresets" @close="showManagePresets = false" />
+    <CastDisplay v-if="accountData().userIsDm" />
 
     <button
       class="border-accent bg-primary-default fixed right-2 bottom-2 z-10 h-10 w-10 rounded-sm border"
@@ -92,6 +93,7 @@ import UploadPresetListPopUp from '@/components/zauber/UploadPresetListPopUp.vue
 import ContainerGrid from '@/components/ContainerGrid.vue'
 import SpellListDisplay from '@/components/zauber/SpellListDisplay.vue'
 import SpellPresetOverview from '@/components/zauber/SpellPresetOverview.vue'
+import CastDisplay from '@/components/zauber/CastDisplay.vue'
 
 ThemeManager.getInstance().pageTheme = 'zauber'
 
