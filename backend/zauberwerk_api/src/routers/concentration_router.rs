@@ -1,4 +1,5 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use repos::{
     model_zauberwerk::Concentration,
     repos::{
@@ -35,7 +36,7 @@ If `owner_uuid` is given, the concentration of that user is returned instead. Th
 #[get("/concentration")]
 pub async fn get_concentration(
     target: TargetUser,
-    con_rep: &State<ConcentrationRepository>) -> Result<Json<Concentration>> {
+    con_rep: &Repo<ConcentrationRepository>) -> Result<Json<Concentration>> {
     Ok(Json(con_rep.get_concentration(&target.owner_uuid).await?))
 }
 
@@ -62,7 +63,7 @@ Only accessible for DMs."#,
 #[get("/concentration/all")]
 pub async fn get_all_concentrations(
     _dm: DmUser,
-    con_rep: &State<ConcentrationRepository>) -> Result<Json<ConcentrationReturnList>> {
+    con_rep: &Repo<ConcentrationRepository>) -> Result<Json<ConcentrationReturnList>> {
     let cons = con_rep.get_all_concentrations().await?;
 
     Ok(Json(ConcentrationReturnList { concentrations: cons }))
@@ -90,9 +91,9 @@ If `owner_uuid` is given and differs from the requesting user, DM privileges are
 #[delete("/concentration")]
 pub async fn remove_concentration(
     target: TargetUser,
-    con_rep: &State<ConcentrationRepository>,
-    usr_rep: &State<UserRepository>,
-    spp_rep: &State<SpellPresetRepository>,
+    con_rep: &Repo<ConcentrationRepository>,
+    usr_rep: &Repo<UserRepository>,
+    spp_rep: &Repo<SpellPresetRepository>,
     queue: &State<Sender<SpellEvent>>) -> Result<Status> {
     if let Some(ended) = con_rep.remove_concentration(&target.owner_uuid).await? {
         let spell = spp_rep.get_spell_preset(&ended).await?;

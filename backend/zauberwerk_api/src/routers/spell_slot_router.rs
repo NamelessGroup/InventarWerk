@@ -1,6 +1,7 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use repos::{model_zauberwerk::SpellSlot, repos::zauberwek::spell_slot_repository::{AvailableSlotsUpdate, SpellSlotRepository}};
-use rocket::{State, http::Status, serde::json::Json};
+use rocket::{http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 use utils::{ApiError, TargetUser};
 use utils::Result;
@@ -33,7 +34,7 @@ If `owner_uuid` is given, the spell slots of that user are returned instead. Thi
 #[get("/spellSlot")]
 pub async fn get_spell_slots(
     target: TargetUser,
-    ssl_rep: &State<SpellSlotRepository>) -> Result<Json<SpellSlotResponse>>{
+    ssl_rep: &Repo<SpellSlotRepository>) -> Result<Json<SpellSlotResponse>>{
     let ssl = ssl_rep.get_all_spell_slots(&target.owner_uuid).await?;
     Ok(Json(SpellSlotResponse {
         owner_uuid: target.owner_uuid,
@@ -78,7 +79,7 @@ If `owner_uuid` is given, the spell slots of that user are modified instead. Thi
 pub async fn patch_available_spell_slots(
     target: TargetUser,
     params: PatchSpellSlotParams,
-    ssl_rep: &State<SpellSlotRepository>) -> Result<Status> {
+    ssl_rep: &Repo<SpellSlotRepository>) -> Result<Status> {
     if !params.is_valid() {
         return Err(ApiError::bad_request("level must be between 1 and 9 and amount must not be negative"));
     }
@@ -110,7 +111,7 @@ If `owner_uuid` is given, the spell slots of that user are modified instead. Thi
 pub async fn patch_maxima_spell_slots(
     target: TargetUser,
     params: PatchSpellSlotParams,
-    ssl_rep: &State<SpellSlotRepository>) -> Result<Status> {
+    ssl_rep: &Repo<SpellSlotRepository>) -> Result<Status> {
     if !params.is_valid() {
         return Err(ApiError::bad_request("level must be between 1 and 9 and amount must not be negative"));
     }
@@ -137,7 +138,7 @@ If `owner_uuid` is given, the spell slots of that user are reset instead. This i
 #[patch("/spellSlot/reset")]
 pub async fn reset_spell_slots(
     target: TargetUser,
-    ssl_rep: &State<SpellSlotRepository>) -> Result<Status>{
+    ssl_rep: &Repo<SpellSlotRepository>) -> Result<Status>{
     ssl_rep.reset_spell_slots(&target.owner_uuid).await?;
     Ok(Status::NoContent)
 }

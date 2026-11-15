@@ -1,11 +1,11 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use reqwest::Client;
 use rocket::form::FromForm;
 use rocket::http::{Cookie, CookieJar, Status};
 use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
-use rocket::State;
 use std::env;
 use utils::AuthenticatedUser;
 
@@ -48,7 +48,7 @@ pub struct AccountResponse {
 #[get("/account/get")]
 pub async fn get_accounts(
     _user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    usr_rep: &Repo<UserRepository>,
 ) -> Result<Json<AccountResponse>> {
     let all_users = usr_rep.get_all_users().await?;
     Ok(Json(AccountResponse {
@@ -81,7 +81,7 @@ pub struct DMResponse {
 pub async fn is_account_dm(
     params: AccountUUIDParams,
     _user: AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    usr_rep: &Repo<UserRepository>,
 ) -> Result<Json<DMResponse>> {
     let user = usr_rep.get_user(&params.account_uuid).await?;
     Ok(Json(DMResponse {
@@ -152,7 +152,7 @@ New users can only register while the system is not locked (see `GET /account/is
 pub async fn callback(
     params: CodeParams,
     cookies: &CookieJar<'_>,
-    usr_rep: &State<UserRepository>,
+    usr_rep: &Repo<UserRepository>,
 ) -> Result<Redirect> {
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID not set");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET not set");

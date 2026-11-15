@@ -1,9 +1,12 @@
 
+use std::ops::Deref;
+
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome};
 use rocket::response::{self, Responder};
-use rocket::{outcome::try_outcome, Request, State};
+use rocket::{outcome::try_outcome, Ignite, Request, Rocket, Sentinel, State};
 use repos::repos::user_repository::UserRepository;
+use repos::{DbPool, Repository, UserDb};
 
 /// Message of `403 Forbidden` responses caused by missing access rights.
 pub const ACCESS_DENIAL_MESSAGE: &str = "no access";
@@ -96,10 +99,55 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
     }
 }
 
+/// Request guard for a repository acting on behalf of the requesting user.
+///
+/// Use it as `&Repo<SomeRepository>` handler parameter; it dereferences to the repository.
+/// Every database change made through it is attributed to the logged in user (sent as
+/// `user` in the change events of `last_changes_api`). For requests without login the
+/// repository works without a user. The repository is built once per request and type.
+///
+/// Requires a managed [`DbPool`]; Rocket refuses to launch otherwise.
+pub struct Repo<T>(T);
+
+impl<T> Repo<T> {
+    /// Returns the repository, like `State::inner`.
+    pub fn inner(&self) -> &T {
+        &self.0
+    }
+}
+
+impl<T> Deref for Repo<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.0
+    }
+}
+
+#[rocket::async_trait]
+impl<'r, T> FromRequest<'r> for &'r Repo<T>
+where
+    T: Repository + Send + Sync + 'static,
+{
+    type Error = ();
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let pool = try_outcome!(request.guard::<&State<DbPool>>().await);
+        let user_id = request.guard::<AuthenticatedUser>().await.succeeded().map(|user| user.user_id);
+        Outcome::Success(
+            request.local_cache(|| Repo(T::from_db(UserDb::new(pool.inner().clone(), user_id)))),
+        )
+    }
+}
+
+impl<T> Sentinel for &Repo<T> {
+    fn abort(rocket: &Rocket<Ignite>) -> bool {
+        rocket.state::<DbPool>().is_none()
+    }
+}
+
 /// Extractor for authenticated users that are Dungeon Masters (DM).
 ///
 /// Responds with `401 Unauthorized` if the user is not logged in and with
-/// `403 Forbidden` if the user is not a DM. Requires a managed `UserRepository`.
+/// `403 Forbidden` if the user is not a DM. Requires a managed `DbPool`.
 pub struct DmUser {
     /// The user id of the authenticated DM
     pub user_id: String,
@@ -110,7 +158,7 @@ impl<'r> FromRequest<'r> for DmUser {
     type Error = ();
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let user = try_outcome!(request.guard::<AuthenticatedUser>().await);
-        let usr_rep = try_outcome!(request.guard::<&State<UserRepository>>().await);
+        let usr_rep = try_outcome!(request.guard::<&Repo<UserRepository>>().await);
 
         match user_is_dm(usr_rep, user.user_id.clone()).await {
             Ok(true) => Outcome::Success(DmUser { user_id: user.user_id }),
@@ -126,7 +174,7 @@ impl<'r> FromRequest<'r> for DmUser {
 /// - omitted or equal to the requesting user: acts on the requesting user
 /// - another user: requires DM privileges, otherwise responds with `403 Forbidden`
 ///
-/// Responds with `401 Unauthorized` if the user is not logged in. Requires a managed `UserRepository`.
+/// Responds with `401 Unauthorized` if the user is not logged in. Requires a managed `DbPool`.
 pub struct TargetUser {
     /// The user id of the authenticated user who sent the request
     pub requester_uuid: String,
@@ -145,7 +193,7 @@ impl<'r> FromRequest<'r> for TargetUser {
 
         let owner_uuid = match requested {
             Some(owner) if owner != user.user_id => {
-                let usr_rep = try_outcome!(request.guard::<&State<UserRepository>>().await);
+                let usr_rep = try_outcome!(request.guard::<&Repo<UserRepository>>().await);
                 match user_is_dm(usr_rep, user.user_id.clone()).await {
                     Ok(true) => owner,
                     Ok(false) => return Outcome::Error((Status::Forbidden, ())),

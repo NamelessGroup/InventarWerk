@@ -1,13 +1,14 @@
+use crate::{Repository, UserDb};
 use crate::model_zauberwerk::Concentration;
-use sqlx::{Error, PgPool};
+use sqlx::Error;
 
 pub struct ConcentrationRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 impl ConcentrationRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Retrieves the concentration of a specific owner.
@@ -17,7 +18,7 @@ impl ConcentrationRepository {
             "SELECT spell_preset_uuid FROM concentration WHERE owner_uuid = $1",
             owner_uuid
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(Concentration {
@@ -35,7 +36,7 @@ impl ConcentrationRepository {
             "DELETE FROM concentration WHERE owner_uuid = $1 RETURNING spell_preset_uuid",
             owner_uuid
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *self.db.acquire().await?)
         .await?;
         Ok(ended)
     }
@@ -46,9 +47,15 @@ impl ConcentrationRepository {
             Concentration,
             r#"SELECT owner_uuid, spell_preset_uuid AS "spell_preset_uuid?" FROM concentration"#
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(concentrations)
+    }
+}
+
+impl Repository for ConcentrationRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

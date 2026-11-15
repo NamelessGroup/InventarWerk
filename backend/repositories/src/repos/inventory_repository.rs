@@ -1,14 +1,15 @@
+use crate::{Repository, UserDb};
 use crate::model_inventarwerk::{FrontendItem, FullFrontendInventory, RawInventory};
 use anyhow::{self, Result};
-use sqlx::{Error, PgPool};
+use sqlx::Error;
 use uuid::Uuid;
 pub struct InventoryRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 impl InventoryRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Returns all user UUIDs with read access to the given inventory.
@@ -17,7 +18,7 @@ impl InventoryRepository {
             "SELECT user_uuid FROM inventory_reader WHERE inventory_uuid = $1",
             inventory_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?
         .into_iter()
         .map(|r| r.user_uuid)
@@ -31,7 +32,7 @@ impl InventoryRepository {
             "SELECT user_uuid FROM inventory_writer WHERE inventory_uuid = $1",
             inventory_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?
         .into_iter()
         .map(|w| w.user_uuid)
@@ -45,7 +46,7 @@ impl InventoryRepository {
             "SELECT uuid, owner_uuid, money, name, creation FROM inventory WHERE uuid = $1",
             uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         let readers = self.get_readers(&inventory.uuid).await?;
@@ -71,7 +72,7 @@ impl InventoryRepository {
             "SELECT uuid FROM inventory WHERE owner_uuid = $1",
             user_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?
         .into_iter()
         .map(|record| record.uuid)
@@ -85,7 +86,7 @@ impl InventoryRepository {
             "SELECT inventory_uuid FROM inventory_reader WHERE user_uuid = $1",
             user_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?
         .into_iter()
         .map(|record| record.inventory_uuid)
@@ -114,7 +115,7 @@ impl InventoryRepository {
             user_uuid
         );
 
-        let inventories = query.fetch_all(&self.pool).await?;
+        let inventories = query.fetch_all(&mut *self.db.acquire().await?).await?;
 
         let mut full_inventories = Vec::new();
 
@@ -137,7 +138,7 @@ impl InventoryRepository {
             "INSERT INTO inventory (uuid, owner_uuid, money, name) VALUES ($1, $2, $3, $4) RETURNING *",
             uuid, owner_uuid, money, name
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
         self.add_reader(&uuid, owner_uuid).await?;
         self.add_writer(&uuid, owner_uuid).await?;
@@ -151,7 +152,7 @@ impl InventoryRepository {
             "SELECT * FROM inventory WHERE uuid = $1",
             uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
         Ok(inventory)
     }
@@ -169,7 +170,7 @@ impl InventoryRepository {
             name,
             uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -177,7 +178,7 @@ impl InventoryRepository {
     /// Deletes an inventory by UUID.
     pub async fn delete_inventory(&self, uuid: &str) -> Result<()> {
         sqlx::query!("DELETE FROM inventory WHERE uuid = $1", uuid)
-            .execute(&self.pool)
+            .execute(&mut *self.db.acquire().await?)
             .await?;
         Ok(())
     }
@@ -189,7 +190,7 @@ impl InventoryRepository {
             user_uuid,
             inventory_uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -201,7 +202,7 @@ impl InventoryRepository {
             user_uuid,
             inventory_uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -213,7 +214,7 @@ impl InventoryRepository {
             user_uuid,
             inventory_uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -225,7 +226,7 @@ impl InventoryRepository {
             user_uuid,
             inventory_uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -242,7 +243,7 @@ impl InventoryRepository {
     ) -> Result<()> {
         sqlx::query!("INSERT INTO inventory_item (inventory_uuid, item_preset_uuid, dm_note, amount, sorting, inventory_item_note) VALUES ($1, $2, $3, $4, $5, $6)",
             inventory_uuid, item_preset_uuid, dm_note, amount, sorting, inventory_item_note)
-            .execute(&self.pool)
+            .execute(&mut *self.db.acquire().await?)
             .await?;
         Ok(())
     }
@@ -259,7 +260,7 @@ impl InventoryRepository {
     ) -> Result<()> {
         sqlx::query!("UPDATE inventory_item SET dm_note = COALESCE($3, dm_note), amount = COALESCE($4, amount), sorting = COALESCE($5, sorting), inventory_item_note = COALESCE($6, inventory_item_note) WHERE inventory_uuid = $1 AND item_preset_uuid = $2",
             inventory_uuid, item_preset_uuid, dm_note, amount, sorting, inventory_item_note)
-            .execute(&self.pool)
+            .execute(&mut *self.db.acquire().await?)
             .await?;
         Ok(())
     }
@@ -275,7 +276,7 @@ impl InventoryRepository {
             inventory_uuid,
             item_preset_uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -295,7 +296,7 @@ impl InventoryRepository {
             item_preset_uuid,
             new_sorting,
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -307,7 +308,7 @@ impl InventoryRepository {
             inventory_uuid,
             item_preset_uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(result.exists.unwrap_or(false))
@@ -327,7 +328,7 @@ impl InventoryRepository {
              ORDER BY ii.sorting",
             inventory_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
 
         let frontend_items = items
@@ -348,5 +349,11 @@ impl InventoryRepository {
             .collect();
 
         Ok(frontend_items)
+    }
+}
+
+impl Repository for InventoryRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

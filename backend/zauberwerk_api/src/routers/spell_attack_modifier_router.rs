@@ -1,9 +1,10 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use repos::{
     model_zauberwerk::SpellAttackModifier,
     repos::zauberwek::spell_attack_modifier_repository::SpellAttackModifierRepository,
 };
-use rocket::{http::Status, serde::json::Json, State};
+use rocket::{http::Status, serde::json::Json};
 use utils::Result;
 use serde::{Deserialize, Serialize};
 use utils::{DmUser, TargetUser};
@@ -30,7 +31,7 @@ If `owner_uuid` is given, the modifier of that user is returned instead. This is
 #[get("/spellAttackModifier")]
 pub async fn get_spell_attack_modifier(
     target: TargetUser,
-    sam_rep: &State<SpellAttackModifierRepository>,
+    sam_rep: &Repo<SpellAttackModifierRepository>,
 ) -> Result<Json<SpellAttackModifier>> {
     Ok(Json(sam_rep.get_spell_attack_modifier(&target.owner_uuid).await?))
 }
@@ -58,7 +59,7 @@ Only accessible for DMs."#,
 #[get("/spellAttackModifier/all")]
 pub async fn get_all_spell_attack_modifiers(
     _dm: DmUser,
-    sam_rep: &State<SpellAttackModifierRepository>,
+    sam_rep: &Repo<SpellAttackModifierRepository>,
 ) -> Result<Json<SpellAttackModifierList>> {
     Ok(Json(SpellAttackModifierList {
         spell_attack_modifiers: sam_rep.get_all_spell_attack_modifiers().await?,
@@ -91,7 +92,7 @@ If `owner_uuid` is given and differs from the requesting user, DM privileges are
 pub async fn set_spell_attack_modifier(
     target: TargetUser,
     params: SetSpellAttackModifierParams,
-    sam_rep: &State<SpellAttackModifierRepository>,
+    sam_rep: &Repo<SpellAttackModifierRepository>,
 ) -> Result<Status> {
     sam_rep
         .set_spell_attack_modifier(&target.owner_uuid, params.modifier)

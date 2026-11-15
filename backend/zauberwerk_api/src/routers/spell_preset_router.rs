@@ -1,4 +1,5 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use repos::{model_zauberwerk::SpellPreset, repos::{user_repository::UserRepository, zauberwek::spell_preset_repository::SpellPresetRepository}};
 use rocket::tokio::sync::broadcast::Sender;
 use rocket::{State, http::Status};
@@ -35,7 +36,7 @@ pub struct SpellPresetUUID{
 pub async fn get_spell_preset(
     _user: AuthenticatedUser,
     params: SpellPresetUUID,
-    spp_rep: &State<SpellPresetRepository>) -> Result<Json<SpellPreset>> {
+    spp_rep: &Repo<SpellPresetRepository>) -> Result<Json<SpellPreset>> {
     Ok(Json(spp_rep.get_spell_preset(&params.spell_preset_uuid).await?))
 }
 
@@ -60,7 +61,7 @@ pub struct AllSpellPresetResult {
 #[get("/spellPreset/all")]
 pub async fn get_all_spell_presets(
     _user: AuthenticatedUser,
-    spp_rep: &State<SpellPresetRepository>) -> Result<Json<AllSpellPresetResult>> {
+    spp_rep: &Repo<SpellPresetRepository>) -> Result<Json<AllSpellPresetResult>> {
     Ok(Json(AllSpellPresetResult {
         spell_presets: spp_rep.get_all_spell_presets().await?
     }))
@@ -89,8 +90,8 @@ Only accessible for DMs."#,
 pub async fn delete_spell_preset(
     dm: DmUser,
     params: SpellPresetUUID,
-    spp_rep: &State<SpellPresetRepository>,
-    usr_rep: &State<UserRepository>,
+    spp_rep: &Repo<SpellPresetRepository>,
+    usr_rep: &Repo<UserRepository>,
     queue: &State<Sender<SpellEvent>>) -> Result<Status> {
     // Fetched before deleting, as it is part of the concentrationEnded events.
     let Some(spell) = spp_rep.find_spell_preset(&params.spell_preset_uuid).await? else {
@@ -126,7 +127,7 @@ Only accessible for DMs."#,
 #[patch("/spellPreset/modify", data = "<json_data>")]
 pub async fn edit_spell_preset(
     _dm: DmUser,
-    spp_rep: &State<SpellPresetRepository>,
+    spp_rep: &Repo<SpellPresetRepository>,
     json_data: Json<SpellPreset>) -> Result<Status> {
     if !spp_rep.modify_spell_preset(json_data.into_inner()).await? {
         return Err(ApiError::not_found("spell preset not found"));
@@ -163,7 +164,7 @@ Only accessible for DMs."#,
 #[put("/spellPreset/addExtern", data = "<json_data>")]
 pub async fn add_extern_spell_preset(
     _dm: DmUser,
-    spp_rep: &State<SpellPresetRepository>,
+    spp_rep: &Repo<SpellPresetRepository>,
     json_data: Json<ExternSpellPreset>) -> Result<Status> {
 
     for spell in &json_data.spell_presets {

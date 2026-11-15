@@ -1,4 +1,5 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use std::time::Duration;
 
 use repos::{
@@ -7,7 +8,7 @@ use repos::{
         inventory_repository::InventoryRepository, item_preset_repository::ItemPresetRepository,
     },
 };
-use rocket::{form::FromForm, http::Status, serde::json::Json, State};
+use rocket::{form::FromForm, http::Status, serde::json::Json};
 use utils::Result;
 use serde::{Deserialize, Serialize};
 
@@ -55,8 +56,8 @@ Public presets are readable by everybody, all other presets only if they are con
 pub async fn get_item_preset(
     params: ItemPresetUUIDParams,
     user: AuthenticatedUser,
-    ipr_rep: &State<ItemPresetRepository>,
-    inv_rep: &State<InventoryRepository>,
+    ipr_rep: &Repo<ItemPresetRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Json<ItemPreset>> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
     if !preset.creator.starts_with("public")
@@ -109,7 +110,7 @@ Requires authentication and creator privileges. Returns an error if the user is 
 pub async fn modify_item_preset(
     params: ItemModifyParams,
     user: AuthenticatedUser,
-    ipr_rep: &State<ItemPresetRepository>,
+    ipr_rep: &Repo<ItemPresetRepository>,
 ) -> Result<Status> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
     if preset.creator != user.user_id {
@@ -149,7 +150,7 @@ Requires authentication and creator privileges. Returns an error if the user is 
 pub async fn delete_item_preset(
     params: ItemPresetUUIDParams,
     user: AuthenticatedUser,
-    ipr_rep: &State<ItemPresetRepository>,
+    ipr_rep: &Repo<ItemPresetRepository>,
 ) -> Result<Status> {
     let preset = ipr_rep.get_by_uuid(&params.item_preset_uuid).await?;
     if preset.creator != user.user_id {
@@ -177,8 +178,8 @@ Requires authentication. Returns an error if the retrieval fails."#,
 #[get("/itemPreset/all")]
 pub async fn get_all_item_presets(
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
-    ipr_rep: &State<ItemPresetRepository>,
+    inv_rep: &Repo<InventoryRepository>,
+    ipr_rep: &Repo<ItemPresetRepository>,
 ) -> Result<Json<GetItemPresetReturn>> {
     let mut item_presets = ipr_rep.get_public_presets().await?;
     let invs = inv_rep
@@ -229,7 +230,7 @@ Requires DM privileges. Retries up to 5 times on creation errors, then skips the
 pub async fn add_extern(
     json_data: Json<ExternPresetDataList>,
     _dm: DmUser,
-    ipr_rep: &State<ItemPresetRepository>,
+    ipr_rep: &Repo<ItemPresetRepository>,
 ) -> Result<Status> {
     for x in &json_data.presets {
         let mut i = 0;

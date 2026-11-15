@@ -44,6 +44,7 @@ async fn postgres_listener_task(
                                     let uuid = json["uuid"].as_str().unwrap_or("").to_string();
                                     let source = json["source"].as_str().unwrap_or("").to_string();
                                     let change_type = json["type"].as_str().unwrap_or("").to_string();
+                                    let user = json["user"].as_str().map(str::to_string);
                                     
                                     let timestamp = std::time::SystemTime::now()
                                         .duration_since(std::time::UNIX_EPOCH)
@@ -54,6 +55,7 @@ async fn postgres_listener_task(
                                         uuid,
                                         source,
                                         change_type,
+                                        user,
                                         timestamp,
                                     };
 

@@ -1,10 +1,11 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use repos::model_inventarwerk::{FullFrontendInventory, ItemPreset};
 use repos::repos::inventory_repository::InventoryRepository;
 use repos::repos::item_preset_repository::ItemPresetRepository;
 use repos::repos::user_repository::UserRepository;
 use rocket::http::Status;
-use rocket::{form::FromForm, serde::json::Json, State};
+use rocket::{form::FromForm, serde::json::Json};
 use utils::Result;
 use serde::{Deserialize, Serialize};
 
@@ -46,7 +47,7 @@ Requires authentication. Returns an error if retrieval fails."#,
 #[get("/inventory/all")]
 pub async fn get_all_inventories(
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Json<GetAllInventoriesReturn>> {
     let allinvs = inv_rep.get_all_inventories(&user.user_id).await?;
     Ok(Json(GetAllInventoriesReturn {
@@ -74,7 +75,7 @@ Requires authentication. Returns an error if the user lacks access."#,
 pub async fn get_specific_inventory(
     params: InventoryUUIDParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Json<FullFrontendInventory>> {
     let inv = inv_rep.get_full_inventory(&params.inventory_uuid).await?;
     if !inv.reader.contains(&user.user_id) && !(inv.owner_uuid == user.user_id) {
@@ -107,8 +108,8 @@ Requires authentication."#,
 pub async fn create_inventory(
     params: InventoryCreateParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
-    usr_rep: &State<UserRepository>,
+    inv_rep: &Repo<InventoryRepository>,
+    usr_rep: &Repo<UserRepository>,
 ) -> Result<Json<FullFrontendInventory>> {
     let inv = inv_rep
         .create_inventory(&user.user_id, 0, &params.name)
@@ -161,7 +162,7 @@ Requires authentication and write access. Returns an error if access is denied."
 pub async fn add_preset_to_inventory(
     params: InventoryAddItemByPresetParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
         inv_rep.inner(),
@@ -215,8 +216,8 @@ Requires authentication and write access. Returns an error if access is denied."
 pub async fn add_new_item_to_inventory(
     params: InventoryAddItemByNameParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
-    ipr_rep: &State<ItemPresetRepository>,
+    inv_rep: &Repo<InventoryRepository>,
+    ipr_rep: &Repo<ItemPresetRepository>,
 ) -> Result<Json<ItemPreset>> {
     if !user_has_write_access_to_inventory(
         inv_rep.inner(),
@@ -270,7 +271,7 @@ Requires authentication and write access. Returns an error if access is denied."
 pub async fn edit_item(
     params: ItemEditParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
         inv_rep.inner(),
@@ -323,7 +324,7 @@ Requires authentication and DM privileges."#,
 pub async fn add_note_to_item(
     params: NoteAddParams,
     _dm: DmUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Status> {
     inv_rep
         .update_inventory_item(
@@ -372,7 +373,7 @@ Requires authentication and write access on both inventories. Returns an error i
 pub async fn move_item_between_inventories(
     params: ItemMoveParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Status> {
     if params.source_inventory_uuid == params.target_inventory_uuid {
         return Err(ApiError::bad_request("source and target inventory should not be the same"))
@@ -436,7 +437,7 @@ Requires authentication and write access. Returns an error if access is denied."
 pub async fn delete_item_from_inventory(
     params: ItemDeleteParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
         inv_rep.inner(),
@@ -483,7 +484,7 @@ Requires authentication and write access. Returns an error if access is denied."
 pub async fn edit_inventory(
     params: InventoryEditParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Status> {
     if !user_has_write_access_to_inventory(
         inv_rep.inner(),
@@ -541,8 +542,8 @@ Requires creator privileges (except for removing oneself)."#,
 pub async fn set_inventory_share_permissions(
     params: InventoryShareParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
-    usr_rep: &State<UserRepository>,
+    inv_rep: &Repo<InventoryRepository>,
+    usr_rep: &Repo<UserRepository>,
 ) -> Result<Status> {
     if let Some(ref st) = params.share_type {
         if !matches!(st.as_str(), "r" | "w") {
@@ -619,7 +620,7 @@ Requires authentication and creator privileges. Returns an error if the user is 
 pub async fn delete_inventory(
     params: InventoryUUIDParams,
     user: AuthenticatedUser,
-    inv_rep: &State<InventoryRepository>,
+    inv_rep: &Repo<InventoryRepository>,
 ) -> Result<Status> {
     if !user_is_creator_of_inventory(
         inv_rep.inner(),

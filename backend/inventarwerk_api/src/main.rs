@@ -7,10 +7,8 @@ mod routers;
 use dotenvy::dotenv;
 use openssl::rand::rand_bytes;
 use repos::create_pg_pool;
-use repos::repos::inventory_repository::InventoryRepository;
-use repos::repos::item_preset_repository::ItemPresetRepository;
 use repos::repos::user_repository::UserRepository;
-use repos::DbPool;
+use repos::{DbPool, UserDb};
 use rocket::config::Config;
 use std::env;
 
@@ -86,9 +84,7 @@ async fn main() {
             .await
             .expect("Couldn't connect to database");
 
-    let inv_rep = InventoryRepository::new(dbconn.clone());
-    let usr_rep = UserRepository::new(dbconn.clone());
-    let ipr_rep = ItemPresetRepository::new(dbconn.clone());
+    let usr_rep = UserRepository::new(UserDb::system(dbconn.clone()));
 
     // Use shared secret key from environment variable or generate one
     let mut secret_key = [0u8; 32];
@@ -122,9 +118,6 @@ async fn main() {
     #[allow(unused_mut)]
     let mut r = rocket::build()
         .configure(config)
-        .manage(inv_rep)
-        .manage(usr_rep)
-        .manage(ipr_rep)
         .manage(dbconn)
         .mount("/", routers::get_account_routes())
         .mount("/", routers::get_inventory_routes())

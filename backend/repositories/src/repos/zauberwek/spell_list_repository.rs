@@ -1,14 +1,15 @@
+use crate::{Repository, UserDb};
 use crate::model_zauberwerk::{SpellList, SpellListEntry};
-use sqlx::{Error, PgPool};
+use sqlx::Error;
 use uuid::Uuid;
 
 pub struct SpellListRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 impl SpellListRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Retrieves all spell lists for a specific owner.
@@ -17,7 +18,7 @@ impl SpellListRepository {
             "SELECT uuid, name, owner_uuid FROM spell_list WHERE owner_uuid = $1",
             owner_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
 
         let mut spell_lists = Vec::new();
@@ -31,7 +32,7 @@ impl SpellListRepository {
     /// Retrieves all spell lists.
     pub async fn get_all_spell_lists(&self) -> Result<Vec<SpellList>, Error> {
         let lists = sqlx::query!("SELECT uuid, name, owner_uuid FROM spell_list")
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *self.db.acquire().await?)
             .await?;
 
         let mut spell_lists = Vec::new();
@@ -53,7 +54,7 @@ impl SpellListRepository {
             owner_uuid,
             spell_preset_uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(exists)
@@ -65,7 +66,7 @@ impl SpellListRepository {
             "SELECT uuid, name, owner_uuid FROM spell_list WHERE uuid = $1",
             spell_list_uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         self.build_spell_list(list.uuid, list.name, list.owner_uuid).await
@@ -80,7 +81,7 @@ impl SpellListRepository {
              ORDER BY sorting, spell_preset_uuid",
             uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(SpellList {
@@ -100,7 +101,7 @@ impl SpellListRepository {
             owner_uuid,
             name
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(uuid)
@@ -113,7 +114,7 @@ impl SpellListRepository {
             spell_list_uuid,
             new_name
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -133,7 +134,7 @@ impl SpellListRepository {
             spell_list_uuid,
             sorting
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -149,7 +150,7 @@ impl SpellListRepository {
             spell_preset_uuid,
             sorting
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?
         .rows_affected();
         Ok(updated > 0)
@@ -163,7 +164,7 @@ impl SpellListRepository {
             spell_list_uuid,
             spell_preset_uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -171,8 +172,13 @@ impl SpellListRepository {
     /// Deletes a spell list.
     pub async fn delete_spell_list(&self, spell_list_uuid: &str) -> Result<(), Error> {
         sqlx::query!("DELETE FROM spell_list WHERE uuid = $1", spell_list_uuid)
-            .execute(&self.pool)
+            .execute(&mut *self.db.acquire().await?)
             .await?;
         Ok(())
+    }
+}
+impl Repository for SpellListRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

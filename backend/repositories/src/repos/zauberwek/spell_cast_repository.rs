@@ -1,7 +1,8 @@
-use sqlx::{Error, PgPool};
+use crate::{Repository, UserDb};
+use sqlx::Error;
 
 pub struct SpellCastRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 /// Result of a spell cast attempt.
@@ -21,8 +22,8 @@ pub enum CastOutcome {
 }
 
 impl SpellCastRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Casts a spell in a single transaction:
@@ -39,7 +40,7 @@ impl SpellCastRepository {
         consume_slot: bool,
         concentration: bool,
     ) -> Result<CastOutcome, Error> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.db.begin().await?;
 
         let remaining_slots = if consume_slot && cast_level > 0 {
             // Atomic decrement: concurrent casts can never take the same last slot.
@@ -110,5 +111,11 @@ impl SpellCastRepository {
             remaining_slots,
             previous_concentration,
         })
+    }
+}
+
+impl Repository for SpellCastRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

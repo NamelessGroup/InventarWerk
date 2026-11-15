@@ -1,8 +1,9 @@
+use crate::{Repository, UserDb};
 use crate::model_zauberwerk::SpellSlot;
-use sqlx::{Error, PgPool};
+use sqlx::Error;
 
 pub struct SpellSlotRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 /// Result of setting the available spell slots of a level.
@@ -16,8 +17,8 @@ pub enum AvailableSlotsUpdate {
 }
 
 impl SpellSlotRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Updates the maximum spell slots for a specific level and owner.
@@ -39,7 +40,7 @@ impl SpellSlotRepository {
             spell_slot_level,
             new_maxima
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -48,7 +49,7 @@ impl SpellSlotRepository {
     ///
     /// Nothing is changed if the level does not exist or `new_available` exceeds its maximum.
     pub async fn modify_current_spell_slots(&self, owner_uuid: &str, spell_slot_level: i32, new_available: i32) -> Result<AvailableSlotsUpdate, Error> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.db.begin().await?;
 
         // Lock the row, so the maximum can not change between check and update.
         let maxima = sqlx::query_scalar!(
@@ -92,7 +93,7 @@ impl SpellSlotRepository {
              ORDER BY spell_slot_level",
             owner_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
         
         Ok(slots)
@@ -106,8 +107,13 @@ impl SpellSlotRepository {
              WHERE owner_uuid = $1",
             owner_uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
+    }
+}
+impl Repository for SpellSlotRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

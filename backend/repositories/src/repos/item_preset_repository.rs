@@ -1,15 +1,16 @@
+use crate::{Repository, UserDb};
 use crate::model_inventarwerk::ItemPreset;
 use anyhow::Result;
-use sqlx::{Error, PgPool};
+use sqlx::Error;
 use uuid::Uuid;
 
 pub struct ItemPresetRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 impl ItemPresetRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Creates a new item preset with the given name and owner, using default values for other fields.
@@ -26,7 +27,7 @@ impl ItemPresetRepository {
             owner,
             ""
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(id)
     }
@@ -39,7 +40,7 @@ impl ItemPresetRepository {
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
             id, item.name, item.price, item.weight, item.description, item.creator, item.item_type, item.creation
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -51,7 +52,7 @@ impl ItemPresetRepository {
             "SELECT * FROM item_preset WHERE uuid = $1",
             uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
         Ok(item)
     }
@@ -81,7 +82,7 @@ impl ItemPresetRepository {
             item_type,
             uuid
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -89,7 +90,7 @@ impl ItemPresetRepository {
     /// Deletes an item preset by UUID.
     pub async fn delete(&self, uuid: &str) -> Result<(), Error> {
         sqlx::query!("DELETE FROM item_preset WHERE uuid = $1", uuid)
-            .execute(&self.pool)
+            .execute(&mut *self.db.acquire().await?)
             .await?;
         Ok(())
     }
@@ -100,7 +101,7 @@ impl ItemPresetRepository {
             ItemPreset,
             "SELECT * FROM item_preset WHERE creator LIKE 'public%'"
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
         Ok(presets)
     }
@@ -115,9 +116,15 @@ impl ItemPresetRepository {
              WHERE ii.inventory_uuid = $1",
             inventory_uuid
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(presets)
+    }
+}
+
+impl Repository for ItemPresetRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

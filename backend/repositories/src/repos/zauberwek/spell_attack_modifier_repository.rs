@@ -1,13 +1,14 @@
+use crate::{Repository, UserDb};
 use crate::model_zauberwerk::SpellAttackModifier;
-use sqlx::{Error, PgPool};
+use sqlx::Error;
 
 pub struct SpellAttackModifierRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 impl SpellAttackModifierRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Retrieves the spell attack modifier of a specific owner.
@@ -17,7 +18,7 @@ impl SpellAttackModifierRepository {
             "SELECT modifier FROM spell_attack_modifier WHERE owner_uuid = $1",
             owner_uuid
         )
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(SpellAttackModifier {
@@ -36,7 +37,7 @@ impl SpellAttackModifierRepository {
             owner_uuid,
             modifier
         )
-        .execute(&self.pool)
+        .execute(&mut *self.db.acquire().await?)
         .await?;
         Ok(())
     }
@@ -47,9 +48,15 @@ impl SpellAttackModifierRepository {
             SpellAttackModifier,
             r#"SELECT owner_uuid, modifier AS "modifier?" FROM spell_attack_modifier"#
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(modifiers)
+    }
+}
+
+impl Repository for SpellAttackModifierRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

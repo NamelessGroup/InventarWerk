@@ -1,14 +1,14 @@
+use crate::{Repository, UserDb};
 use crate::model_inventarwerk::User;
 use anyhow::Result;
-use sqlx::PgPool;
 
 pub struct UserRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 impl UserRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Creates a new user with the given UUID, name, and avatar.
@@ -23,7 +23,7 @@ impl UserRepository {
             avatar,
             dm
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(user)
@@ -32,7 +32,7 @@ impl UserRepository {
     /// Retrieves a user by their UUID.
     pub async fn get_user(&self, uuid: &str) -> Result<User> {
         let user = sqlx::query_as!(User, "SELECT * FROM \"user\" WHERE uuid = $1", uuid)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *self.db.acquire().await?)
             .await?;
 
         Ok(user)
@@ -41,7 +41,7 @@ impl UserRepository {
     /// Retrieves all users from the database.
     pub async fn get_all_users(&self) -> Result<Vec<User>> {
         let users = sqlx::query_as!(User, "SELECT * FROM \"user\"")
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *self.db.acquire().await?)
             .await?;
 
         Ok(users)
@@ -57,7 +57,7 @@ impl UserRepository {
             dm,
             uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(user)
@@ -69,7 +69,7 @@ impl UserRepository {
             "SELECT EXISTS(SELECT 1 FROM \"user\" WHERE uuid = $1)",
             uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(exists.unwrap_or(false))
@@ -78,7 +78,7 @@ impl UserRepository {
     /// Checks if any user with DM status exists.
     pub async fn dm_exists(&self) -> Result<bool> {
         let exists = sqlx::query_scalar!("SELECT EXISTS(SELECT 1 FROM \"user\" WHERE dm)")
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *self.db.acquire().await?)
             .await?;
 
         Ok(exists.unwrap_or(false))
@@ -87,7 +87,7 @@ impl UserRepository {
     /// Retrieves the IDs of all users with DM status.
     pub async fn get_all_dm_ids(&self) -> Result<Vec<String>> {
         let dm_ids = sqlx::query_scalar!("SELECT uuid FROM \"user\" WHERE dm")
-            .fetch_all(&self.pool)
+            .fetch_all(&mut *self.db.acquire().await?)
             .await?;
 
         Ok(dm_ids)
@@ -96,9 +96,15 @@ impl UserRepository {
     /// Checks if any user exists in the database.
     pub async fn any_user_exists(&self) -> Result<bool> {
         let result = sqlx::query!("SELECT EXISTS(SELECT 1 FROM \"user\") AS exists")
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *self.db.acquire().await?)
             .await?;
 
         Ok(result.exists.unwrap_or(false))
+    }
+}
+
+impl Repository for UserRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

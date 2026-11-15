@@ -6,13 +6,6 @@ mod routers;
 use dotenvy::dotenv;
 use openssl::rand::rand_bytes;
 
-use repos::repos::zauberwek::concentration_repository::ConcentrationRepository;
-use repos::repos::zauberwek::spell_attack_modifier_repository::SpellAttackModifierRepository;
-use repos::repos::zauberwek::spell_list_repository::SpellListRepository;
-use repos::repos::zauberwek::spell_preset_repository::SpellPresetRepository;
-use repos::repos::user_repository::UserRepository;
-use repos::repos::zauberwek::spell_slot_repository::SpellSlotRepository;
-use repos::repos::zauberwek::spell_cast_repository::SpellCastRepository;
 use rocket::tokio::sync::broadcast::channel;
 use rocket::config::Config;
 use std::env;
@@ -52,14 +45,6 @@ async fn main() {
         let _ = rand_bytes(&mut secret_key);
     }
 
-    let spp_rep = SpellPresetRepository::new(dbconn.clone());
-    let usr_rep = UserRepository::new(dbconn.clone());
-    let con_rep = ConcentrationRepository::new(dbconn.clone());
-    let sam_rep = SpellAttackModifierRepository::new(dbconn.clone());
-    let ssl_rep = SpellSlotRepository::new(dbconn.clone());
-    let sli_rep = SpellListRepository::new(dbconn.clone());
-    let cast_rep = SpellCastRepository::new(dbconn.clone());
-
     // Broadcast channel for the spell cast SSE stream
     let (cast_tx, _cast_rx) = channel::<SpellEvent>(1024);
 
@@ -77,13 +62,7 @@ async fn main() {
     #[allow(unused_mut)]
     let mut r = rocket::build()
         .configure(config)
-        .manage(spp_rep)
-        .manage(usr_rep)
-        .manage(con_rep)
-        .manage(sam_rep)
-        .manage(ssl_rep)
-        .manage(sli_rep)
-        .manage(cast_rep)
+        .manage(dbconn)
         .manage(cast_tx)
         .mount("/", routers::get_spell_list_routes())
         .mount("/", routers::get_concentration_routes())

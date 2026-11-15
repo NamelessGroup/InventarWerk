@@ -16,6 +16,8 @@ pub struct InventoryChangeEvent {
     /// `INSERT`, `UPDATE` or `DELETE`
     #[serde(rename = "type")]
     pub change_type: String,
+    /// UUID of the user who caused the change. `null` if the change was not made by a logged in user via the API, e.g. during startup, by a migration or directly in the database.
+    pub user: Option<String>,
     /// Unix timestamp in milliseconds
     pub timestamp: u128,
 }
@@ -25,7 +27,7 @@ pub struct InventoryChangeEvent {
     get,
     path = "/lastChanges/stream",
     summary = "Subscribe to data change events",
-    description = "Opens a Server-Sent Events (SSE) stream that pushes a notification for every change of an InventarWerk or ZauberWerk table (inventories, items, item presets, spell presets, spell lists, spell slots, concentrations, spell attack modifiers). Events are triggered by Postgres triggers and contain only what changed, not the new data.",
+    description = "Opens a Server-Sent Events (SSE) stream that pushes a notification for every change of an InventarWerk or ZauberWerk table (inventories, items, item presets, spell presets, spell lists, spell slots, concentrations, spell attack modifiers). Events are triggered by Postgres triggers and contain only what changed and who changed it, not the new data.",
     responses(
         (status = 200, description = "Event stream established", content_type = "text/event-stream")
     ),

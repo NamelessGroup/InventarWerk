@@ -1,6 +1,7 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use repos::{model_zauberwerk::{SpellList, SpellListEntry}, repos::{user_repository::UserRepository, zauberwek::{spell_list_repository::SpellListRepository, spell_preset_repository::SpellPresetRepository}}};
-use rocket::{State, http::Status, serde::json::Json};
+use rocket::{http::Status, serde::json::Json};
 use serde::{Deserialize, Serialize};
 use utils::{ApiError, AuthenticatedUser, user_is_dm};
 use utoipa::{IntoParams, OpenApi, ToSchema};
@@ -32,8 +33,8 @@ Only the owner of the list or a DM may read it."#,
 #[get("/spellList?<params..>")]
 pub async fn get_spell_list(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
-    usr_rep: &State<UserRepository>,
+    sli_rep: &Repo<SpellListRepository>,
+    usr_rep: &Repo<UserRepository>,
     params: SpellListUUID) -> Result<Json<SpellList>> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if list.owner_uuid != user.user_id && !user_is_dm(usr_rep, user.user_id).await? {
@@ -65,7 +66,7 @@ pub struct SpellListNameParam {
 #[put("/spellList?<params..>")]
 pub async fn create_spelllist(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
+    sli_rep: &Repo<SpellListRepository>,
     params: SpellListNameParam) -> Result<Json<SpellList>>{
     let spell_list_uuid: String = sli_rep.create_spell_list(&user.user_id, &params.spell_list_name).await?;
     Ok(Json(sli_rep.get_spell_list(&spell_list_uuid).await?))
@@ -94,8 +95,8 @@ pub struct AllSpellListResponse {
 #[get("/spellList/all")]
 pub async fn get_all_spell_list(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
-    usr_rep: &State<UserRepository>) -> Result<Json<AllSpellListResponse>> {
+    sli_rep: &Repo<SpellListRepository>,
+    usr_rep: &Repo<UserRepository>) -> Result<Json<AllSpellListResponse>> {
     let lists = if user_is_dm(usr_rep, user.user_id.clone()).await? {
         sli_rep.get_all_spell_lists().await?
     } else {
@@ -122,7 +123,7 @@ pub async fn get_all_spell_list(
 #[delete("/spellList/delete?<params..>")]
 pub async fn delete_spell_list(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
+    sli_rep: &Repo<SpellListRepository>,
     params: SpellListUUID) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
@@ -158,7 +159,7 @@ pub struct SpellListEditParam {
 #[patch("/spellList/edit?<params..>")]
 pub async fn patch_spell_list(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
+    sli_rep: &Repo<SpellListRepository>,
     params: SpellListEditParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
@@ -205,8 +206,8 @@ pub struct SpellListAddPresetParam {
 #[put("/spellList/spell/addPreset?<params..>")]
 pub async fn add_preset_to_list(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
-    spp_rep: &State<SpellPresetRepository>,
+    sli_rep: &Repo<SpellListRepository>,
+    spp_rep: &Repo<SpellPresetRepository>,
     params: SpellListAddPresetParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
@@ -249,7 +250,7 @@ The values do not need to be consecutive or unique; spells with the same `sortin
 #[patch("/spellList/spell/edit?<params..>")]
 pub async fn edit_spell_in_list(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
+    sli_rep: &Repo<SpellListRepository>,
     params: SpellListSortingParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {
@@ -279,7 +280,7 @@ pub async fn edit_spell_in_list(
 #[delete("/spellList/spell/removePreset?<params..>")]
 pub async fn delete_preset_from_list(
     user: AuthenticatedUser,
-    sli_rep: &State<SpellListRepository>,
+    sli_rep: &Repo<SpellListRepository>,
     params: SpellListPresetParam) -> Result<Status> {
     let list = sli_rep.get_spell_list(&params.spell_list_uuid).await?;
     if user.user_id != list.owner_uuid {

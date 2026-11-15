@@ -1,15 +1,16 @@
+use crate::{Repository, UserDb};
 use crate::model_zauberwerk::SpellPreset;
 use anyhow::{self, Result};
-use sqlx::{Error, PgPool, Postgres, Transaction};
+use sqlx::{Error, Postgres, Transaction};
 use uuid::Uuid;
 
 pub struct SpellPresetRepository {
-    pool: PgPool,
+    db: UserDb,
 }
 
 impl SpellPresetRepository {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: UserDb) -> Self {
+        Self { db }
     }
 
     /// Retrieves a spell preset by its UUID.
@@ -35,7 +36,7 @@ impl SpellPresetRepository {
             "#,
             spell_preset_uuid
         )
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *self.db.acquire().await?)
         .await?;
 
         Ok(SpellPreset {
@@ -76,7 +77,7 @@ impl SpellPresetRepository {
             spell_preset.uuid.clone()
         };
 
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.db.begin().await?;
 
         sqlx::query!(
             "INSERT INTO spell_preset (uuid, name, level, description, time, concentration, duration, range, school,
@@ -119,7 +120,7 @@ impl SpellPresetRepository {
     ///
     /// Returns `false` if no preset with the given UUID exists; nothing is changed then.
     pub async fn modify_spell_preset(&self, spell_preset: SpellPreset) -> Result<bool, Error> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.db.begin().await?;
 
         let updated = sqlx::query!(
             "UPDATE spell_preset SET
@@ -259,7 +260,7 @@ impl SpellPresetRepository {
             GROUP BY sp.uuid
             "#
         )
-        .fetch_all(&self.pool)
+        .fetch_all(&mut *self.db.acquire().await?)
         .await?;
 
         let spells = results
@@ -310,7 +311,7 @@ impl SpellPresetRepository {
     ///
     /// Returns the UUIDs of the users whose concentration was ended.
     pub async fn delete_spell_preset(&self, uuid: &str) -> Result<Vec<String>, Error> {
-        let mut tx = self.pool.begin().await?;
+        let mut tx = self.db.begin().await?;
 
         // Would also be removed by ON DELETE CASCADE, but the affected users are needed.
         let ended_concentrations = sqlx::query_scalar!(
@@ -326,5 +327,10 @@ impl SpellPresetRepository {
 
         tx.commit().await?;
         Ok(ended_concentrations)
+    }
+}
+impl Repository for SpellPresetRepository {
+    fn from_db(db: UserDb) -> Self {
+        Self::new(db)
     }
 }

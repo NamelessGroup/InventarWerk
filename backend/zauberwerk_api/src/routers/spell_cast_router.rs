@@ -1,4 +1,5 @@
 use utils::ApiDocAddon;
+use utils::Repo;
 use repos::{
     model_zauberwerk::SpellPreset,
     repos::{
@@ -147,10 +148,10 @@ On success a `SpellCastEvent` with all information about the cast is returned an
 pub async fn cast_spell(
     target: TargetUser,
     params: CastSpellParams,
-    usr_rep: &State<UserRepository>,
-    spp_rep: &State<SpellPresetRepository>,
-    sli_rep: &State<SpellListRepository>,
-    cast_rep: &State<SpellCastRepository>,
+    usr_rep: &Repo<UserRepository>,
+    spp_rep: &Repo<SpellPresetRepository>,
+    sli_rep: &Repo<SpellListRepository>,
+    cast_rep: &Repo<SpellCastRepository>,
     queue: &State<Sender<SpellEvent>>,
 ) -> Result<Json<SpellCastEvent>> {
     let TargetUser { requester_uuid, owner_uuid: caster_uuid } = target;

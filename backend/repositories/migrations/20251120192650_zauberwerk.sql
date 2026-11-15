@@ -151,11 +151,14 @@ BEGIN
             RAISE EXCEPTION 'Unhandled table: %', TG_TABLE_NAME;
     END CASE;
     
-    -- Build JSON payload with uuid, source table, and operation type
+    -- Build JSON payload with uuid, source table, operation type and the user who caused the change
     payload := json_build_object(
         'uuid', uuid,
         'source', TG_TABLE_NAME,
-        'type', TG_OP  -- INSERT, UPDATE, or DELETE
+        'type', TG_OP,  -- INSERT, UPDATE, or DELETE
+        -- Set by the backend per connection/transaction (UserDb), NULL if no user is known.
+        -- Empty after being cleared on a pooled connection, hence NULLIF.
+        'user', NULLIF(current_setting('app.user_id', true), '')
     );
     
     -- Send NOTIFY with JSON payload
