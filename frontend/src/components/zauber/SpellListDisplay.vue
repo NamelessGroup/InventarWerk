@@ -17,6 +17,7 @@
 
     <template #postItems>
       <button
+        v-if="accountData().uuid === spellList.ownerUuid"
         class="bg-primary-default h-10 w-full rounded-sm text-center"
         @click="showAddSpellPopup = true"
       >

@@ -31,8 +31,18 @@
 
       <template #default>
         <div class="flex flex-col gap-5 overflow-auto">
+          <div v-if="accountData().userIsDm" class="flex flex-wrap gap-5">
+            <SpellSlotList
+              v-for="account in accountsWithSlots"
+              :key="account.uuid"
+              :spell-slots="zauberData().spellSlots[account.uuid]"
+              :user="account.uuid"
+              :concentration-spell="zauberData().concentrationSpell[account.uuid]"
+              :default-expanded="false"
+            />
+          </div>
           <SpellSlotList
-            v-if="zauberData().spellSlots[accountData().uuid] !== undefined"
+            v-else-if="zauberData().spellSlots[accountData().uuid] !== undefined"
             :spell-slots="zauberData().spellSlots[accountData().uuid]"
             :user="accountData().uuid"
             :concentration-spell="zauberData().concentrationSpell[accountData().uuid]"
@@ -117,6 +127,10 @@ const spellLists = computed(() => {
   const allInventories = zauberData().spellListUuids.map((uuid) => zauberData().spellLists[uuid])
   return allInventories.filter(matchSearchString)
 })
+
+const accountsWithSlots = computed(() =>
+  accountData().accounts.filter((a) => zauberData().spellSlots[a.uuid] !== undefined)
+)
 
 async function submitAddSpellList() {
   if (nameFieldContent.value == '') {

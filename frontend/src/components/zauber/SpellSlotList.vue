@@ -1,50 +1,70 @@
 <template>
   <div
-    class="border-accent bg-primary-dark flex flex-col gap-2 overflow-hidden rounded-sm border-2 p-2"
+    class="border-accent bg-primary-dark flex flex-col overflow-hidden rounded-sm border-2 p-2"
+    :class="expanded ? 'w-full' : 'w-fit'"
   >
     <div class="flex items-center gap-2 text-lg">
       <DiscordImage :user="owner" class="h-6" />
       <span v-if="accountData().userIsDm">{{ owner.name }}</span>
-      <span>Spell Slots</span>
+      <span v-if="expanded">Spell Slots</span>
+      <span v-if="!expanded && concentrationSpell" class="text-accent font-bold italic">C</span>
       <div class="flex-1"></div>
       <button
-        v-if="accountData().userIsDm || accountData().uuid === user"
-        class="border-accent bg-primary-default mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-sm"
+        class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
+        @click="expanded = !expanded"
+      >
+        <FontAwesomeIcon
+          class="transition"
+          :class="{ 'rotate-180': !expanded }"
+          :icon="faChevronUp"
+        />
+      </button>
+      <button
+        v-if="(accountData().userIsDm || accountData().uuid === user) && expanded"
+        class="border-accent bg-primary-default flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-sm"
         @click="zauberData().resetSpellSlots(user)"
       >
         <FontAwesomeIcon :icon="faRotateLeft" />
       </button>
       <button
-        class="border-accent bg-primary-default mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-sm"
+        v-if="expanded"
+        class="border-accent bg-primary-default flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-sm"
         @click="showManageMaxima = true"
       >
         <FontAwesomeIcon :icon="faGears" />
       </button>
     </div>
+    <CollapseTransition with-opacity speed="0.5s">
+      <div v-if="expanded" class="mt-2 flex flex-col gap-2">
+        <div class="flex flex-wrap gap-5">
+          <div v-for="lvl in maxSpellSlot" :key="lvl" class="flex items-center gap-1">
+            <span>{{ lvl }}:</span>
+            <SpellSlotDot
+              v-for="[idx, slot] in spellSlots[lvl].entries()"
+              :key="idx"
+              :state="slot"
+            />
+          </div>
+        </div>
 
-    <div class="flex flex-wrap gap-5">
-      <div v-for="lvl in maxSpellSlot" :key="lvl" class="flex items-center gap-1">
-        <span>{{ lvl }}:</span>
-        <SpellSlotDot v-for="[idx, slot] in spellSlots[lvl].entries()" :key="idx" :state="slot" />
+        <div v-if="concentrationSpell" class="flex items-center gap-2">
+          <span
+            >Concentrating on
+            <span class="bold text-accent italic">{{
+              zauberData().getPreset(concentrationSpell).name
+            }}</span></span
+          >
+          <button
+            v-if="accountData().userIsDm || accountData().uuid === user"
+            class="border-accent bg-primary-default mr-2 flex h-7 w-fit shrink-0 items-center gap-2 rounded-sm border"
+            @click="zauberData().endConcentration(user)"
+          >
+            <FontAwesomeIcon :icon="faX" />
+            <span>Cancel Concentration</span>
+          </button>
+        </div>
       </div>
-    </div>
-
-    <div v-if="concentrationSpell" class="flex items-center gap-2">
-      <span
-        >Concentrating on
-        <span class="bold text-accent italic">{{
-          zauberData().getPreset(concentrationSpell).name
-        }}</span></span
-      >
-      <button
-        v-if="accountData().userIsDm || accountData().uuid === user"
-        class="border-accent bg-primary-default mr-2 flex h-7 w-fit shrink-0 items-center gap-2 rounded-sm border"
-        @click="zauberData().endConcentration(user)"
-      >
-        <FontAwesomeIcon :icon="faX" />
-        <span>Cancel Concentration</span>
-      </button>
-    </div>
+    </CollapseTransition>
 
     <ManageSlotMaximaPopUp
       v-if="showManageMaxima"
@@ -58,12 +78,13 @@
 <script setup lang="ts">
 import type { SpellSlots } from '@/model/SpellSlots'
 import { accountData, zauberData } from '@/store'
-import { faGears, faRotateLeft, faX } from '@fortawesome/free-solid-svg-icons'
+import { faChevronUp, faGears, faRotateLeft, faX } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed, ref, type PropType } from 'vue'
 import DiscordImage from '../DiscordImage.vue'
 import ManageSlotMaximaPopUp from './ManageSlotMaximaPopUp.vue'
 import SpellSlotDot from './SpellSlotDot.vue'
+import CollapseTransition from '../CollapseTransition.vue'
 
 const showManageMaxima = ref(false)
 
@@ -80,8 +101,14 @@ const props = defineProps({
     type: String,
     required: false,
     default: undefined
+  },
+  defaultExpanded: {
+    type: Boolean,
+    default: true
   }
 })
+
+const expanded = ref(props.defaultExpanded)
 
 const owner = computed(
   () =>
