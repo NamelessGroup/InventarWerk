@@ -9,6 +9,8 @@
     @click="expanded = !expanded"
   >
     <div class="flex items-center gap-2">
+      <div class="drag-handle mx-1 h-fit cursor-grab">⋮⋮</div>
+
       <div class="break-wrap flex flex-1 items-center">{{ spell.name }}</div>
 
       <button

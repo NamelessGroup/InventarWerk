@@ -63,6 +63,7 @@
             group="items"
             :item-key="dragKey"
             :animation="150"
+            handle=".drag-handle"
             class="flex flex-col gap-2"
             @change="onDragEvent"
           >
