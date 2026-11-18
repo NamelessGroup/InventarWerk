@@ -20,7 +20,7 @@
         />
       </button>
       <button
-        v-if="(accountData().userIsDm || accountData().uuid === user) && expanded"
+        v-if="canEdit && expanded"
         class="border-accent bg-primary-default flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border text-sm"
         @click="zauberData().resetSpellSlots(user)"
       >
@@ -43,6 +43,8 @@
               v-for="[idx, slot] in spellSlots[lvl].entries()"
               :key="idx"
               :state="slot"
+              :clickable="canEdit"
+              @click="toggleSlot(lvl, slot)"
             />
           </div>
         </div>
@@ -55,7 +57,7 @@
             }}</span></span
           >
           <button
-            v-if="accountData().userIsDm || accountData().uuid === user"
+            v-if="canEdit"
             class="border-accent bg-primary-default mr-2 flex h-7 w-fit shrink-0 items-center gap-2 rounded-sm border"
             @click="zauberData().endConcentration(user)"
           >
@@ -76,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SpellSlots } from '@/model/SpellSlots'
+import { SpellSlotState, type SpellSlots } from '@/model/SpellSlots'
 import { accountData, zauberData } from '@/store'
 import { faChevronUp, faGears, faRotateLeft, faX } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -119,6 +121,15 @@ const owner = computed(
       uuid: ''
     }
 )
+
+const canEdit = computed(() => accountData().userIsDm || accountData().uuid === props.user)
+
+function toggleSlot(level: number, state: SpellSlotState) {
+  if (!canEdit.value) return
+  const available = props.spellSlots[level].filter((s) => s === SpellSlotState.AVAILABLE).length
+  const newAvailable = state === SpellSlotState.AVAILABLE ? available - 1 : available + 1
+  zauberData().setAvailableSlots(level, newAvailable, props.user)
+}
 
 const maxSpellSlot = computed(() => {
   let max = 0

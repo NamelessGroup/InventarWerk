@@ -1,11 +1,13 @@
 <template>
   <span
     class="border-accent inline-flex h-6 w-6 items-center justify-center rounded-full border"
-    :class="
+    :class="[
       state === SpellSlotState.USED
         ? 'bg-primary-dark text-text'
-        : 'bg-primary-light text-transparent'
-    "
+        : 'bg-primary-light text-transparent',
+      { 'cursor-pointer': clickable }
+    ]"
+    :title="clickable ? (state === SpellSlotState.USED ? 'Free slot' : 'Use slot') : undefined"
   >
     <svg
       viewBox="0 0 24 24"
@@ -25,6 +27,7 @@ import { SpellSlotState } from '@/model/SpellSlots'
 import type { PropType } from 'vue'
 
 defineProps({
-  state: { type: Number as PropType<SpellSlotState>, default: SpellSlotState.AVAILABLE }
+  state: { type: Number as PropType<SpellSlotState>, default: SpellSlotState.AVAILABLE },
+  clickable: { type: Boolean, default: false }
 })
 </script>
