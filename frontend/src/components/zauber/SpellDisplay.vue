@@ -11,7 +11,19 @@
     <div class="flex items-center gap-2">
       <div class="drag-handle mx-1 h-fit cursor-grab">⋮⋮</div>
 
-      <div class="break-wrap flex flex-1 items-center">{{ spell.name }}</div>
+      <div class="flex flex-1 flex-col gap-1">
+        <div class="break-wrap">{{ spell.name }}</div>
+        <div class="flex flex-wrap gap-1 text-xs">
+          <span
+            v-for="tag in tags"
+            :key="tag.label"
+            class="bg-primary-dark rounded-sm px-1.5"
+            :class="tag.highlight ? 'text-accent' : 'opacity-80'"
+            :title="tag.title"
+            >{{ tag.label }}</span
+          >
+        </div>
+      </div>
 
       <button
         v-if="canCast"
@@ -86,6 +98,34 @@ const expanded = ref(false)
 const emit = defineEmits(['delete'])
 
 const showCastPopUp = ref(false)
+
+interface Tag {
+  label: string
+  title: string
+  highlight?: boolean
+}
+
+const tags = computed(() => {
+  const result: Tag[] = [
+    props.spell.level === 0
+      ? { label: 'Cantrip', title: 'Cantrip' }
+      : { label: `Lvl ${props.spell.level}`, title: `Level ${props.spell.level}` }
+  ]
+  // components are stored as e.g. "Verbal", "Somatic", "Material (a feather)"
+  const componentLetters = props.spell.components
+    .map((c) => c.charAt(0).toUpperCase())
+    .filter((c) => ['V', 'S', 'M'].includes(c))
+  if (componentLetters.length > 0) {
+    result.push({ label: componentLetters.join(' '), title: props.spell.components.join(', ') })
+  }
+  if (props.spell.concentration) {
+    result.push({ label: 'Concentration', title: 'Requires concentration', highlight: true })
+  }
+  if (props.spell.ritual) {
+    result.push({ label: 'Ritual', title: 'Can be cast as a ritual', highlight: true })
+  }
+  return result
+})
 
 const description = computed(() => marked.parse(props.spell.description))
 const higherLevelDescription = computed(() => marked.parse(props.spell.higherLevel))
