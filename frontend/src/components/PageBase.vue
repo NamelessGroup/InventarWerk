@@ -1,10 +1,32 @@
 <template>
   <div>
     <div class="bg-primary-dark flex h-12 w-full items-center gap-5 px-2 md:fixed md:top-0">
-      <button @click="showLinks = !showLinks">
+      <!-- small screens: menu to switch between the apps -->
+      <button class="md:hidden" @click="showLinks = !showLinks">
         <FontAwesomeIcon :icon="faBars" class="text-accent" />
       </button>
-      <DynamicLogo class="h-10" :logo="type" />
+      <DynamicLogo class="h-10 md:hidden" :logo="type" />
+
+      <!-- enough space: switch directly via the logos in the header -->
+      <nav class="hidden items-center gap-3 md:flex">
+        <RouterLink
+          to="/"
+          class="text-accent flex h-10 w-10 items-center justify-center opacity-50 transition-opacity hover:opacity-100"
+          title="Home"
+        >
+          <FontAwesomeIcon :icon="faHouse" class="text-[2rem]" />
+        </RouterLink>
+        <RouterLink
+          v-for="app in apps"
+          :key="app.logo"
+          :to="{ name: app.route }"
+          :title="app.route"
+          class="transition-opacity"
+          :class="app.logo === type ? 'opacity-100' : 'opacity-50 hover:opacity-100'"
+        >
+          <DynamicLogo class="h-10" :logo="app.logo" />
+        </RouterLink>
+      </nav>
       <slot name="header" />
       <button
         class="border-accent bg-primary-default h-10 w-10 rounded-sm border"
@@ -26,7 +48,7 @@
 
     <div
       v-if="showLinks"
-      class="border-accent bg-primary-dark text-accent absolute top-12 left-0 flex w-screen flex-col gap-5 border-b p-5 pl-2 text-xl md:h-fit md:w-fit md:rounded-br md:border-0"
+      class="border-accent bg-primary-dark text-accent absolute top-12 left-0 flex w-screen flex-col gap-5 border-b p-5 pl-2 text-xl md:hidden md:h-fit md:w-fit md:rounded-br md:border-0"
     >
       <RouterLink to="/">
         <div class="flex items-center gap-2">
@@ -66,6 +88,11 @@ defineProps({
     required: true
   }
 })
+
+const apps = [
+  { logo: 'inventar', route: 'InventarWerk' },
+  { logo: 'zauber', route: 'ZauberWerk' }
+] as const
 
 const showSettings = ref(false)
 const showLinks = ref(false)
