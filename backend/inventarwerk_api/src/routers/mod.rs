@@ -1,21 +1,17 @@
-use rocket::http::Status;
-use rocket::request::Outcome;
-use rocket::Request;
-use rocket::{request::FromRequest, Route};
 
-use anyhow::anyhow;
-use rocket_errors::anyhow::AnyhowError;
+use rocket::Route;
+
 
 pub mod account_router;
+pub mod backup_router;
 pub mod inventory_router;
 pub mod item_preset_router;
-pub mod last_changes_router;
 mod router_utility;
 
 use account_router::*;
+use backup_router::*;
 use inventory_router::*;
 use item_preset_router::*;
-use last_changes_router::*;
 
 /// Returns all inventory-related routes.
 pub fn get_inventory_routes() -> Vec<Route> {
@@ -50,11 +46,6 @@ pub fn get_account_routes() -> Vec<Route> {
     ]
 }
 
-/// Returns all last-changes-related routes.
-pub fn get_last_changes_routes() -> Vec<Route> {
-    routes![last_changes]
-}
-
 /// Returns all item preset-related routes.
 pub fn get_item_preset_routes() -> Vec<Route> {
     routes![
@@ -66,28 +57,10 @@ pub fn get_item_preset_routes() -> Vec<Route> {
     ]
 }
 
-/// Extractor for authenticated users based on a private `user_id` cookie.
-pub struct AuthenticatedUser {
-    /// The user id of the authenticated user
-    pub user_id: String,
+/// Returns all backup-related routes.
+pub fn get_backup_routes() -> Vec<Route> {
+    routes![create_database_backup]
 }
 
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for AuthenticatedUser {
-    type Error = ();
-    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let cookies = request.cookies();
 
-        if let Some(cookie) = cookies.get_private("user_id") {
-            let user_id = cookie.value().to_string();
-            Outcome::Success(AuthenticatedUser { user_id })
-        } else {
-            Outcome::Error((Status::Unauthorized, ()))
-        }
-    }
-}
 
-/// Helper to create an error for API responses.
-fn create_error(msg: &str) -> AnyhowError {
-    anyhow!(msg.to_string()).into()
-}

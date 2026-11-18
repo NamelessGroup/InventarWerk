@@ -1,20 +1,24 @@
-import { DatabaseHandler } from './DatabaseHandler'
 import { reactive } from 'vue'
 
 const LOCAL_STORAGE_KEY = 'invSettings'
 
+export const SPELL_TAGS = ['level', 'components', 'concentration', 'ritual'] as const
+export type SpellTag = (typeof SPELL_TAGS)[number]
+
 export interface SettingsState {
   breakDownGold: boolean
-  timeBetweenFetches: number
   strictInventoryGrid: boolean
   noDeleteConfirmation: boolean
+  groupSpellsByLevel: boolean
+  spellTags: Record<SpellTag, boolean>
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
-  timeBetweenFetches: 5,
   strictInventoryGrid: false,
-  noDeleteConfirmation: false
+  noDeleteConfirmation: false,
+  groupSpellsByLevel: false,
+  spellTags: { level: true, components: true, concentration: true, ritual: true }
 }
 
 export class Settings {
@@ -34,10 +38,6 @@ export class Settings {
     return this.settings.breakDownGold
   }
 
-  public get timeBetweenFetches(): number {
-    return this.settings.timeBetweenFetches
-  }
-
   public get strictInventoryGrid(): boolean {
     return this.settings.strictInventoryGrid
   }
@@ -46,15 +46,22 @@ export class Settings {
     return this.settings.noDeleteConfirmation
   }
 
-  public set breakDownGold(breakDownGold: boolean) {
-    this.settings.breakDownGold = breakDownGold
+  public get groupSpellsByLevel(): boolean {
+    return this.settings.groupSpellsByLevel
+  }
+
+  public showSpellTag(tag: SpellTag): boolean {
+    return this.settings.spellTags[tag]
+  }
+
+  public setShowSpellTag(tag: SpellTag, show: boolean) {
+    this.settings.spellTags[tag] = show
     this.save()
   }
 
-  public set timeBetweenFetches(timeBetweenFetches: number) {
-    this.settings.timeBetweenFetches = timeBetweenFetches ?? 5
+  public set breakDownGold(breakDownGold: boolean) {
+    this.settings.breakDownGold = breakDownGold
     this.save()
-    DatabaseHandler.getInstance().setFetchInterval(timeBetweenFetches)
   }
 
   public set strictInventoryGrid(strictInventoryGrid: boolean) {
@@ -67,6 +74,11 @@ export class Settings {
     this.save()
   }
 
+  public set groupSpellsByLevel(groupSpellsByLevel: boolean) {
+    this.settings.groupSpellsByLevel = groupSpellsByLevel
+    this.save()
+  }
+
   private save() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.settings))
   }
@@ -74,11 +86,14 @@ export class Settings {
   private load() {
     const settings = localStorage.getItem(LOCAL_STORAGE_KEY) ?? localStorage.getItem('settings')
     if (settings) {
-      const parsedState: Partial<Settings> = JSON.parse(settings)
-      this.settings = {
+      const parsedState: Partial<SettingsState> = JSON.parse(settings)
+      // keep the object reactive, otherwise the UI does not update when a setting changes
+      this.settings = reactive({
         ...this.settings,
-        ...parsedState
-      }
+        ...parsedState,
+        // merged separately, so tags added later are shown by default
+        spellTags: { ...this.settings.spellTags, ...parsedState.spellTags }
+      })
     }
   }
 }

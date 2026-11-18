@@ -25,7 +25,7 @@
 import { computed, type PropType } from 'vue'
 import PopUp from '../PopUp.vue'
 import type { Inventory } from '@/model/Inventory'
-import { store } from '@/store'
+import { accountData, inventoryData } from '@/store'
 import ShareRow from './ShareRow.vue'
 import type { Account } from '@/model/Account'
 
@@ -38,7 +38,7 @@ const props = defineProps({
 type Access = 'read' | 'write' | 'none'
 
 const accounts = computed(() =>
-  store()
+  accountData()
     .accounts.map((account) => {
       const hasRead = props.inventory.reader.includes(account.uuid)
       const hasWrite = props.inventory.writer.includes(account.uuid)
@@ -53,7 +53,7 @@ const accounts = computed(() =>
 const emit = defineEmits(['close'])
 
 async function makePublic() {
-  await store().makePublic(props.inventory.uuid)
+  await inventoryData().makePublic(props.inventory.uuid)
   emit('close')
 }
 
@@ -62,19 +62,19 @@ async function updateShare(val: Access, uuid: string) {
   if (!user) return
   if (val === 'none') {
     if (user.accessType == 'read') {
-      store().removeReadShare(props.inventory.uuid, uuid)
+      inventoryData().removeReadShare(props.inventory.uuid, uuid)
     } else if (user.accessType == 'write') {
-      await store().removeWriteShare(props.inventory.uuid, uuid)
-      store().removeReadShare(props.inventory.uuid, uuid)
+      await inventoryData().removeWriteShare(props.inventory.uuid, uuid)
+      inventoryData().removeReadShare(props.inventory.uuid, uuid)
     }
   } else if (val === 'read') {
     if (user.accessType === 'write') {
-      await store().removeWriteShare(props.inventory.uuid, uuid)
+      await inventoryData().removeWriteShare(props.inventory.uuid, uuid)
     } else {
-      store().addReadShare(props.inventory.uuid, uuid)
+      inventoryData().addReadShare(props.inventory.uuid, uuid)
     }
   } else if (val === 'write') {
-    store().addWriteShare(props.inventory.uuid, uuid)
+    inventoryData().addWriteShare(props.inventory.uuid, uuid)
   }
   user.accessType = val
 }

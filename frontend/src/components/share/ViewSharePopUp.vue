@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import type { Inventory } from '@/model/Inventory'
-import { store } from '@/store'
+import { inventoryData, accountData } from '@/store'
 import { computed, type PropType } from 'vue'
 import DiscordImage from '../DiscordImage.vue'
 import PopUp from '../PopUp.vue'
@@ -34,7 +34,7 @@ const props = defineProps({
 
 const creator = computed(() => {
   return (
-    store().accounts.filter((account) => account.uuid === props.inventory.ownerUuid)[0] ?? {
+    accountData().accounts.filter((account) => account.uuid === props.inventory.ownerUuid)[0] ?? {
       name: 'Unknown',
       avatar: null,
       dm: false,
@@ -42,15 +42,17 @@ const creator = computed(() => {
     }
   )
 })
-const hasWriteAccess = computed(() => props.inventory.writer.includes(store().uuid))
+const hasWriteAccess = computed(() => props.inventory.writer.includes(accountData().uuid))
 
 const emit = defineEmits(['close'])
 
 async function leaveInventory() {
-  await store().removeReadShare(props.inventory.uuid, store().uuid)
+  await inventoryData().removeReadShare(props.inventory.uuid, accountData().uuid)
 
-  store().inventoryUuids = store().inventoryUuids.filter((uuid) => uuid !== props.inventory.uuid)
-  delete store().inventories[props.inventory.uuid]
+  inventoryData().inventoryUuids = inventoryData().inventoryUuids.filter(
+    (uuid) => uuid !== props.inventory.uuid
+  )
+  delete inventoryData().inventories[props.inventory.uuid]
   emit('close')
 }
 </script>

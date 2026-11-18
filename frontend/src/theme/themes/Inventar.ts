@@ -1,6 +1,6 @@
 import type { Theme } from '../Theme'
 
-export const InventarTheme: Theme = {
+export const inventarTheme: Theme = {
   background: 'oklch(12.9% 0.042 264.695)',
   popUpBackground: 'oklch(20.8% 0.042 265.755)',
   accent: 'oklch(87.9% 0.169 91.605)',

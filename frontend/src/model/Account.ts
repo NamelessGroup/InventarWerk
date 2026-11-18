@@ -1,12 +1,6 @@
-export interface RawAccount<T> {
+export interface Account {
   uuid: string
   name: string
   avatar: string | null
-  dm: T
+  dm: boolean
 }
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface Account extends RawAccount<boolean> {}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DBAccount extends RawAccount<number> {}

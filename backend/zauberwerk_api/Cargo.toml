@@ -1,0 +1,18 @@
+[package]
+name = "zauberwerk_api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rocket = { version = "0.5.1", features = ["json", "secrets"] }
+dotenvy = "0.15.7"
+serde = {version="1.0.216", features=["derive"]}
+openssl = { version = "0.10", features = ["vendored"] }
+rocket_cors = "0.6.0"
+repos = {path = "../repositories"}
+utoipa = {version="6.0.0"}
+utoipa-swagger-ui = {version="10", features = ["rocket"]}
+utils = {path = "../utils"}
+
+[features]
+dev = []

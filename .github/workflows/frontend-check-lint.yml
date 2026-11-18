@@ -15,7 +15,7 @@ jobs:
       
       - uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "24"
 
       - name: Install and Lint 🎨
         working-directory: frontend

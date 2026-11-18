@@ -1,3 +1,4 @@
+use utils::ApiDocAddon;
 use reqwest::Client;
 use rocket::form::FromForm;
 use rocket::http::{Cookie, CookieJar, Status};
@@ -6,27 +7,28 @@ use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::State;
 use std::env;
+use utils::AuthenticatedUser;
 
 use utoipa::IntoParams;
 use utoipa::OpenApi;
 use utoipa::ToSchema;
 
-use repos::model::User;
+use repos::model_inventarwerk::User;
 use repos::repos::user_repository::UserRepository;
 
-use rocket_errors::anyhow::Result;
+use utils::Result;
 
-use crate::routers::router_utility::user_is_dm;
+use utils::{ApiError, DmUser};
 use crate::{lock_toggle, locked_status};
 
-use super::create_error;
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct AccountUUIDParams {
+    /// UUID of the user to check
     account_uuid: String,
 }
 
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct AccountResponse {
     accounts: Vec<User>,
 }
@@ -37,14 +39,15 @@ pub struct AccountResponse {
     summary = "Retrieve all users",
     description = r#"Returns a JSON response containing all users. Requires authentication."#,
     responses(
-        (status = 200, description = "A list of user accounts", body = AccountResponse)
+        (status = 200, description = "A list of user accounts", body = AccountResponse),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/get")]
 pub async fn get_accounts(
-    _user: super::AuthenticatedUser,
+    _user: AuthenticatedUser,
     usr_rep: &State<UserRepository>,
 ) -> Result<Json<AccountResponse>> {
     let all_users = usr_rep.get_all_users().await?;
@@ -54,7 +57,7 @@ pub async fn get_accounts(
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 #[serde(crate = "rocket::serde")]
 pub struct DMResponse {
     isDm: bool,
@@ -67,20 +70,22 @@ pub struct DMResponse {
     summary = "Check if a user is a DM",
     description = r#"Checks if a user (by UUID) is a Dungeon Master (DM). Requires authentication."#,
     responses(
-        (status = 200, description = "A JSON response indicating whether the user is DM", body = DMResponse)
+        (status = 200, description = "A JSON response indicating whether the user is DM", body = DMResponse),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Database error")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/isDm?<params..>")]
 pub async fn is_account_dm(
     params: AccountUUIDParams,
-    _user: super::AuthenticatedUser,
+    _user: AuthenticatedUser,
     usr_rep: &State<UserRepository>,
 ) -> Result<Json<DMResponse>> {
     let user = usr_rep.get_user(&params.account_uuid).await?;
     Ok(Json(DMResponse {
-        isDm: (user.dm == 1),
+        isDm: user.dm,
     }))
 }
 
@@ -90,7 +95,7 @@ pub async fn is_account_dm(
     summary = "Redirect to the Discord login page",
     description = r#"Redirects the user to the Discord OAuth login page."#,
     responses(
-        (status = 307, description = "Redirecting to Discord login")
+        (status = 303, description = "Redirecting to Discord login")
     ),
     tag = "Accounts"
 )]
@@ -105,12 +110,13 @@ pub async fn login() -> Redirect {
     Redirect::to(url)
 }
 
-#[derive(FromForm, ToSchema, IntoParams)]
+#[derive(FromForm, IntoParams)]
 pub struct CodeParams {
+    /// OAuth authorization code issued by Discord
     code: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TokenResponse {
     access_token: String,
     token_type: String,
@@ -119,7 +125,7 @@ pub struct TokenResponse {
     scope: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DiscordUser {
     id: String,
     username: String,
@@ -132,11 +138,14 @@ pub struct DiscordUser {
     path = "/account/oauth/callback",
     params(CodeParams),
     summary = "Handle OAuth callback from Discord",
-    description = r#"Enters the OAuth flow, exchanging the code for a token. Retrieves user info from Discord and creates/updates a user in the DB."#,
+    description = r#"Called by Discord after login. Exchanges the code for a token, retrieves the user info from Discord and creates/updates the user in the DB. Sets the `user_id` session cookie.
+
+New users can only register while the system is not locked (see `GET /account/isLocked`)."#,
     responses(
-        (status = 307, description = "Redirects to the base URL after processing the OAuth callback")
+        (status = 303, description = "Login successful, redirects to the frontend"),
+        (status = 403, description = "System is locked for new users"),
+        (status = 500, description = "Discord request failed or database error")
     ),
-    security(("bearer_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/oauth/callback?<params..>")]
@@ -196,7 +205,7 @@ pub async fn callback(
     
     if !has_user {
         if locked_status!() {
-            return Err(create_error("No new Users allowed"));
+            return Err(ApiError::new(Status::Forbidden, "no new users allowed"));
         }
         let _res = usr_rep
             .create_user(&user_response.id, &user_response.username, &avatar_unpacked)
@@ -229,7 +238,7 @@ pub async fn callback(
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct InfoResponse {
     userUUID: String,
 }
@@ -242,18 +251,18 @@ pub struct InfoResponse {
     responses(
         (status = 200, description = "UUID of the authenticated user", body = InfoResponse)
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[get("/account/info")]
-pub async fn account_info(user: super::AuthenticatedUser) -> Json<InfoResponse> {
+pub async fn account_info(user: AuthenticatedUser) -> Json<InfoResponse> {
     return Json(InfoResponse {
         userUUID: user.user_id,
     });
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct LoggedInResponse {
     loggedIn: bool,
 }
@@ -297,7 +306,7 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Status {
 }
 
 #[allow(non_snake_case)]
-#[derive(Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct IsLockedResponse {
     isLocked: bool,
 }
@@ -323,28 +332,25 @@ pub async fn is_locked() -> Json<IsLockedResponse> {
     patch,
     path = "/account/toggleLock",
     summary = "Toggle the lock status of the system",
-    description = r#"Only a DM can toggle the system lock. Returns an error if the user is not a DM."#,
+    description = r#"Only a DM can toggle the system lock."#,
     responses(
         (status = 204, description = "System lock toggled successfully"),
-        (status = 418, description = "User is not a Dungeon Master")
+        (status = 403, description = "Forbidden - user is not a DM")
     ),
-    security(("bearer_auth" = [])),
+    security(("cookie_auth" = [])),
     tag = "Accounts"
 )]
 #[patch("/account/toggleLock")]
 pub async fn toggle_lock(
-    user: super::AuthenticatedUser,
-    usr_rep: &State<UserRepository>,
+    _dm: DmUser,
 ) -> Result<Status> {
-    if !user_is_dm(usr_rep.inner(), user.user_id).await? {
-        return Ok(Status::ImATeapot);
-    }
     lock_toggle!();
     Ok(Status::NoContent)
 }
 
 #[derive(OpenApi)]
 #[openapi(
+    modifiers(&ApiDocAddon),
     paths(
         get_accounts,
         is_account_dm,
@@ -361,11 +367,7 @@ pub async fn toggle_lock(
             DMResponse,
             AccountResponse,
             LoggedInResponse,
-            TokenResponse,
             InfoResponse,
-            DiscordUser,
-            CodeParams,
-            AccountUUIDParams,
             IsLockedResponse
         )
     ),

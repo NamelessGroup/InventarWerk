@@ -1,5 +1,8 @@
 [workspace]
 members = [
-  "inventarwerk_api",
-  "repositories",
+  "inventarwerk_api", "last_changes_api",
+  "repositories", "utils", "zauberwerk_api",
   ]
+
+
+resolver = "3" 

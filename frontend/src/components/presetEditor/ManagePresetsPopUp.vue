@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import PopUp from '../PopUp.vue'
-import { store } from '@/store'
+import { inventoryData } from '@/store'
 import PresetGroup from './PresetGroup.vue'
 import type { ItemPreset } from '@/model/ItemPreset'
 
@@ -28,7 +28,7 @@ const emit = defineEmits(['close'])
 const searchFieldContent = ref('')
 
 const allPresets = computed(() => {
-  return store().itemPresets.sort((a, b) => {
+  return inventoryData().itemPresets.sort((a, b) => {
     if (a.itemType == b.itemType) {
       return a.name.localeCompare(b.name)
     }
