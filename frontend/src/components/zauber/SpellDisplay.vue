@@ -13,7 +13,7 @@
 
       <div class="flex flex-1 flex-col gap-1">
         <div class="break-wrap">{{ spell.name }}</div>
-        <div class="flex flex-wrap gap-1 text-xs">
+        <div v-if="tags.length > 0" class="flex flex-wrap gap-1 text-xs">
           <span
             v-for="tag in tags"
             :key="tag.label"
@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { Settings } from '@/store/Settings'
+import { Settings, type SpellTag } from '@/store/Settings'
 import { computed, ref, type PropType } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faWandSparkles, faTrashCan } from '@fortawesome/free-solid-svg-icons'
@@ -104,6 +104,7 @@ const emit = defineEmits(['delete'])
 const showCastPopUp = ref(false)
 
 interface Tag {
+  key: SpellTag
   label: string
   title: string
   highlight?: boolean
@@ -112,23 +113,37 @@ interface Tag {
 const tags = computed(() => {
   const result: Tag[] = [
     props.spell.level === 0
-      ? { label: 'Cantrip', title: 'Cantrip' }
-      : { label: `Lvl ${props.spell.level}`, title: `Level ${props.spell.level}` }
+      ? { key: 'level', label: 'Cantrip', title: 'Cantrip' }
+      : { key: 'level', label: `Lvl ${props.spell.level}`, title: `Level ${props.spell.level}` }
   ]
   // components are stored as e.g. "Verbal", "Somatic", "Material (a feather)"
   const componentLetters = props.spell.components
     .map((c) => c.charAt(0).toUpperCase())
     .filter((c) => ['V', 'S', 'M'].includes(c))
   if (componentLetters.length > 0) {
-    result.push({ label: componentLetters.join(' '), title: props.spell.components.join(', ') })
+    result.push({
+      key: 'components',
+      label: componentLetters.join(' '),
+      title: props.spell.components.join(', ')
+    })
   }
   if (props.spell.concentration) {
-    result.push({ label: 'Concentration', title: 'Requires concentration', highlight: true })
+    result.push({
+      key: 'concentration',
+      label: 'Concentration',
+      title: 'Requires concentration',
+      highlight: true
+    })
   }
   if (props.spell.ritual) {
-    result.push({ label: 'Ritual', title: 'Can be cast as a ritual', highlight: true })
+    result.push({
+      key: 'ritual',
+      label: 'Ritual',
+      title: 'Can be cast as a ritual',
+      highlight: true
+    })
   }
-  return result
+  return result.filter((tag) => Settings.getInstance().showSpellTag(tag.key))
 })
 
 const description = computed(() => marked.parse(props.spell.description))

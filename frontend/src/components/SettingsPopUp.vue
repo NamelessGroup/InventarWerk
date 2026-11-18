@@ -22,6 +22,21 @@
         <input id="groupSpellsByLevel" v-model="groupSpellsByLevel" type="checkbox" />
         <label for="groupSpellsByLevel">Group spells in lists by level</label>
       </div>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 md:col-span-2">
+        <span>Spell tags:</span>
+        <div v-for="tag in SPELL_TAGS" :key="tag" class="space-x-2">
+          <input
+            :id="`spellTag-${tag}`"
+            type="checkbox"
+            :checked="Settings.getInstance().showSpellTag(tag)"
+            @change="
+              (e) =>
+                Settings.getInstance().setShowSpellTag(tag, (e.target as HTMLInputElement).checked)
+            "
+          />
+          <label :for="`spellTag-${tag}`" class="capitalize">{{ tag }}</label>
+        </div>
+      </div>
       <div class="space-x-2 md:col-span-2">
         <label>Theme:</label>
         <select
@@ -55,7 +70,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import PopUp from './PopUp.vue'
-import { Settings } from '@/store/Settings'
+import { Settings, SPELL_TAGS } from '@/store/Settings'
 import { accountData } from '@/store'
 import { version } from '@/utils/version'
 import DiscordImage from './DiscordImage.vue'
