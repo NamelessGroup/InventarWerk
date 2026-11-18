@@ -2,19 +2,9 @@
   <PopUp @close="emit('close')">
     <div class="flex min-h-full flex-col">
       <h1 class="text-xl">Settings</h1>
-      <div class="grid grid-cols-1 gap-2 md:grid-cols-[auto_1fr]">
-        <div class="space-x-2 md:col-span-2">
-          <input id="simplyGold" v-model="simplifyGold" type="checkbox" />
-          <label for="simplyGold">Simplify gold into platinum:</label>
-        </div>
-
-        <label for="fetchTime">Time between fetches (in seconds):</label>
-        <input
-          id="fetchTime"
-          v-model="fetchTime"
-          type="number"
-          class="border-accent bg-primary-default rounded-sm border px-1 outline-hidden"
-        />
+      <div class="space-x-2 md:col-span-2">
+        <input id="simplyGold" v-model="simplifyGold" type="checkbox" />
+        <label for="simplyGold">Simplify gold into platinum:</label>
       </div>
       <div class="space-x-2 md:col-span-2">
         <input id="strictInventoryGrid" v-model="strictInventoryGrid" type="checkbox" />
@@ -73,11 +63,6 @@ const emit = defineEmits(['close'])
 const simplifyGold = computed({
   get: () => Settings.getInstance().breakDownGold,
   set: (value: boolean) => (Settings.getInstance().breakDownGold = value)
-})
-
-const fetchTime = computed({
-  get: () => Settings.getInstance().timeBetweenFetches,
-  set: (value: number) => (Settings.getInstance().timeBetweenFetches = value)
 })
 
 const strictInventoryGrid = computed({

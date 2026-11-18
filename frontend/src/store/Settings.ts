@@ -4,14 +4,12 @@ const LOCAL_STORAGE_KEY = 'invSettings'
 
 export interface SettingsState {
   breakDownGold: boolean
-  timeBetweenFetches: number
   strictInventoryGrid: boolean
   noDeleteConfirmation: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
-  timeBetweenFetches: 5,
   strictInventoryGrid: false,
   noDeleteConfirmation: false
 }
@@ -33,10 +31,6 @@ export class Settings {
     return this.settings.breakDownGold
   }
 
-  public get timeBetweenFetches(): number {
-    return this.settings.timeBetweenFetches
-  }
-
   public get strictInventoryGrid(): boolean {
     return this.settings.strictInventoryGrid
   }
@@ -47,11 +41,6 @@ export class Settings {
 
   public set breakDownGold(breakDownGold: boolean) {
     this.settings.breakDownGold = breakDownGold
-    this.save()
-  }
-
-  public set timeBetweenFetches(timeBetweenFetches: number) {
-    this.settings.timeBetweenFetches = timeBetweenFetches ?? 5
     this.save()
   }
 
