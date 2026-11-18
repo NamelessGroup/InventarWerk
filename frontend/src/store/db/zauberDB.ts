@@ -19,18 +19,39 @@ export class ZauberDB extends BaseDatabaseHandler {
   }
 
   public async initialize(): Promise<void> {
+    await this.initPresets()
+    await this.initSpellSlots()
+    await this.initConcentration()
+    await this.initSpellLists()
+  }
+
+  public async initPresets() {
     ;(await this.getAllPresets()).forEach((s) => zauberData().addPreset(s))
+  }
+
+  public async initSpellSlots() {
     if (accountData().userIsDm) {
       for (const account of accountData().accounts) {
         zauberData().spellSlots[account.uuid] = (await this.getSpellSlots(account.uuid)) ?? {}
+      }
+    } else {
+      zauberData().spellSlots[accountData().uuid] = (await this.getSpellSlots()) ?? {}
+    }
+  }
+
+  public async initConcentration() {
+    if (accountData().userIsDm) {
+      for (const account of accountData().accounts) {
         zauberData().concentrationSpell[account.uuid] = await this.getConcentrationSpell(
           account.uuid
         )
       }
     } else {
-      zauberData().spellSlots[accountData().uuid] = (await this.getSpellSlots()) ?? {}
       zauberData().concentrationSpell[accountData().uuid] = await this.getConcentrationSpell()
     }
+  }
+
+  public async initSpellLists() {
     const spellLists = await this.getAllSpellLists()
     spellLists.forEach((s) => this.setSpellListInStore(s))
     zauberData().spellListUuids = spellLists.map((s) => s.uuid)
