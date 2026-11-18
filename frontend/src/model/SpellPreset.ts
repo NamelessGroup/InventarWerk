@@ -7,6 +7,7 @@ export interface SpellPreset {
   feats: string[]
   level: number
   name: string
+  source: string
   range: string
   school: string
   species: string[]

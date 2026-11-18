@@ -7,6 +7,7 @@ use utoipa::ToSchema;
 pub struct SpellPreset {
     pub uuid: String,
     pub name: String,
+    pub source: String,
     pub level: i32,
     pub description: String,
     pub time: String,

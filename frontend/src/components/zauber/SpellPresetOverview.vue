@@ -29,7 +29,9 @@ const presets = computed(() => {
   return mapped.sort((a, b) => {
     const levelDiff = b.level - a.level
     if (levelDiff !== 0) return levelDiff
-    return b.name.localeCompare(a.name)
+    const nameDiff = b.name.localeCompare(a.name)
+    if (nameDiff !== 0) return nameDiff
+    return b.source.localeCompare(a.source)
   })
 })
 </script>

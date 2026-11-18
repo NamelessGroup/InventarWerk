@@ -123,6 +123,7 @@ function convertSpell(original: ToolsSpell, classes?: string[]): SpellPreset {
   return {
     uuid: '',
     name: original.name,
+    source: original.source,
     duration: original.duration
       .map((d) => (d.duration ? `${d.duration.amount} ${d.duration.type}` : d.type))
       .join(', '),
@@ -160,29 +161,37 @@ export interface SpellJson {
   spell: ToolsSpell[]
 }
 
+function sourceKey(book: string, spell: string) {
+  return `${book.toLowerCase()}|${spell.toLowerCase()}`
+}
+
 function flattenSources(sources: SourceJson) {
-  const result: Record<string, string[]> = {}
-  const books = Object.keys(sources)
-  for (const book of books) {
+  const byBook: Record<string, string[]> = {}
+  const byName: Record<string, string[]> = {}
+  for (const book of Object.keys(sources)) {
     const data = sources[book]
-    const spells = Object.keys(data)
-    for (const spell of spells) {
-      if (result[spell] !== undefined) {
-        const classes = data[spell].class ?? data[spell].classVariant ?? []
-        result[spell].push(...classes.map((c) => c.name))
-      } else {
-        result[spell] = (data[spell].class ?? data[spell].classVariant ?? []).map((c) => c.name)
-      }
+    for (const spell of Object.keys(data)) {
+      const classes = (data[spell].class ?? data[spell].classVariant ?? []).map((c) => c.name)
+      const key = sourceKey(book, spell)
+      byBook[key] = [...(byBook[key] ?? []), ...classes]
+      const nameKey = spell.toLowerCase()
+      byName[nameKey] = [...(byName[nameKey] ?? []), ...classes]
     }
   }
-  return result
+  return { byBook, byName }
 }
 
 export async function parseSpellList(spellList: SpellJson[], sources: SourceJson) {
   const flattenedSources = flattenSources(sources)
   const spells = spellList
     .flatMap((l) => l.spell)
-    .map((s) => convertSpell(s, Array.from(new Set(flattenedSources[s.name]))))
+    .map((s) => {
+      const classes =
+        flattenedSources.byBook[sourceKey(s.source, s.name)] ??
+        flattenedSources.byName[s.name.toLowerCase()] ??
+        []
+      return convertSpell(s, Array.from(new Set(classes)))
+    })
 
   return processList(spells, DB.zauber.getMassUploadURL(), 'spell_presets')
 }

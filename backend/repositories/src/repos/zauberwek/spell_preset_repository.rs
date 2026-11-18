@@ -17,7 +17,7 @@ impl SpellPresetRepository {
         let result = sqlx::query!(
             r#"
             SELECT 
-                sp.uuid, sp.name, sp.level, sp.description, sp.time, 
+                sp.uuid, sp.name, sp.source, sp.level, sp.description, sp.time, 
                 sp.concentration, sp.duration, sp.range, sp.school, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
                 COALESCE(array_agg(DISTINCT spc.component_name) FILTER (WHERE spc.component_name IS NOT NULL), '{}') as "components!",
                 COALESCE(array_agg(DISTINCT spclass.spell_preset_class) FILTER (WHERE spclass.spell_preset_class IS NOT NULL), '{}') as "class!",
@@ -41,6 +41,7 @@ impl SpellPresetRepository {
         Ok(SpellPreset {
             uuid: result.uuid,
             name: result.name,
+            source: result.source,
             level: result.level,
             description: result.description,
             time: result.time,
@@ -80,8 +81,8 @@ impl SpellPresetRepository {
 
         sqlx::query!(
             "INSERT INTO spell_preset (uuid, name, level, description, time, concentration, duration, range, school,
-                 condition_inflict, saving_throw, affects_creature_type, damage_inflict, spell_attack, ritual, damage_immune, ability_check, damage_resist, condition_immune, higher_level)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)",
+                 condition_inflict, saving_throw, affects_creature_type, damage_inflict, spell_attack, ritual, damage_immune, ability_check, damage_resist, condition_immune, higher_level, source)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)",
             id,
             spell_preset.name,
             spell_preset.level,
@@ -101,7 +102,8 @@ impl SpellPresetRepository {
             spell_preset.ability_check,
             spell_preset.damage_resist,
             spell_preset.condition_immune,
-            spell_preset.higher_level
+            spell_preset.higher_level,
+            spell_preset.source
         )
         .execute(&mut *tx)
         .await?;
@@ -126,7 +128,7 @@ impl SpellPresetRepository {
                 name = $2, level = $3, description = $4, time = $5, concentration = $6, duration = $7,
                 range = $8, school = $9, condition_inflict = $10, saving_throw = $11, affects_creature_type = $12,
                 damage_inflict = $13, spell_attack = $14, ritual = $15, damage_immune = $16, ability_check = $17,
-                damage_resist = $18, condition_immune = $19, higher_level = $20
+                damage_resist = $18, condition_immune = $19, higher_level = $20, source = $21
              WHERE uuid = $1",
             spell_preset.uuid,
             spell_preset.name,
@@ -147,7 +149,8 @@ impl SpellPresetRepository {
             spell_preset.ability_check,
             spell_preset.damage_resist,
             spell_preset.condition_immune,
-            spell_preset.higher_level
+            spell_preset.higher_level,
+            spell_preset.source
         )
         .execute(&mut *tx)
         .await?
@@ -243,7 +246,7 @@ impl SpellPresetRepository {
         let results = sqlx::query!(
             r#"
             SELECT 
-                sp.uuid, sp.name, sp.level, sp.description, sp.time, 
+                sp.uuid, sp.name, sp.source, sp.level, sp.description, sp.time, 
                 sp.concentration, sp.duration, sp.range, sp.school, sp.condition_inflict, sp.saving_throw, sp.affects_creature_type, sp.damage_inflict, sp.spell_attack, sp.ritual, sp.damage_immune, sp.ability_check, sp.damage_resist, sp.condition_immune, sp.higher_level,
                 COALESCE(array_agg(DISTINCT spc.component_name) FILTER (WHERE spc.component_name IS NOT NULL), '{}') as "components!",
                 COALESCE(array_agg(DISTINCT spclass.spell_preset_class) FILTER (WHERE spclass.spell_preset_class IS NOT NULL), '{}') as "class!",
@@ -267,6 +270,7 @@ impl SpellPresetRepository {
             .map(|result| SpellPreset {
                 uuid: result.uuid,
                 name: result.name,
+                source: result.source,
                 level: result.level,
                 description: result.description,
                 time: result.time,

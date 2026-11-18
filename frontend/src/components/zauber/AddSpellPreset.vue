@@ -48,7 +48,7 @@ const completionItems = computed(() => {
     .spellPresetList.map((s) => {
       let group = s.level === 0 ? 'Cantrip' : `Lvl ${s.level}`
       return {
-        label: s.name,
+        label: `${s.name} (${s.source})`,
         group: group,
         uuid: s.uuid
       }

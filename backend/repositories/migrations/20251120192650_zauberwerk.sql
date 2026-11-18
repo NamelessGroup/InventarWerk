@@ -3,6 +3,7 @@
 CREATE TABLE spell_preset (
     uuid TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
+    source TEXT NOT NULL,
     level INTEGER NOT NULL,
     description TEXT NOT NULL,
     time TEXT NOT NULL,

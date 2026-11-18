@@ -36,6 +36,7 @@
           ><span v-if="spell.level === 0">{{ spell.school }} Cantrip</span>
           <span v-else>Level {{ spell.level }} {{ spell.school }}</span></i
         >
+        <div><b>Source:</b> {{ spell.source }}</div>
         <div><b>Time:</b> {{ spell.time }}<span v-if="spell.ritual"> or Ritual</span></div>
         <div><b>Range:</b> {{ spell.range }}</div>
         <div>
