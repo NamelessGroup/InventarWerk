@@ -8,19 +8,20 @@
     }"
     @click="expanded = !expanded"
   >
-    <div class="grid grid-cols-[auto_1fr_auto] overflow-hidden">
+    <div class="flex items-center gap-2 overflow-hidden">
+      <div class="drag-handle ml-1 h-fit cursor-grab">⋮⋮</div>
       <NumericInput
         v-model="amountValue"
         :readonly="!canEdit"
-        class="bg-primary-dark row-start-1 my-auto h-8 w-10 rounded-sm border-none px-1 text-right outline-hidden"
+        class="bg-primary-dark my-auto h-8 w-10 rounded-sm border-none px-1 text-right outline-hidden"
         @click.stop
         @update="(v) => editAmount(v)"
       />
-      <div class="break-wrap row-start-1 flex items-center px-2">{{ item.name }}</div>
+      <div class="break-wrap h-fit flex-1">{{ item.name }}</div>
 
       <TimedConfirmationButton
         v-if="canEdit"
-        class="bg-primary-dark text-delete row-start-1 my-auto h-8 rounded-sm border-none px-3"
+        class="bg-primary-dark text-delete my-auto h-8 rounded-sm border-none px-3"
         :skip-confirmation="Settings.getInstance().noDeleteConfirmation"
         @confirm="deleteItem()"
       >
