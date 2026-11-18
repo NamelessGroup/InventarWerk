@@ -59,19 +59,22 @@
         <slot name="preItems" />
 
         <div class="flex flex-col gap-2">
-          <DraggableContainer
-            :model-value="localDraggableItems"
-            group="items"
-            :item-key="dragKey"
-            :animation="150"
-            handle=".drag-handle"
-            class="flex flex-col gap-2"
-            @change="onDragEvent"
-          >
-            <div v-for="(item, idx) in localDraggableItems" :key="idx" :item="item">
-              <slot name="item" :item="item" />
-            </div>
-          </DraggableContainer>
+          <div v-for="group in draggableGroups" :key="group.key" class="flex flex-col gap-2">
+            <div v-if="group.label" class="mt-1 text-sm opacity-80">{{ group.label }}</div>
+            <DraggableContainer
+              :model-value="group.items"
+              group="items"
+              :item-key="dragKey"
+              :animation="150"
+              handle=".drag-handle"
+              class="flex flex-col gap-2"
+              @change="(e: DragChangeEvent<DraggableItem<I>>) => onDragEvent(e, group.key)"
+            >
+              <div v-for="(item, idx) in group.items" :key="idx" :item="item">
+                <slot name="item" :item="item" />
+              </div>
+            </DraggableContainer>
+          </div>
         </div>
 
         <slot name="postItems" />
@@ -89,7 +92,7 @@ import { Settings } from '@/store/Settings'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import TimedConfirmationButton from './TimedConfirmationButton.vue'
 import CollapseTransition from './CollapseTransition.vue'
-import type { DraggableItem } from '@/model/Drag.ts'
+import type { DraggableItem, ItemGroup } from '@/model/Drag.ts'
 import { VueDraggableNext as DraggableContainer, type DragChangeEvent } from 'vue-draggable-next'
 
 const props = defineProps({
@@ -104,6 +107,10 @@ const props = defineProps({
   dragKey: {
     type: String,
     required: true
+  },
+  groups: {
+    type: Array as PropType<ItemGroup<I>[]>,
+    default: undefined
   }
 })
 
@@ -120,9 +127,16 @@ const creator = computed(
       uuid: ''
     }
 )
-const localDraggableItems = computed(() =>
-  props.items.map((i) => ({ ...i, sourceContainer: props.container.uuid }))
-)
+const draggableGroups = computed(() => {
+  const groups =
+    props.groups && props.groups.length > 0
+      ? props.groups
+      : [{ key: '', label: '', items: props.items }]
+  return groups.map((g) => ({
+    ...g,
+    items: g.items.map((i) => ({ ...i, sourceContainer: props.container.uuid }))
+  }))
+})
 
 function updateName() {
   const newName = nameInput.value?.innerText ?? ''
@@ -141,15 +155,14 @@ function editName() {
   }
 }
 
-function onDragEvent(e: DragChangeEvent<DraggableItem<T>>) {
+function onDragEvent(e: DragChangeEvent<DraggableItem<I>>, groupKey: string) {
   if (e.added) {
-    // Item moved to this inventory
-    emit('move', e.added.element, e.added.newIndex, true)
+    const fromOtherContainer = e.added.element.sourceContainer !== props.container.uuid
+    emit('move', e.added.element, e.added.newIndex, fromOtherContainer, groupKey)
   }
 
   if (e.moved) {
-    // Item moved in this inventory
-    emit('move', e.moved.element, e.moved.newIndex, false)
+    emit('move', e.moved.element, e.moved.newIndex, false, groupKey)
   }
 
   // We purposefully ignore the `removed` option, since removal will be handled by addition to the new inventory

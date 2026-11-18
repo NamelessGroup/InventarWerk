@@ -2,6 +2,7 @@
   <BaseContainer
     :container="spellList"
     :items="entries"
+    :groups="groups"
     drag-key="uuid"
     @update-name="(n: string) => zauberData().editSpellListName(spellList.uuid, n)"
     @delete="zauberData().deleteSpellList(spellList.uuid)"
@@ -14,9 +15,6 @@
     </template>
 
     <template #item="{ item }">
-      <div v-if="groupStarts.has(item.uuid)" class="mt-1 text-sm opacity-80">
-        {{ item.level === 0 ? 'Cantrips' : `Level ${item.level}` }}
-      </div>
       <SpellDisplay
         :spell="item"
         :can-delete="canDoStuff"
@@ -46,7 +44,7 @@
 
 <script setup lang="ts">
 import type { SpellEntry, SpellList } from '@/model/SpellList'
-import type { DraggableItem } from '@/model/Drag'
+import type { DraggableItem, ItemGroup } from '@/model/Drag'
 import { accountData, zauberData } from '@/store'
 import { Settings } from '@/store/Settings'
 import { computed, ref, type PropType } from 'vue'
@@ -69,20 +67,32 @@ const entries = computed(() => {
   return [...props.spellList.entries].sort((a, b) => a.level - b.level)
 })
 
-const groupStarts = computed(() => {
-  const starts = new Set<string>()
-  if (!Settings.getInstance().groupSpellsByLevel) return starts
-  let lastLevel: number | undefined
+const groups = computed<ItemGroup<SpellEntry>[] | undefined>(() => {
+  if (!Settings.getInstance().groupSpellsByLevel) return undefined
+  const result: ItemGroup<SpellEntry>[] = []
   for (const entry of entries.value) {
-    if (entry.level !== lastLevel) starts.add(entry.uuid)
-    lastLevel = entry.level
+    const last = result[result.length - 1]
+    if (last?.key === entry.level.toString()) {
+      last.items.push(entry)
+    } else {
+      result.push({ key: entry.level.toString(), label: levelLabel(entry.level), items: [entry] })
+    }
   }
-  return starts
+  return result
 })
+
+function levelLabel(level: number) {
+  return level === 0 ? 'Cantrips' : `Level ${level}`
+}
 
 const canDoStuff = computed(() => props.spellList.ownerUuid === accountData().uuid)
 
-async function moveSpell(item: DraggableItem<SpellEntry>, newIndex: number, movedHere: boolean) {
+async function moveSpell(
+  item: DraggableItem<SpellEntry>,
+  newIndex: number,
+  movedHere: boolean,
+  groupKey: string
+) {
   if (!canDoStuff.value) {
     throw new Error('You can only move spells into your own spell lists!')
   }
@@ -96,12 +106,26 @@ async function moveSpell(item: DraggableItem<SpellEntry>, newIndex: number, move
     }
   }
 
-  const order = entries.value.map((e) => e.uuid).filter((uuid) => uuid !== item.uuid)
-  order.splice(newIndex, 0, item.uuid)
+  const others = entries.value.filter((e) => e.uuid !== item.uuid)
+  let index = newIndex
+  if (groups.value !== undefined) {
+    const offset = others.filter((e) => e.level < item.level).length
+    const sameLevelCount = others.filter((e) => e.level === item.level).length
+    const droppedLevel = Number(groupKey)
+    if (groupKey === item.level.toString()) {
+      index = offset + newIndex
+    } else if (groupKey !== '' && droppedLevel < item.level) {
+      index = offset
+    } else {
+      index = offset + sameLevelCount
+    }
+  }
+  const order = others.map((e) => e.uuid)
+  order.splice(index, 0, item.uuid)
   const oldSortings = new Map(props.spellList.entries.map((e) => [e.uuid, e.sorting]))
 
   if (movedHere) {
-    await zauberData().moveSpell(item.sourceContainer, props.spellList.uuid, item.uuid, newIndex)
+    await zauberData().moveSpell(item.sourceContainer, props.spellList.uuid, item.uuid, index)
   }
 
   const sortingsToUpdate: Record<string, number> = {}
