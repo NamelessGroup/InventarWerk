@@ -6,12 +6,14 @@ export interface SettingsState {
   breakDownGold: boolean
   strictInventoryGrid: boolean
   noDeleteConfirmation: boolean
+  groupSpellsByLevel: boolean
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
   breakDownGold: true,
   strictInventoryGrid: false,
-  noDeleteConfirmation: false
+  noDeleteConfirmation: false,
+  groupSpellsByLevel: false
 }
 
 export class Settings {
@@ -39,6 +41,10 @@ export class Settings {
     return this.settings.noDeleteConfirmation
   }
 
+  public get groupSpellsByLevel(): boolean {
+    return this.settings.groupSpellsByLevel
+  }
+
   public set breakDownGold(breakDownGold: boolean) {
     this.settings.breakDownGold = breakDownGold
     this.save()
@@ -54,6 +60,11 @@ export class Settings {
     this.save()
   }
 
+  public set groupSpellsByLevel(groupSpellsByLevel: boolean) {
+    this.settings.groupSpellsByLevel = groupSpellsByLevel
+    this.save()
+  }
+
   private save() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.settings))
   }
@@ -62,10 +73,11 @@ export class Settings {
     const settings = localStorage.getItem(LOCAL_STORAGE_KEY) ?? localStorage.getItem('settings')
     if (settings) {
       const parsedState: Partial<Settings> = JSON.parse(settings)
-      this.settings = {
+      // keep the object reactive, otherwise the UI does not update when a setting changes
+      this.settings = reactive({
         ...this.settings,
         ...parsedState
-      }
+      })
     }
   }
 }

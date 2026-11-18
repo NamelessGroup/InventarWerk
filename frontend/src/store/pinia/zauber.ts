@@ -87,6 +87,37 @@ export const zauberData = defineStore('zauber', () => {
     DB.zauber.addSpellToList(listUuid, presetUuid)
   }
 
+  async function changeSpellListSorting(listUuid: string, newSortings: Record<string, number>) {
+    const entries = spellLists.value[listUuid].entries
+    const promises: Promise<boolean>[] = []
+    for (const presetUuid in newSortings) {
+      const entry = entries.find((e) => e.uuid === presetUuid)
+      if (entry !== undefined) {
+        entry.sorting = newSortings[presetUuid]
+        promises.push(DB.zauber.setSpellSorting(listUuid, presetUuid, newSortings[presetUuid]))
+      }
+    }
+    entries.sort((a, b) => a.sorting - b.sorting)
+    await Promise.all(promises)
+  }
+
+  async function moveSpell(
+    sourceListUuid: string,
+    targetListUuid: string,
+    presetUuid: string,
+    sorting: number
+  ) {
+    const source = spellLists.value[sourceListUuid]
+    const target = spellLists.value[targetListUuid]
+    const entry = source.entries.find((e) => e.uuid === presetUuid)
+    if (entry === undefined) return
+    source.entries = source.entries.filter((e) => e.uuid !== presetUuid)
+    target.entries.push({ ...entry, sorting })
+    target.entries.sort((a, b) => a.sorting - b.sorting)
+    await DB.zauber.addSpellToList(targetListUuid, presetUuid, sorting)
+    await DB.zauber.removeSpell(sourceListUuid, presetUuid)
+  }
+
   return {
     spellListUuids,
     spellLists,
@@ -103,6 +134,8 @@ export const zauberData = defineStore('zauber', () => {
     addPreset,
     getPreset,
     deletePreset,
-    addSpellToList
+    addSpellToList,
+    changeSpellListSorting,
+    moveSpell
   }
 })

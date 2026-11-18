@@ -19,6 +19,10 @@
         <label for="noDeleteConfirmation">Disable delete confirmation</label>
       </div>
       <div class="space-x-2 md:col-span-2">
+        <input id="groupSpellsByLevel" v-model="groupSpellsByLevel" type="checkbox" />
+        <label for="groupSpellsByLevel">Group spells in lists by level</label>
+      </div>
+      <div class="space-x-2 md:col-span-2">
         <label>Theme:</label>
         <select
           v-model="theme"
@@ -78,6 +82,11 @@ const serverLock = computed({
 const noDeleteConfirmation = computed({
   get: () => Settings.getInstance().noDeleteConfirmation,
   set: (value: boolean) => (Settings.getInstance().noDeleteConfirmation = value)
+})
+
+const groupSpellsByLevel = computed({
+  get: () => Settings.getInstance().groupSpellsByLevel,
+  set: (value: boolean) => (Settings.getInstance().groupSpellsByLevel = value)
 })
 
 const theme = computed({

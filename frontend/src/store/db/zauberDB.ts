@@ -185,10 +185,20 @@ export class ZauberDB extends BaseDatabaseHandler {
     return result.spell_lists
   }
 
-  public async addSpellToList(listUuid: string, presetUuid: string) {
+  public async addSpellToList(listUuid: string, presetUuid: string, sorting?: number) {
     const result = await this.put<unknown>([ZauberDB.SPELL_END_POINT, 'addPreset'], {
       spell_list_uuid: listUuid,
-      spell_preset_uuid: presetUuid
+      spell_preset_uuid: presetUuid,
+      ...(sorting !== undefined ? { sorting: sorting.toString() } : {})
+    })
+    return result !== undefined
+  }
+
+  public async setSpellSorting(listUuid: string, presetUuid: string, sorting: number) {
+    const result = await this.patch<unknown>([ZauberDB.SPELL_END_POINT, 'edit'], {
+      spell_list_uuid: listUuid,
+      spell_preset_uuid: presetUuid,
+      sorting: sorting.toString()
     })
     return result !== undefined
   }

@@ -9,7 +9,7 @@
     @click="expanded = !expanded"
   >
     <div class="flex items-center gap-2">
-      <div class="drag-handle mx-1 h-fit cursor-grab">⋮⋮</div>
+      <div v-if="canDrag" class="drag-handle mx-1 h-fit cursor-grab" @click.stop>⋮⋮</div>
 
       <div class="flex flex-1 flex-col gap-1">
         <div class="break-wrap">{{ spell.name }}</div>
@@ -88,6 +88,10 @@ const props = defineProps({
     default: false
   },
   canCast: {
+    type: Boolean,
+    default: false
+  },
+  canDrag: {
     type: Boolean,
     default: false
   }
