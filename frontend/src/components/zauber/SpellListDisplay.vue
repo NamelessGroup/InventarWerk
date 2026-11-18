@@ -6,6 +6,12 @@
     @update-name="(n: string) => zauberData().editSpellListName(spellList.uuid, n)"
     @delete="zauberData().deleteSpellList(spellList.uuid)"
   >
+    <template #extraInfoRight>
+      <div class="shrink-0 text-sm opacity-60" title="Number of spells">
+        {{ spellList.entries.length }}
+      </div>
+    </template>
+
     <template #item="{ item }">
       <SpellDisplay
         :spell="item"

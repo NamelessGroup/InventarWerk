@@ -30,6 +30,7 @@
       </button>
       <slot name="extraInfo" />
       <div class="flex-1"><!-- Spacer --></div>
+      <slot name="extraInfoRight" />
       <button
         class="border-accent bg-primary-default h-7 w-7 shrink-0 rounded-sm border"
         @click="expanded = !expanded"
